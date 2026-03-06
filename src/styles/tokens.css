@@ -1,0 +1,32 @@
+:root {
+  --font-body: 'IBM Plex Sans', 'Aptos', 'Segoe UI', sans-serif;
+  --font-display: 'Instrument Serif', 'Iowan Old Style', 'Times New Roman', serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', 'Cascadia Code', monospace;
+  --lane-a-bg: #f7f7f7;
+  --lane-b-bg: #ffffff;
+  --lane-c-bg: #eef2f7;
+  --gateway-border: #4a6fa5;
+  --read-edge: #2d6cdf;
+  --guard-edge: #455a75;
+  --write-edge: #d35400;
+  --ack-edge: #7d8597;
+  --tool-edge: #148a8a;
+  --audit-edge: #8d6e63;
+  --surface: #f4f6f9;
+  --surface-strong: #ffffff;
+  --surface-muted: #e8edf4;
+  --surface-panel: rgba(255, 255, 255, 0.84);
+  --surface-panel-strong: rgba(255, 255, 255, 0.94);
+  --surface-accent: rgba(255, 249, 241, 0.94);
+  --text-main: #1f2937;
+  --text-subtle: #4b5563;
+  --text-faint: #6b7280;
+  --border-strong: #b9c2cf;
+  --border-muted: #d6dde7;
+  --border-emphasis: rgba(69, 90, 117, 0.22);
+  --focus-ring: #111827;
+  --shadow-panel: 0 22px 56px rgba(15, 23, 42, 0.08);
+  --shadow-card: 0 16px 28px rgba(15, 23, 42, 0.06);
+  --radius-panel: 22px;
+  --radius-card: 18px;
+}
