@@ -1,6 +1,8 @@
+import type { ExportMode } from '@/graph/compile/toExportSvg'
+
 interface ExportBarProps {
-  onExportSvg(mode: 'current' | 'full'): void
-  onExportPdf(mode: 'current' | 'full'): void
+  onExportSvg(mode: ExportMode): void
+  onExportPdf(mode: ExportMode): void
   onExportMermaid(panel: 'architecture' | 'vor-sequence'): void
   onExportGraphJson(): void
   onExportProjection(): void
@@ -15,17 +17,17 @@ export function ExportBar({
 }: ExportBarProps) {
   return (
     <div className="export-bar">
-      <button type="button" onClick={() => onExportSvg('current')}>
-        SVG current
+      <button type="button" onClick={() => onExportSvg('viewport')}>
+        SVG viewport
       </button>
-      <button type="button" onClick={() => onExportSvg('full')}>
-        SVG full
+      <button type="button" onClick={() => onExportSvg('publication')}>
+        SVG publication
       </button>
-      <button type="button" onClick={() => onExportPdf('current')}>
-        PDF current
+      <button type="button" onClick={() => onExportPdf('viewport')}>
+        PDF viewport
       </button>
-      <button type="button" onClick={() => onExportPdf('full')}>
-        PDF full
+      <button type="button" onClick={() => onExportPdf('publication')}>
+        PDF publication
       </button>
       <button type="button" onClick={() => onExportMermaid('architecture')}>
         Mermaid A
@@ -42,4 +44,3 @@ export function ExportBar({
     </div>
   )
 }
-

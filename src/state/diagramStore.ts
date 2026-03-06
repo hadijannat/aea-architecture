@@ -10,7 +10,7 @@ import type {
   LaneId,
   ProjectionOverrides,
 } from '@/graph/spec/schema'
-import { computeNodePositions, type NodePositionMap } from '@/layout/elk'
+import { computeBoardNodePositions, type NodePositionMap } from '@/layout/boardLayout'
 
 export interface DiagramFilters {
   claims: ClaimId[]
@@ -128,7 +128,7 @@ export const useDiagramStore = create<DiagramStore>()(
             }))
 
             try {
-              const positions = await computeNodePositions(get().graph, get().projection)
+              const positions = await computeBoardNodePositions(get().graph, get().projection)
               set((state) => ({
                 ...state,
                 layout: {
@@ -411,6 +411,7 @@ export const useDiagramStore = create<DiagramStore>()(
               projection: {
                 ...state.projection,
                 nodePositions: {},
+                edgeHandles: {},
               },
               layout: {
                 ...state.layout,

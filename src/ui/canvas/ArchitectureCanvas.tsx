@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, type RefObject } from 'react'
 import {
   Background,
   ControlButton,
@@ -213,6 +213,7 @@ function CanvasHud({
 }
 
 interface ArchitectureCanvasProps {
+  containerRef?: RefObject<HTMLDivElement | null>
   nodes: DiagramFlowNode[]
   edges: DiagramFlowEdge[]
   ui: DiagramStore['ui']
@@ -224,6 +225,7 @@ interface ArchitectureCanvasProps {
 }
 
 export function ArchitectureCanvas({
+  containerRef,
   nodes,
   edges,
   ui,
@@ -234,7 +236,7 @@ export function ArchitectureCanvas({
   onResetLayout,
 }: ArchitectureCanvasProps) {
   return (
-    <div className="architecture-canvas" aria-label="Panel A architecture canvas">
+    <div ref={containerRef} className="architecture-canvas" aria-label="Panel A architecture canvas">
       <ReactFlow
         nodes={nodes}
         edges={edges}

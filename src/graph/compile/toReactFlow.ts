@@ -1,6 +1,6 @@
 import type { Edge as FlowEdge, Node as FlowNode } from '@xyflow/react'
 
-import { buildEdgeAriaLabel, buildNodeAriaLabel, buildStepAriaLabel } from '@/a11y/aria'
+import { buildEdgeAriaLabel, buildNodeAriaLabel } from '@/a11y/aria'
 import {
   edgeEntityKey,
   graphManifest,
@@ -9,18 +9,9 @@ import {
   resolveGraphNode,
   resolveSequenceStep,
 } from '@/graph/spec/manifest'
-import type {
-  ClaimId,
-  EdgeSpec,
-  EntityKey,
-  GraphManifest,
-  NodeSpec,
-  SequenceStep,
-} from '@/graph/spec/schema'
+import type { ClaimId, EdgeSpec, EntityKey, GraphManifest, NodeSpec } from '@/graph/spec/schema'
 import { resolveEdgeHandles } from '@/layout/ports'
 import type { DiagramStore } from '@/state/diagramStore'
-
-import { sortSequenceEdges, sortSequenceSteps } from './sequence'
 
 export interface BreadcrumbItem {
   id: string
@@ -63,38 +54,6 @@ export interface CompiledEdgeData extends Record<string, unknown> {
   highlighted: boolean
   dimmed: boolean
   callbacks: CompileCallbacks
-}
-
-export interface CompiledSequenceStep {
-  step: SequenceStep
-  ariaLabel: string
-  selected: boolean
-  highlighted: boolean
-  dimmed: boolean
-  hidden: boolean
-}
-
-export interface CompiledSequenceEdge {
-  edge: EdgeSpec
-  selected: boolean
-  highlighted: boolean
-  dimmed: boolean
-  hidden: boolean
-}
-
-export interface CompiledSequenceTerminal {
-  node: NodeSpec
-  ariaLabel: string
-  selected: boolean
-  highlighted: boolean
-  dimmed: boolean
-  hidden: boolean
-}
-
-export interface SequencePanelModel {
-  steps: CompiledSequenceStep[]
-  edges: CompiledSequenceEdge[]
-  terminals: CompiledSequenceTerminal[]
 }
 
 export type DiagramFlowNode = FlowNode<CompiledNodeData, string>
@@ -621,60 +580,4 @@ export function compileArchitectureEdges(
         },
       }
     })
-}
-
-export function compileSequencePanel(
-  state: DiagramStore,
-  derivedState: DerivedDiagramState,
-  manifest: GraphManifest = graphManifest,
-): SequencePanelModel {
-  const hasHighlights =
-    derivedState.highlightedNodeIds.size > 0 ||
-    derivedState.highlightedEdgeIds.size > 0 ||
-    derivedState.highlightedStepIds.size > 0
-
-  return {
-    steps: sortSequenceSteps(manifest.steps).map((step) => {
-      const highlighted = derivedState.highlightedStepIds.has(step.id)
-
-      return {
-        step,
-        ariaLabel: buildStepAriaLabel(step),
-        selected: state.ui.selectedStepId === step.id,
-        highlighted,
-        dimmed: hasHighlights && !highlighted,
-        hidden: !derivedState.visibleStepIds.has(step.id),
-      }
-    }),
-    edges: sortSequenceEdges(
-      manifest.edges.filter((edge) => edge.panel.includes('vor-sequence')),
-      manifest,
-    )
-      .map((edge) => {
-        const highlighted = derivedState.highlightedEdgeIds.has(edge.id)
-
-        return {
-          edge,
-          selected: state.ui.selectedEdgeId === edge.id,
-          highlighted,
-          dimmed: hasHighlights && !highlighted,
-          hidden: !derivedState.visibleEdgeIds.has(edge.id),
-        }
-      }),
-    terminals: manifest.nodes
-      .filter((node) => isSequenceTerminal(node))
-      .sort((left, right) => left.id.localeCompare(right.id))
-      .map((node) => {
-        const highlighted = derivedState.highlightedNodeIds.has(node.id)
-
-        return {
-          node,
-          ariaLabel: buildNodeAriaLabel(node, manifest),
-          selected: state.ui.selectedNodeId === node.id,
-          highlighted,
-          dimmed: hasHighlights && !highlighted,
-          hidden: !derivedState.visibleNodeIds.has(node.id),
-        }
-      }),
-  }
 }

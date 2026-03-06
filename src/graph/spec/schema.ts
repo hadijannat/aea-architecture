@@ -210,7 +210,6 @@ export const layoutDefaultsSchema = z.object({
     height: z.number(),
     bandHeights: z.record(bandIdSchema, z.number()),
   }),
-  elk: z.record(z.string(), z.string()),
 })
 
 export const graphManifestSchema = z.object({
@@ -264,7 +263,7 @@ export const projectionOverridesSchema = z.object({
   expandedNoteIds: z.array(z.string()).default([]),
   annotations: z.record(z.string(), z.string()).default({}),
   theme: z.string().default('default'),
-  exportPreset: z.enum(['current', 'full']).default('current'),
+  exportPreset: z.enum(['viewport', 'publication']).default('viewport'),
   panelBSize: z.number().default(24),
   panelBVisible: z.boolean().default(true),
   snapshots: z.array(projectionSnapshotSchema).default([]),

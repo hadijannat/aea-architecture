@@ -31,11 +31,19 @@ test('selecting F_VoR_ACK highlights the Panel B acknowledgement', async ({ page
   })
   await expect(page.getByRole('heading', { name: 'F_VoR_ACK' })).toBeVisible()
   await expect(page.getByRole('button', { name: /PB_ACK/ })).toBeVisible()
-  await expect(page.locator('.sequence-status.is-highlighted')).toContainText('PB_ACK')
+  await expect(page.locator('.sequence-edge-label.is-highlighted')).toContainText('PB_ACK')
 })
 
 test('edge controls expose semantic accessible names', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('button', { name: /^F5: writeback edge from/ })).toBeVisible()
   await expect(page.getByRole('button', { name: /^F_VoR_ACK: status-ack edge from/ })).toBeVisible()
+})
+
+test('export controls use viewport and publication labels', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('button', { name: 'SVG viewport' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'SVG publication' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'PDF viewport' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'PDF publication' })).toBeVisible()
 })

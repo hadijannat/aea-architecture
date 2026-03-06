@@ -8,7 +8,7 @@ export interface NodePosition {
 
 export type NodePositionMap = Record<string, NodePosition>
 
-export async function computeNodePositions(
+export async function computeBoardNodePositions(
   manifest: GraphManifest = graphManifest,
   overrides?: ProjectionOverrides,
 ): Promise<NodePositionMap> {

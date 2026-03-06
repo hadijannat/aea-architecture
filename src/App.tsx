@@ -1,13 +1,14 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels'
 import type { OnNodeDrag } from '@xyflow/react'
 import { jsPDF } from 'jspdf'
 import { svg2pdf } from 'svg2pdf.js'
 
 import { buildSearchResults, type SearchResult } from '@/graph/compile/searchIndex'
-import { compileArchitectureEdges, compileArchitectureNodes, compileSequencePanel, deriveDiagramState, getEntityPathHighlights } from '@/graph/compile/toReactFlow'
+import { compileSequenceBoard } from '@/graph/compile/sequenceBoard'
+import { buildExportSvgDocument, type ExportMode } from '@/graph/compile/toExportSvg'
+import { compileArchitectureEdges, compileArchitectureNodes, deriveDiagramState, getEntityPathHighlights } from '@/graph/compile/toReactFlow'
 import { toMermaid } from '@/graph/compile/toMermaid'
-import { toPublicationSvg } from '@/graph/compile/toPublicationSvg'
 import { getGraphManifestJson, graphManifest, resolveGraphEdge, resolveGraphNode, resolveSequenceStep } from '@/graph/spec/manifest'
 import { useDiagramStore } from '@/state/diagramStore'
 import type { DiagramStore } from '@/state/diagramStore'
@@ -46,6 +47,8 @@ function parseSearchParamList(value: string | null) {
 export default function App() {
   const store = useDiagramStore()
   const { actions } = store
+  const architectureCanvasRef = useRef<HTMLDivElement>(null)
+  const sequencePanelRef = useRef<HTMLElement>(null)
 
   const overviewMetrics = useMemo(
     () => [
@@ -178,7 +181,7 @@ export default function App() {
   )
 
   const sequenceModel = useMemo(
-    () => compileSequencePanel(store, derivedState),
+    () => compileSequenceBoard(store, derivedState),
     [derivedState, store],
   )
 
@@ -239,20 +242,50 @@ export default function App() {
     actions.setFilter('standards', [result.id])
   }
 
-  async function exportPdf(mode: 'current' | 'full') {
-    const svgText = toPublicationSvg(store, mode)
+  function buildExportDocument(mode: ExportMode) {
+    const architectureElement = architectureCanvasRef.current
+    const sequenceElement = sequencePanelRef.current
+    const viewportMetrics =
+      mode === 'viewport'
+        ? {
+            architecture: {
+              width: architectureElement?.clientWidth || graphManifest.layoutDefaults.canvas.width,
+              height: architectureElement?.clientHeight || graphManifest.layoutDefaults.canvas.height,
+            },
+            sequence:
+              store.ui.panelBVisible && sequenceElement
+                ? {
+                    width: sequenceElement.clientWidth || graphManifest.layoutDefaults.canvas.width,
+                    height: sequenceElement.clientHeight || 240,
+                  }
+                : undefined,
+          }
+        : undefined
+
+    return buildExportSvgDocument(
+      store,
+      {
+        mode,
+        viewportMetrics,
+      },
+      graphManifest,
+    )
+  }
+
+  async function exportPdf(mode: ExportMode) {
+    const exportDocument = buildExportDocument(mode)
     const parser = new DOMParser()
-    const svgDoc = parser.parseFromString(svgText, 'image/svg+xml')
+    const svgDoc = parser.parseFromString(exportDocument.svg, 'image/svg+xml')
     const pdf = new jsPDF({
-      orientation: 'landscape',
-      unit: 'pt',
-      format: [graphManifest.layoutDefaults.canvas.width, graphManifest.layoutDefaults.canvas.height + 290],
+      orientation: exportDocument.pdf.width >= exportDocument.pdf.height ? 'landscape' : 'portrait',
+      unit: exportDocument.pdf.unit,
+      format: [exportDocument.pdf.width, exportDocument.pdf.height],
     })
     await svg2pdf(svgDoc.documentElement, pdf, {
       x: 0,
       y: 0,
-      width: graphManifest.layoutDefaults.canvas.width,
-      height: graphManifest.layoutDefaults.canvas.height + 290,
+      width: exportDocument.pdf.width,
+      height: exportDocument.pdf.height,
     })
     pdf.save(`aea-architecture-${mode}.pdf`)
   }
@@ -264,7 +297,7 @@ export default function App() {
           <p className="eyebrow">AEA Architecture Figure</p>
           <h1>Interactive Graph Application</h1>
           <p className="app-header__summary">
-            Canonical graph manifest, live ELK layout, and synchronized VoR sequence rendered from one audited runtime model.
+            Canonical graph manifest, fixed board layout, and synchronized VoR sequence rendered from one audited runtime model.
           </p>
           <div className="app-header__metrics" aria-label="Application overview metrics">
             {overviewMetrics.map((metric) => (
@@ -279,7 +312,10 @@ export default function App() {
         <div className="app-header__actions">
           <span className="toolbar__label">Export</span>
           <ExportBar
-            onExportSvg={(mode) => downloadText(`aea-architecture-${mode}.svg`, toPublicationSvg(store, mode), 'image/svg+xml')}
+            onExportSvg={(mode) => {
+              const exportDocument = buildExportDocument(mode)
+              downloadText(`aea-architecture-${mode}.svg`, exportDocument.svg, 'image/svg+xml')
+            }}
             onExportPdf={(mode) => void exportPdf(mode)}
             onExportMermaid={(panel) => downloadText(`${panel}.mmd`, toMermaid(panel), 'text/plain')}
             onExportGraphJson={() => downloadText('graph.json', getGraphManifestJson(), 'application/json')}
@@ -357,6 +393,7 @@ export default function App() {
           >
             <Panel id="architecture" defaultSize={100 - store.ui.panelBSize} minSize={48}>
               <ArchitectureCanvas
+                containerRef={architectureCanvasRef}
                 nodes={architectureNodes}
                 edges={architectureEdges}
                 ui={store.ui}
@@ -372,6 +409,7 @@ export default function App() {
                 <PanelResizeHandle className="panel-resize-handle" />
                 <Panel id="sequence" defaultSize={store.ui.panelBSize} minSize={18} maxSize={42}>
                   <SequencePanel
+                    containerRef={sequencePanelRef}
                     model={sequenceModel}
                     onSelectNode={actions.selectNode}
                     onSelectStep={actions.selectStep}

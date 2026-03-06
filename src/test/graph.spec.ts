@@ -1,17 +1,18 @@
 import { buildSearchResults } from '@/graph/compile/searchIndex'
+import { compileSequenceBoard } from '@/graph/compile/sequenceBoard'
+import { buildExportSvgDocument } from '@/graph/compile/toExportSvg'
 import mermaid from 'mermaid'
 import { describe, expect, it } from 'vitest'
 
-import { compileSequencePanel, deriveDiagramState } from '@/graph/compile/toReactFlow'
+import { deriveDiagramState } from '@/graph/compile/toReactFlow'
 import { toMermaid } from '@/graph/compile/toMermaid'
-import { toPublicationSvg } from '@/graph/compile/toPublicationSvg'
 import { defaultProjectionOverrides, graphManifest } from '@/graph/spec/manifest'
 import { validateGraphManifest } from '@/graph/spec/validators'
-import { computeNodePositions } from '@/layout/elk'
-import type { DiagramStore } from '@/state/diagramStore'
+import { computeBoardNodePositions } from '@/layout/boardLayout'
+import { useDiagramStore, type DiagramStore } from '@/state/diagramStore'
 
 async function createState(overrides?: Partial<DiagramStore['ui']>): Promise<DiagramStore> {
-  const positions = await computeNodePositions(graphManifest, defaultProjectionOverrides)
+  const positions = await computeBoardNodePositions(graphManifest, defaultProjectionOverrides)
   return {
     graph: graphManifest,
     projection: defaultProjectionOverrides,
@@ -172,7 +173,11 @@ describe('derived projections', () => {
     }
     const state = await createState()
     const derived = deriveDiagramState(state, scrambledManifest)
-    const model = compileSequencePanel(state, derived, scrambledManifest)
+    const model = compileSequenceBoard(state, derived, scrambledManifest)
+    const ackEdge = model.edges.find((edge) => edge.edge.id === 'PB_ACK')
+    const rejectEdge = model.edges.find((edge) => edge.edge.id === 'PB_REJECT')
+    const stepFour = model.steps.find((step) => step.step.id === 'PB4')
+    const stepFourAnchorX = stepFour ? stepFour.rect.x + stepFour.rect.width / 2 : 0
 
     expect(model.steps.map((step) => step.step.id)).toEqual(['PB1', 'PB2', 'PB3', 'PB4', 'PB5'])
     expect(
@@ -188,6 +193,9 @@ describe('derived projections', () => {
       'PB5->PB_AEA',
     ])
     expect(model.terminals.map((terminal) => terminal.node.id)).toEqual(['PB_AEA', 'PB_REJECT_OUT'])
+    expect(ackEdge?.path).toContain(` ${model.ackRouteY}`)
+    expect(ackEdge?.labelY).toBe(model.ackRouteY)
+    expect(rejectEdge?.path.startsWith(`M ${stepFourAnchorX}`)).toBe(true)
   })
 
   it('builds direct search results for ids and standards', () => {
@@ -217,26 +225,75 @@ describe('exports', () => {
     expect(sequenceMermaid).toContain('PB_REJECT_OUT')
   })
 
-  it('includes title and desc tags in SVG export', async () => {
-    const state = await createState()
-    const svg = toPublicationSvg(state, 'current')
-    expect(svg).toContain('<title>AEA Architecture Graph Export</title>')
-    expect(svg).toContain('<desc>Publication export of the AEA architecture graph application including Panel A and Panel B.</desc>')
-    expect(svg).toContain('id="edge-F5"')
-    expect(svg).toContain('id="sequence-node-PB_AEA"')
-    expect(svg).toContain('id="sequence-node-PB_REJECT_OUT"')
+  it('reuses the shared sequence geometry in viewport export', async () => {
+    const state = await createState({
+      viewport: { x: -120, y: -80, zoom: 2 },
+    })
+    const derived = deriveDiagramState(state)
+    const board = compileSequenceBoard(state, derived)
+    const ackEdge = board.edges.find((edge) => edge.edge.id === 'PB_ACK')
+    const viewportDocument = buildExportSvgDocument(state, {
+      mode: 'viewport',
+      viewportMetrics: {
+        architecture: { width: 640, height: 360 },
+        sequence: { width: 640, height: 220 },
+      },
+    })
+
+    expect(viewportDocument.svg).toContain('<title>AEA Architecture Viewport Export</title>')
+    expect(viewportDocument.svg).toContain('viewBox="60 40 320 180"')
+    expect(viewportDocument.svg).toContain(`d="${ackEdge?.path}"`)
+    expect(viewportDocument.svg).toContain('id="sequence-node-PB_AEA"')
+    expect(viewportDocument.svg).toContain('id="sequence-edge-PB_ACK"')
   })
 
-  it('keeps current-view export aligned with Panel B visibility while full export remains complete', async () => {
-    const currentState = await createState({ panelBVisible: false })
-    const currentSvg = toPublicationSvg(currentState, 'current')
-    const fullSvg = toPublicationSvg(currentState, 'full')
+  it('builds a fixed-size publication export with both panels', async () => {
+    const state = await createState({ panelBVisible: false })
+    const publicationDocument = buildExportSvgDocument(state, { mode: 'publication' })
 
-    expect(currentSvg).not.toContain('sequence-node-PB_AEA')
-    expect(currentSvg).not.toContain('sequence-edge-PB_ACK')
-    expect(currentSvg).not.toContain('VoR Domain-Transition Sequence')
-    expect(fullSvg).toContain('sequence-node-PB_AEA')
-    expect(fullSvg).toContain('sequence-edge-PB_ACK')
-    expect(fullSvg).toContain('VoR Domain-Transition Sequence')
+    expect(publicationDocument.svg).toContain('<title>AEA Architecture Publication Export</title>')
+    expect(publicationDocument.svg).toContain('width="183mm"')
+    expect(publicationDocument.svg).toContain('font-size="9pt"')
+    expect(publicationDocument.svg).toContain('font-size="6.5pt"')
+    expect(publicationDocument.svg).toContain('font-size="5pt"')
+    expect(publicationDocument.svg).toContain('stroke-dasharray="4 2"')
+    expect(publicationDocument.svg).toContain('id="sequence-edge-PB_ACK"')
+    expect(publicationDocument.svg).toContain('VoR Domain-Transition Sequence')
+  })
+
+  it('resetLayout clears manual edge handles together with node positions', async () => {
+    const initialState = useDiagramStore.getState()
+    const positions = await computeBoardNodePositions(graphManifest, defaultProjectionOverrides)
+    useDiagramStore.setState({
+      projection: {
+        ...initialState.projection,
+        nodePositions: {
+          A1: { x: 999, y: 888 },
+        },
+        edgeHandles: {
+          F5: {
+            sourceHandle: 'top',
+            targetHandle: 'bottom',
+          },
+        },
+      },
+      layout: {
+        ready: true,
+        running: false,
+        positions: {
+          ...positions,
+          A1: { x: 999, y: 888 },
+        },
+      },
+    })
+
+    await useDiagramStore.getState().actions.resetLayout()
+
+    const nextState = useDiagramStore.getState()
+    expect(nextState.projection.nodePositions).toEqual({})
+    expect(nextState.projection.edgeHandles).toEqual({})
+    expect(nextState.layout.positions.A1).toEqual(positions.A1)
+
+    useDiagramStore.setState(initialState)
   })
 })

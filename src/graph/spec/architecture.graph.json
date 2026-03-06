@@ -263,7 +263,7 @@
         "rationale": "The AEA groups all agent-side processing while keeping the publication architecture aligned to the Sense–Decide–Act narrative.",
         "notes": [
           "The AEA is a logical container, not an additional security boundary.",
-          "Nodes inside the AEA are ELK-managed inside each band."
+          "Nodes inside the AEA are positioned within fixed board slots inside each band."
         ],
         "relatedEdgeIds": ["F1", "F4", "F5", "F7a"],
         "relatedStepIds": ["PB1", "PB2", "PB3", "PB4", "PB5"]
@@ -1956,17 +1956,6 @@
         "Decide": 340,
         "Act": 190
       }
-    },
-    "elk": {
-      "elk.algorithm": "layered",
-      "elk.direction": "RIGHT",
-      "elk.edgeRouting": "ORTHOGONAL",
-      "elk.spacing.nodeNodeBetweenLayers": "60",
-      "elk.spacing.edgeNodeBetweenLayers": "30",
-      "elk.spacing.edgeEdge": "16",
-      "elk.layered.nodePlacement.favorStraightEdges": "true",
-      "elk.layered.crossingMinimization.greedySwitch.type": "TWO_SIDED",
-      "elk.interactiveLayout": "true"
     }
   }
 }

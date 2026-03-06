@@ -6,7 +6,7 @@ Interactive React application that projects the AEA Architecture Figure master s
 
 - Vite + React + TypeScript
 - React Flow for Panel A
-- ELK.js for architecture layout
+- Fixed board layout for Panel A
 - Zustand for UI, selection, projection overrides, and persistence
 - Mermaid and SVG/PDF export from the same graph model
 
@@ -30,10 +30,10 @@ The UI does not allow semantic node or edge creation, deletion, or retargeting. 
 
 The header export bar supports:
 
-- SVG current view
-- SVG full view
-- PDF current view
-- PDF full view
+- SVG viewport
+- SVG publication
+- PDF viewport
+- PDF publication
 - Mermaid export for Panel A and Panel B
 - raw `graph.json`
 - raw `projection.json`
