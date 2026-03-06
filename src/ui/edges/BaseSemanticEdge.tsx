@@ -1,14 +1,13 @@
 import {
   BaseEdge,
   EdgeLabelRenderer,
-  Position,
-  getSmoothStepPath,
   type EdgeProps,
 } from '@xyflow/react'
 import clsx from 'clsx'
 
 import type { DiagramFlowEdge } from '@/graph/compile/toReactFlow'
 import { edgeEntityKey } from '@/graph/spec/manifest'
+import { buildBoardEdgeRoute } from '@/layout/board'
 
 const strokeColors: Record<string, string> = {
   writeback: '#d35400',
@@ -38,22 +37,16 @@ export function BaseSemanticEdge({
   sourceY,
   targetX,
   targetY,
-  sourcePosition,
-  targetPosition,
 }: EdgeProps<DiagramFlowEdge>) {
   if (!data) {
     return null
   }
 
-  const [edgePath, labelX, labelY] = getSmoothStepPath({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition: sourcePosition ?? Position.Right,
-    targetPosition: targetPosition ?? Position.Left,
-    borderRadius: 14,
-  })
+  const { path: edgePath, labelX, labelY } = buildBoardEdgeRoute(
+    data.spec,
+    { x: sourceX, y: sourceY },
+    { x: targetX, y: targetY },
+  )
 
   const strokeColor = strokeColors[data.spec.semantic] ?? strokeColors.default
   const strokeWidth = strokeWidths[data.spec.style] ?? 1.5
@@ -93,9 +86,12 @@ export function BaseSemanticEdge({
         <button
           type="button"
           className={clsx('edge-label', data.selected && 'is-selected', data.highlighted && 'is-highlighted')}
+          aria-label={data.ariaLabel}
           style={{
             transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY + labelYOffset}px)`,
           }}
+          onFocus={() => data.callbacks.onHover(edgeEntityKey(id))}
+          onBlur={() => data.callbacks.onHover(undefined)}
           onPointerDown={(event) => {
             event.stopPropagation()
             data.callbacks.onSelectEdge(id)

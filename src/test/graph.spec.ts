@@ -47,6 +47,32 @@ describe('graph manifest', () => {
     expect(issues).toEqual([])
   })
 
+  it('rejects gateway node drift and broken cross-panel correspondences', () => {
+    const mutated = structuredClone(graphManifest)
+    const voi = mutated.nodes.find((node) => node.id === 'VOI')
+    const pbAck = mutated.edges.find((edge) => edge.id === 'PB_ACK')
+    const ackRule = mutated.interactionRules.find((rule) => rule.id === 'RULE_VOR_ACK')
+
+    if (!voi || !pbAck || !ackRule) {
+      throw new Error('Expected canonical VOI, PB_ACK, and RULE_VOR_ACK objects to exist')
+    }
+
+    voi.kind = 'gateway-module'
+    voi.title = 'G4'
+    pbAck.target = 'PB_REJECT_OUT'
+    ackRule.relatedEdgeIds = ['edge:F_VoR_ACK']
+
+    const issues = validateGraphManifest(mutated)
+    expect(issues.map((issue) => issue.code)).toEqual(
+      expect.arrayContaining([
+        'invalid-node-kind',
+        'invalid-node-title',
+        'invalid-edge-target',
+        'invalid-interaction-edge',
+      ]),
+    )
+  })
+
   it('keeps the canonical connection inventory aligned with the spec', () => {
     const expectedEdges = {
       F_GW1: { source: 'A2', target: 'G1', semantic: 'gateway-internal', style: 'medium', direction: 'ltr' },
@@ -149,6 +175,18 @@ describe('derived projections', () => {
     const model = compileSequencePanel(state, derived, scrambledManifest)
 
     expect(model.steps.map((step) => step.step.id)).toEqual(['PB1', 'PB2', 'PB3', 'PB4', 'PB5'])
+    expect(
+      model.edges
+        .filter((edge) => !edge.hidden)
+        .map((edge) => `${edge.edge.source}->${edge.edge.target}`),
+    ).toEqual([
+      'PB1->PB2',
+      'PB2->PB3',
+      'PB3->PB4',
+      'PB4->PB5',
+      'PB4->PB_REJECT_OUT',
+      'PB5->PB_AEA',
+    ])
     expect(model.terminals.map((terminal) => terminal.node.id)).toEqual(['PB_AEA', 'PB_REJECT_OUT'])
   })
 
@@ -169,6 +207,12 @@ describe('exports', () => {
     mermaid.initialize({ startOnLoad: false })
     await expect(mermaid.parse(architectureMermaid)).resolves.toBeTruthy()
     await expect(mermaid.parse(sequenceMermaid)).resolves.toBeTruthy()
+    expect(architectureMermaid).toContain('subgraph GW["GW: NOA Security Gateway · NE 177 / NE 178"]')
+    expect(architectureMermaid).toContain('subgraph GW_NE177["NE 177 read-only chain"]')
+    expect(architectureMermaid).toContain('subgraph GW_NE178["NE 178 VoR interface"]')
+    expect(architectureMermaid).toContain('F_GW2:')
+    expect(architectureMermaid).toContain('[diode, medium]')
+    expect(architectureMermaid).toContain('stroke-width:3.2px')
     expect(sequenceMermaid).toContain('PB_AEA')
     expect(sequenceMermaid).toContain('PB_REJECT_OUT')
   })
@@ -181,5 +225,18 @@ describe('exports', () => {
     expect(svg).toContain('id="edge-F5"')
     expect(svg).toContain('id="sequence-node-PB_AEA"')
     expect(svg).toContain('id="sequence-node-PB_REJECT_OUT"')
+  })
+
+  it('keeps current-view export aligned with Panel B visibility while full export remains complete', async () => {
+    const currentState = await createState({ panelBVisible: false })
+    const currentSvg = toPublicationSvg(currentState, 'current')
+    const fullSvg = toPublicationSvg(currentState, 'full')
+
+    expect(currentSvg).not.toContain('sequence-node-PB_AEA')
+    expect(currentSvg).not.toContain('sequence-edge-PB_ACK')
+    expect(currentSvg).not.toContain('VoR Domain-Transition Sequence')
+    expect(fullSvg).toContain('sequence-node-PB_AEA')
+    expect(fullSvg).toContain('sequence-edge-PB_ACK')
+    expect(fullSvg).toContain('VoR Domain-Transition Sequence')
   })
 })

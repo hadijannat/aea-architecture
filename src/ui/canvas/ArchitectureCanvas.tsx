@@ -184,7 +184,7 @@ function CanvasHud({
 
   const selectionLabel = useMemo(() => {
     if (!activeSelection) {
-      return 'Use a focus preset to inspect the architecture at working scale.'
+      return 'Jump to a readable board region.'
     }
     return `Selection active: ${activeSelection}`
   }, [activeSelection])
@@ -192,8 +192,8 @@ function CanvasHud({
   return (
     <div className="canvas-hud">
       <div className="canvas-hud__copy">
-        <span className="canvas-hud__eyebrow">Focus presets</span>
-        <strong>Readable default working views</strong>
+        <span className="canvas-hud__eyebrow">Board presets</span>
+        <strong>Trace views</strong>
         <p>{selectionLabel}</p>
       </div>
       <div className="canvas-hud__actions">

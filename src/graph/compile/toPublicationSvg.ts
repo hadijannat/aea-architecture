@@ -4,10 +4,8 @@ import { resolveEdgeHandles } from '@/layout/ports'
 import type { DiagramStore } from '@/state/diagramStore'
 
 import { deriveDiagramState } from './toReactFlow'
-
-function sortSequenceSteps(steps: GraphManifest['steps']) {
-  return [...steps].sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
-}
+import { sortSequenceEdges, sortSequenceSteps } from './sequence'
+import { buildBoardEdgeRoute } from '@/layout/board'
 
 function esc(value: string) {
   return value
@@ -40,11 +38,13 @@ function buildEdgePath(edge: EdgeSpec, state: DiagramStore, projection: Projecti
   const handles = resolveEdgeHandles(edge, projection.edgeHandles)
   const source = anchorPoint(edge.source, handles.sourceHandle, state)
   const target = anchorPoint(edge.target, handles.targetHandle, state)
-  const midX = (source.x + target.x) / 2
+  const route = buildBoardEdgeRoute(edge, source, target)
   return {
-    path: `M ${source.x} ${source.y} L ${midX} ${source.y} L ${midX} ${target.y} L ${target.x} ${target.y}`,
+    path: route.path,
     source,
     target,
+    labelX: route.labelX,
+    labelY: route.labelY,
   }
 }
 
@@ -97,6 +97,7 @@ export function toPublicationSvg(
   exportMode: 'current' | 'full',
   manifest: GraphManifest = graphManifest,
 ): string {
+  const includeSequencePanel = exportMode === 'full' || state.ui.panelBVisible
   const effectiveState =
     exportMode === 'full'
       ? {
@@ -117,7 +118,7 @@ export function toPublicationSvg(
 
   const derived = deriveDiagramState(effectiveState as DiagramStore, manifest)
   const width = manifest.layoutDefaults.canvas.width
-  const height = manifest.layoutDefaults.canvas.height + 290
+  const height = manifest.layoutDefaults.canvas.height + (includeSequencePanel ? 290 : 0)
 
   const architectureNodes = manifest.nodes.filter(
     (node) => node.panel.includes('architecture') && derived.visibleNodeIds.has(node.id),
@@ -125,15 +126,18 @@ export function toPublicationSvg(
   const architectureEdges = manifest.edges.filter(
     (edge) => edge.panel.includes('architecture') && derived.visibleEdgeIds.has(edge.id),
   )
-  const sequenceSteps = sortSequenceSteps(
-    manifest.steps.filter((step) => derived.visibleStepIds.has(step.id)),
-  )
-  const sequenceEdges = manifest.edges.filter(
-    (edge) => edge.panel.includes('vor-sequence') && derived.visibleEdgeIds.has(edge.id),
-  )
-  const sequenceTerminals = manifest.nodes.filter(
-    (node) => node.panel.includes('vor-sequence') && derived.visibleNodeIds.has(node.id),
-  )
+  const sequenceSteps = includeSequencePanel
+    ? sortSequenceSteps(manifest.steps.filter((step) => derived.visibleStepIds.has(step.id)))
+    : []
+  const sequenceEdges = includeSequencePanel
+    ? sortSequenceEdges(
+        manifest.edges.filter((edge) => edge.panel.includes('vor-sequence') && derived.visibleEdgeIds.has(edge.id)),
+        manifest,
+      )
+    : []
+  const sequenceTerminals = includeSequencePanel
+    ? manifest.nodes.filter((node) => node.panel.includes('vor-sequence') && derived.visibleNodeIds.has(node.id))
+    : []
 
   const stepStartX = 230
   const stepY = manifest.layoutDefaults.canvas.height + 80
@@ -177,7 +181,11 @@ export function toPublicationSvg(
   return `
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img">
   <title>AEA Architecture Graph Export</title>
-  <desc>Publication export of the AEA architecture graph application including Panel A and Panel B.</desc>
+  <desc>${esc(
+    includeSequencePanel
+      ? 'Publication export of the AEA architecture graph application including Panel A and Panel B.'
+      : 'Publication export of the AEA architecture graph application including only Panel A because Panel B is hidden in the current view.',
+  )}</desc>
   <defs>
     <marker id="arrowhead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth">
       <path d="M 0 0 L 10 4 L 0 8 z" fill="#455a75" />
@@ -220,9 +228,7 @@ export function toPublicationSvg(
     .join('\n')}
   ${architectureEdges
     .map((edge) => {
-      const { path, source, target } = buildEdgePath(edge, effectiveState as DiagramStore, effectiveState.projection)
-      const labelX = (source.x + target.x) / 2
-      const labelY = (source.y + target.y) / 2 - 8
+      const { path, labelX, labelY } = buildEdgePath(edge, effectiveState as DiagramStore, effectiveState.projection)
       const marker =
         edge.semantic === 'writeback'
           ? 'arrowhead-write'
@@ -240,7 +246,7 @@ export function toPublicationSvg(
   </g>`
     })
     .join('\n')}
-  <text x="32" y="${manifest.layoutDefaults.canvas.height + 36}" fill="#1f2937" font-size="24" font-family="Arial, sans-serif" font-weight="700">(b) VoR Domain-Transition Sequence (NE 178, 2025)</text>
+  ${includeSequencePanel ? `<text x="32" y="${manifest.layoutDefaults.canvas.height + 36}" fill="#1f2937" font-size="24" font-family="Arial, sans-serif" font-weight="700">(b) VoR Domain-Transition Sequence (NE 178, 2025)</text>` : ''}
   ${sequenceTerminals
     .map((node) => {
       const anchor = terminalAnchors[node.id]

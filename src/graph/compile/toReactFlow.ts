@@ -20,6 +20,8 @@ import type {
 import { resolveEdgeHandles } from '@/layout/ports'
 import type { DiagramStore } from '@/state/diagramStore'
 
+import { sortSequenceEdges, sortSequenceSteps } from './sequence'
+
 export interface BreadcrumbItem {
   id: string
   label: string
@@ -124,10 +126,6 @@ function isStructuralNode(node: NodeSpec): boolean {
 
 function isSequenceTerminal(node: NodeSpec): boolean {
   return node.panel.includes('vor-sequence')
-}
-
-function sortSequenceSteps(steps: SequenceStep[]) {
-  return [...steps].sort((left, right) => left.order - right.order || left.id.localeCompare(right.id))
 }
 
 function includesPathTag(tags: string[], preset: DiagramStore['ui']['filters']['pathPreset']) {
@@ -648,9 +646,10 @@ export function compileSequencePanel(
         hidden: !derivedState.visibleStepIds.has(step.id),
       }
     }),
-    edges: manifest.edges
-      .filter((edge) => edge.panel.includes('vor-sequence'))
-      .sort((left, right) => left.id.localeCompare(right.id))
+    edges: sortSequenceEdges(
+      manifest.edges.filter((edge) => edge.panel.includes('vor-sequence')),
+      manifest,
+    )
       .map((edge) => {
         const highlighted = derivedState.highlightedEdgeIds.has(edge.id)
 

@@ -404,15 +404,29 @@
   position: relative;
   height: 100%;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(252, 253, 255, 0.94)),
-    linear-gradient(90deg, rgba(214, 221, 231, 0.18) 1px, transparent 1px),
-    linear-gradient(rgba(214, 221, 231, 0.18) 1px, transparent 1px);
-  background-size: auto, 28px 28px, 28px 28px;
+    radial-gradient(circle at 18px 18px, rgba(44, 72, 104, 0.08) 0 1.2px, transparent 1.5px),
+    linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(241, 246, 251, 0.96)),
+    linear-gradient(90deg, rgba(145, 164, 188, 0.14) 1px, transparent 1px),
+    linear-gradient(rgba(145, 164, 188, 0.14) 1px, transparent 1px);
+  background-size: 28px 28px, auto, 28px 28px, 28px 28px;
+}
+
+.architecture-canvas::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(45, 108, 223, 0.05), transparent 20%),
+    radial-gradient(circle at 78% 74%, rgba(211, 84, 0, 0.05), transparent 22%),
+    linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.16) 100%);
+  z-index: 0;
 }
 
 .architecture-canvas .react-flow__renderer,
 .architecture-canvas .react-flow__viewport {
   background: transparent;
+  z-index: 1;
 }
 
 .architecture-canvas .react-flow__node.rf-node--structural {
@@ -445,16 +459,16 @@
 .canvas-hud {
   position: absolute;
   top: 14px;
-  left: 14px;
+  right: 14px;
   z-index: 12;
   display: flex;
   gap: 14px;
   align-items: center;
-  max-width: min(760px, calc(100% - 28px));
-  padding: 10px 12px;
-  border: 1px solid rgba(69, 90, 117, 0.16);
+  max-width: min(420px, calc(100% - 28px));
+  padding: 8px 10px;
+  border: 1px solid rgba(69, 90, 117, 0.18);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.78);
   backdrop-filter: blur(16px);
   box-shadow: var(--shadow-card);
 }
@@ -465,16 +479,23 @@
   min-width: 168px;
 }
 
-.canvas-hud__copy strong {
-  font-size: 0.92rem;
-  line-height: 1.15;
-}
-
 .canvas-hud__copy p {
   margin: 0;
   color: var(--text-subtle);
   font-size: 0.78rem;
   line-height: 1.35;
+}
+
+.canvas-hud__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.canvas-hud__copy strong {
+  font-size: 0.92rem;
+  line-height: 1.15;
 }
 
 .panel-resize-handle {
@@ -767,11 +788,12 @@
   gap: 10px;
   padding: 14px;
   border-radius: var(--radius-card);
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid var(--border-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 253, 0.96));
+  border: 1px solid rgba(103, 123, 148, 0.28);
   box-sizing: border-box;
   cursor: pointer;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 16px 28px rgba(15, 23, 42, 0.06);
   overflow: hidden;
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, opacity 140ms ease;
 }
@@ -793,7 +815,8 @@
 
 .node-card.is-structural {
   align-content: start;
-  background: rgba(255, 255, 255, 0.42);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(249, 251, 253, 0.4));
   box-shadow: none;
   pointer-events: none;
   overflow: visible;
@@ -803,6 +826,10 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
+}
+
+.node-card__header > div {
+  min-width: 0;
 }
 
 .node-card__title {
@@ -835,7 +862,8 @@
 
 .node-card__meta {
   display: grid;
-  gap: 7px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.85fr);
+  gap: 10px;
   min-height: 0;
   align-content: start;
 }
@@ -856,12 +884,13 @@
 
 .node-card__meta-rail {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: 72px;
   padding-bottom: 2px;
-  scrollbar-width: none;
-  mask-image: linear-gradient(90deg, transparent 0, #000 8px, #000 calc(100% - 14px), transparent 100%);
+  scrollbar-width: thin;
 }
 
 .node-card__meta-rail::-webkit-scrollbar {
@@ -917,9 +946,14 @@
 .edge-label {
   position: absolute;
   pointer-events: all;
-  font-size: 0.72rem;
-  padding: 0.32rem 0.68rem;
-  background: rgba(255, 255, 255, 0.92);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  padding: 0.28rem 0.56rem;
+  border: 1px solid rgba(69, 90, 117, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
 .node-card--compact {
@@ -936,6 +970,7 @@
 }
 
 .node-card--compact .node-card__meta {
+  grid-template-columns: 1fr;
   gap: 6px;
 }
 
@@ -950,6 +985,10 @@
 .node-card--compact .badge {
   font-size: 0.64rem;
   padding: 0.26rem 0.52rem;
+}
+
+.node-card--compact .node-card__meta-rail {
+  max-height: 54px;
 }
 
 .node-card--balanced .node-card__description {

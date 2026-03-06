@@ -1,4 +1,4 @@
-import type { EdgeSpec, GraphManifest } from './schema'
+import type { EdgeSpec, GraphManifest, NodeSpec } from './schema'
 
 const requiredNodeIds = [
   'A1',
@@ -63,6 +63,89 @@ const requiredEdgeIds = [
 
 const requiredStepIds = ['PB1', 'PB2', 'PB3', 'PB4', 'PB5'] as const
 const requiredSequenceTerminalIds = ['PB_AEA', 'PB_REJECT_OUT'] as const
+const requiredInteractionRuleIds = [
+  'RULE_VOR_CHAIN',
+  'RULE_VOR_EXECUTION',
+  'RULE_VOR_ACK',
+  'RULE_VOR_REJECT',
+] as const
+
+type CanonicalNodeRule = Partial<
+  Pick<NodeSpec, 'kind' | 'nodeType' | 'title' | 'subtitle' | 'parentId' | 'lane' | 'band'>
+> & {
+  forbiddenAliases?: readonly string[]
+}
+
+const canonicalNodeRules: Record<string, CanonicalNodeRule> = {
+  GW: {
+    kind: 'container',
+    nodeType: 'ContainerNode',
+    title: 'NOA Security Gateway',
+    subtitle: 'NE 177 / NE 178',
+  },
+  AEA: {
+    kind: 'container',
+    nodeType: 'ContainerNode',
+    title: 'Autonomous Edge Agent (AEA)',
+    lane: 'B',
+  },
+  BAND_SENSE: {
+    kind: 'band',
+    nodeType: 'ContainerNode',
+    title: 'Sense',
+    parentId: 'AEA',
+    lane: 'B',
+    band: 'Sense',
+  },
+  BAND_DECIDE: {
+    kind: 'band',
+    nodeType: 'ContainerNode',
+    title: 'Decide',
+    parentId: 'AEA',
+    lane: 'B',
+    band: 'Decide',
+  },
+  BAND_ACT: {
+    kind: 'band',
+    nodeType: 'ContainerNode',
+    title: 'Act',
+    parentId: 'AEA',
+    lane: 'B',
+    band: 'Act',
+  },
+  G1: {
+    kind: 'gateway-module',
+    nodeType: 'GatewayModuleNode',
+    title: 'G1',
+    parentId: 'GW',
+  },
+  G2: {
+    kind: 'gateway-module',
+    nodeType: 'GatewayModuleNode',
+    title: 'G2',
+    parentId: 'GW',
+  },
+  G3: {
+    kind: 'gateway-module',
+    nodeType: 'GatewayModuleNode',
+    title: 'G3',
+    parentId: 'GW',
+  },
+  VOI: {
+    kind: 'gateway-interface',
+    nodeType: 'GatewayInterfaceNode',
+    title: 'VoR Interface',
+    subtitle: 'NE 178 interface',
+    parentId: 'GW',
+    forbiddenAliases: ['G4'],
+  },
+  PB_AEA: {
+    title: 'AEA Return',
+  },
+  PB_REJECT_OUT: {
+    title: 'Rejection Output',
+  },
+}
 
 type CanonicalEdgeRule = Pick<
   EdgeSpec,
@@ -309,6 +392,53 @@ const canonicalEdgeRules: Record<(typeof requiredEdgeIds)[number], CanonicalEdge
   },
 }
 
+const canonicalEdgeStepRules: Record<string, readonly string[]> = {
+  F5: ['PB1', 'PB2', 'PB3', 'PB4', 'PB5'],
+  F6: ['PB5'],
+  F_VoR_ACK: ['PB5'],
+  PB_ACK: ['PB5'],
+  PB_REJECT: ['PB4'],
+  F3f_reject: ['PB4'],
+}
+
+const canonicalInteractionRuleRequirements: Record<
+  (typeof requiredInteractionRuleIds)[number],
+  {
+    triggerIds?: readonly string[]
+    relatedNodeIds?: readonly string[]
+    relatedEdgeIds?: readonly string[]
+    relatedStepIds?: readonly string[]
+    focusPath?: GraphManifest['interactionRules'][number]['focusPath']
+  }
+> = {
+  RULE_VOR_CHAIN: {
+    triggerIds: ['edge:F5', 'node:ACT1', 'node:VOI'],
+    relatedEdgeIds: ['edge:F4', 'edge:F5', 'edge:F6', 'edge:F_VoR_ACK', 'edge:F_AUDIT'],
+    relatedStepIds: ['step:PB1', 'step:PB2', 'step:PB3', 'step:PB4', 'step:PB5'],
+    focusPath: 'write',
+  },
+  RULE_VOR_EXECUTION: {
+    triggerIds: ['edge:F6', 'node:A3'],
+    relatedEdgeIds: ['edge:F6', 'edge:PB_ACK'],
+    relatedStepIds: ['step:PB5'],
+    focusPath: 'write',
+  },
+  RULE_VOR_ACK: {
+    triggerIds: ['edge:F_VoR_ACK'],
+    relatedNodeIds: ['node:VOI', 'node:ACT1'],
+    relatedEdgeIds: ['edge:F_VoR_ACK', 'edge:PB_ACK'],
+    relatedStepIds: ['step:PB5'],
+    focusPath: 'write',
+  },
+  RULE_VOR_REJECT: {
+    triggerIds: ['edge:PB_REJECT'],
+    relatedNodeIds: ['node:ACT1', 'node:VOI', 'node:DEC_G1'],
+    relatedEdgeIds: ['edge:PB_REJECT', 'edge:F3f_reject'],
+    relatedStepIds: ['step:PB4'],
+    focusPath: 'write',
+  },
+}
+
 export interface ValidationIssue {
   code: string
   message: string
@@ -390,6 +520,49 @@ function validateCanonicalEdge(edge: EdgeSpec): ValidationIssue[] {
   return issues
 }
 
+function validateCanonicalNode(node: NodeSpec): ValidationIssue[] {
+  const expected = canonicalNodeRules[node.id]
+  if (!expected) {
+    return []
+  }
+
+  const issues: ValidationIssue[] = []
+
+  for (const key of ['kind', 'nodeType', 'title', 'subtitle', 'parentId', 'lane', 'band'] as const) {
+    if (expected[key] !== undefined && node[key] !== expected[key]) {
+      issues.push({
+        code: `invalid-node-${key}`,
+        message: `${node.id} must use ${key}=${expected[key]} (found ${node[key] ?? 'undefined'})`,
+      })
+    }
+  }
+
+  for (const forbiddenAlias of expected.forbiddenAliases ?? []) {
+    if (node.aliases.includes(forbiddenAlias)) {
+      issues.push({
+        code: 'invalid-node-alias',
+        message: `${node.id} must not include alias ${forbiddenAlias}`,
+      })
+    }
+  }
+
+  return issues
+}
+
+function validateSetMembership(
+  actualValues: readonly string[],
+  requiredValues: readonly string[],
+  context: string,
+  issueCode: string,
+): ValidationIssue[] {
+  return requiredValues
+    .filter((value) => !actualValues.includes(value))
+    .map((value) => ({
+      code: issueCode,
+      message: `${context} must include ${value}`,
+    }))
+}
+
 export function validateGraphManifest(manifest: GraphManifest): ValidationIssue[] {
   const issues: ValidationIssue[] = []
   const nodeIds = new Set<string>()
@@ -401,6 +574,7 @@ export function validateGraphManifest(manifest: GraphManifest): ValidationIssue[
       issues.push({ code: 'duplicate-node-id', message: `Duplicate node id ${node.id}` })
     }
     nodeIds.add(node.id)
+    issues.push(...validateCanonicalNode(node))
   }
 
   for (const edge of manifest.edges) {
@@ -504,6 +678,52 @@ export function validateGraphManifest(manifest: GraphManifest): ValidationIssue[
     }
   }
 
+  for (const requiredId of requiredInteractionRuleIds) {
+    const rule = manifest.interactionRules.find((candidate) => candidate.id === requiredId)
+    if (!rule) {
+      issues.push({
+        code: 'missing-required-interaction-rule',
+        message: `Required interaction rule ${requiredId} is missing`,
+      })
+      continue
+    }
+
+    const expected = canonicalInteractionRuleRequirements[requiredId]
+    issues.push(
+      ...validateSetMembership(
+        rule.triggerIds,
+        expected.triggerIds ?? [],
+        `${rule.id} triggerIds`,
+        'invalid-interaction-trigger',
+      ),
+      ...validateSetMembership(
+        rule.relatedNodeIds,
+        expected.relatedNodeIds ?? [],
+        `${rule.id} relatedNodeIds`,
+        'invalid-interaction-node',
+      ),
+      ...validateSetMembership(
+        rule.relatedEdgeIds,
+        expected.relatedEdgeIds ?? [],
+        `${rule.id} relatedEdgeIds`,
+        'invalid-interaction-edge',
+      ),
+      ...validateSetMembership(
+        rule.relatedStepIds,
+        expected.relatedStepIds ?? [],
+        `${rule.id} relatedStepIds`,
+        'invalid-interaction-step',
+      ),
+    )
+
+    if (expected.focusPath && rule.focusPath !== expected.focusPath) {
+      issues.push({
+        code: 'invalid-interaction-focus-path',
+        message: `${rule.id} must use focusPath=${expected.focusPath}`,
+      })
+    }
+  }
+
   const stepOrders = [...manifest.steps]
     .sort((left, right) => left.order - right.order)
     .map((step) => step.order)
@@ -581,6 +801,25 @@ export function validateGraphManifest(manifest: GraphManifest): ValidationIssue[
       code: 'invalid-t0-pair',
       message: 'F3d and F3h must share the same t0 snapshot semantics',
     })
+  }
+
+  for (const [edgeId, requiredStepIdsForEdge] of Object.entries(canonicalEdgeStepRules)) {
+    const edge = manifest.edges.find((candidate) => candidate.id === edgeId)
+    if (!edge) {
+      continue
+    }
+
+    const actualStepIds = [...edge.interactive.relatedStepIds].sort()
+    const expectedStepIds = [...requiredStepIdsForEdge].sort()
+    if (
+      actualStepIds.length !== expectedStepIds.length ||
+      actualStepIds.some((stepId, index) => stepId !== expectedStepIds[index])
+    ) {
+      issues.push({
+        code: 'invalid-edge-step-correspondence',
+        message: `${edge.id} must map to steps ${expectedStepIds.join(', ')} (found ${actualStepIds.join(', ') || 'none'})`,
+      })
+    }
   }
 
   return issues
