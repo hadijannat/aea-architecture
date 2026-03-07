@@ -6,9 +6,11 @@ import { describe, expect, it } from 'vitest'
 
 import { deriveDiagramState } from '@/graph/compile/toReactFlow'
 import { toMermaid } from '@/graph/compile/toMermaid'
-import { defaultProjectionOverrides, graphManifest } from '@/graph/spec/manifest'
+import { defaultProjectionOverrides, graphManifest, resolveGraphEdge, resolveGraphNode } from '@/graph/spec/manifest'
+import { buildBoardEdgeRoute } from '@/layout/board'
 import { validateGraphManifest } from '@/graph/spec/validators'
 import { computeBoardNodePositions } from '@/layout/boardLayout'
+import { resolveEdgeHandles, type HandleId } from '@/layout/ports'
 import { useDiagramStore, type DiagramStore } from '@/state/diagramStore'
 
 async function createState(overrides?: Partial<DiagramStore['ui']>): Promise<DiagramStore> {
@@ -40,6 +42,44 @@ async function createState(overrides?: Partial<DiagramStore['ui']>): Promise<Dia
     },
     actions: {} as DiagramStore['actions'],
   }
+}
+
+function anchorPoint(
+  state: DiagramStore,
+  nodeId: string,
+  handleId: HandleId,
+) {
+  const node = resolveGraphNode(nodeId)
+  const position = state.layout.positions[nodeId]
+
+  if (!node || !position) {
+    throw new Error(`Missing anchor state for ${nodeId}`)
+  }
+
+  switch (handleId) {
+    case 'left':
+      return { x: position.x, y: position.y + node.height / 2 }
+    case 'right':
+      return { x: position.x + node.width, y: position.y + node.height / 2 }
+    case 'top':
+      return { x: position.x + node.width / 2, y: position.y }
+    case 'bottom':
+      return { x: position.x + node.width / 2, y: position.y + node.height }
+  }
+}
+
+function buildArchitectureRoute(state: DiagramStore, edgeId: string) {
+  const edge = resolveGraphEdge(edgeId)
+  if (!edge) {
+    throw new Error(`Missing edge ${edgeId}`)
+  }
+
+  const handles = resolveEdgeHandles(edge, state.projection.edgeHandles)
+  return buildBoardEdgeRoute(
+    edge,
+    anchorPoint(state, edge.source, handles.sourceHandle),
+    anchorPoint(state, edge.target, handles.targetHandle),
+  )
 }
 
 describe('graph manifest', () => {
@@ -215,14 +255,71 @@ describe('exports', () => {
     mermaid.initialize({ startOnLoad: false })
     await expect(mermaid.parse(architectureMermaid)).resolves.toBeTruthy()
     await expect(mermaid.parse(sequenceMermaid)).resolves.toBeTruthy()
+    expect(architectureMermaid).toContain('%% Canonical topology export only; schematic and not viewport/state-aware.')
     expect(architectureMermaid).toContain('subgraph GW["GW: NOA Security Gateway · NE 177 / NE 178"]')
     expect(architectureMermaid).toContain('subgraph GW_NE177["NE 177 read-only chain"]')
     expect(architectureMermaid).toContain('subgraph GW_NE178["NE 178 VoR interface"]')
     expect(architectureMermaid).toContain('F_GW2:')
     expect(architectureMermaid).toContain('[diode, medium]')
     expect(architectureMermaid).toContain('stroke-width:3.2px')
+    expect(sequenceMermaid).toContain('%% Canonical topology export only; schematic and not viewport/state-aware.')
     expect(sequenceMermaid).toContain('PB_AEA')
     expect(sequenceMermaid).toContain('PB_REJECT_OUT')
+  })
+
+  it('keeps critical architecture routes on their reserved board channels', async () => {
+    const state = await createState()
+    const expectedRoutes = {
+      F5: {
+        path: 'M 670 900 L 634 900 L 634 996 L 562 996 L 562 823 L 534 823',
+        labelX: 562,
+        labelY: 909.5,
+      },
+      F6: {
+        path: 'M 424 823 L 360 823 L 360 996 L 336 996 L 336 843 L 308 843',
+        labelX: 360,
+        labelY: 909.5,
+      },
+      F_VoR_ACK: {
+        path: 'M 534 823 L 562 823 L 562 936 L 640 936 L 640 900 L 670 900',
+        labelX: 562,
+        labelY: 879.5,
+      },
+      F7a: {
+        path: 'M 1438 893 L 1472 893 L 1472 914 L 1584 914 L 1584 902 L 1610 902',
+        labelX: 1528,
+        labelY: 914,
+      },
+      F7_sub: {
+        path: 'M 1710 1020 L 1868 1020 L 1868 956 L 1710 956',
+        labelX: 1789,
+        labelY: 1020,
+      },
+    } as const
+
+    for (const [edgeId, expected] of Object.entries(expectedRoutes)) {
+      expect(buildArchitectureRoute(state, edgeId)).toEqual(expected)
+    }
+  })
+
+  it('keeps Panel B acknowledgement and rejection routes on the shared sequence geometry', async () => {
+    const state = await createState()
+    const derived = deriveDiagramState(state)
+    const board = compileSequenceBoard(state, derived)
+    const ackEdge = board.edges.find((edge) => edge.edge.id === 'PB_ACK')
+    const rejectEdge = board.edges.find((edge) => edge.edge.id === 'PB_REJECT')
+
+    expect(board.ackRouteY).toBe(206)
+    expect(ackEdge).toMatchObject({
+      path: 'M 1221 152 L 1221 206 L 202 206 L 202 104 L 188 104',
+      labelX: 711.5,
+      labelY: 206,
+    })
+    expect(rejectEdge).toMatchObject({
+      path: 'M 997 152 L 997 208 L 1030 208 L 1030 226',
+      labelX: 997,
+      labelY: 180,
+    })
   })
 
   it('reuses the shared sequence geometry in viewport export', async () => {
@@ -232,6 +329,7 @@ describe('exports', () => {
     const derived = deriveDiagramState(state)
     const board = compileSequenceBoard(state, derived)
     const ackEdge = board.edges.find((edge) => edge.edge.id === 'PB_ACK')
+    const rejectEdge = board.edges.find((edge) => edge.edge.id === 'PB_REJECT')
     const viewportDocument = buildExportSvgDocument(state, {
       mode: 'viewport',
       viewportMetrics: {
@@ -242,7 +340,13 @@ describe('exports', () => {
 
     expect(viewportDocument.svg).toContain('<title>AEA Architecture Viewport Export</title>')
     expect(viewportDocument.svg).toContain('viewBox="60 40 320 180"')
+    expect(viewportDocument.svg).toContain(`d="${buildArchitectureRoute(state, 'F5').path}"`)
+    expect(viewportDocument.svg).toContain(`d="${buildArchitectureRoute(state, 'F6').path}"`)
+    expect(viewportDocument.svg).toContain(`d="${buildArchitectureRoute(state, 'F_VoR_ACK').path}"`)
+    expect(viewportDocument.svg).toContain(`d="${buildArchitectureRoute(state, 'F7a').path}"`)
+    expect(viewportDocument.svg).toContain(`d="${buildArchitectureRoute(state, 'F7_sub').path}"`)
     expect(viewportDocument.svg).toContain(`d="${ackEdge?.path}"`)
+    expect(viewportDocument.svg).toContain(`d="${rejectEdge?.path}"`)
     expect(viewportDocument.svg).toContain('id="sequence-node-PB_AEA"')
     expect(viewportDocument.svg).toContain('id="sequence-edge-PB_ACK"')
   })

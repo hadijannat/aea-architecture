@@ -30,10 +30,10 @@ export function ExportBar({
         PDF publication
       </button>
       <button type="button" onClick={() => onExportMermaid('architecture')}>
-        Mermaid A
+        Mermaid topology (architecture)
       </button>
       <button type="button" onClick={() => onExportMermaid('vor-sequence')}>
-        Mermaid B
+        Mermaid topology (sequence)
       </button>
       <button type="button" onClick={onExportGraphJson}>
         graph.json

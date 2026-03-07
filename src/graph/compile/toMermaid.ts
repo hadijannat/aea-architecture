@@ -3,6 +3,8 @@ import type { EdgeSpec, GraphManifest, NodeSpec } from '@/graph/spec/schema'
 
 import { sortSequenceEdges, sortSequenceSteps } from './sequence'
 
+const mermaidExportNotice = '%% Canonical topology export only; schematic and not viewport/state-aware.'
+
 function sanitizeId(id: string) {
   return id.replace(/[^a-zA-Z0-9_]/g, '_')
 }
@@ -112,7 +114,7 @@ function renderChildrenByParent(
 }
 
 function buildArchitectureMermaid(manifest: GraphManifest) {
-  const lines: string[] = ['flowchart LR']
+  const lines: string[] = [mermaidExportNotice, 'flowchart LR']
   const architectureNodes = manifest.nodes.filter((node) => node.panel.includes('architecture'))
   const laneA = architectureNodes.find((node) => node.id === 'LANE_A')
   const laneB = architectureNodes.find((node) => node.id === 'LANE_B')
@@ -205,7 +207,7 @@ function buildArchitectureMermaid(manifest: GraphManifest) {
 }
 
 function buildSequenceMermaid(manifest: GraphManifest) {
-  const lines: string[] = ['flowchart LR']
+  const lines: string[] = [mermaidExportNotice, 'flowchart LR']
   const terminalNodes = manifest.nodes.filter((node) => node.panel.includes('vor-sequence'))
   for (const node of terminalNodes) {
     renderNode(lines, node, 0)

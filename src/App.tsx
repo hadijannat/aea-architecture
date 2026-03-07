@@ -44,6 +44,10 @@ function parseSearchParamList(value: string | null) {
   return value ? value.split(',').filter(Boolean) : []
 }
 
+function mermaidDownloadName(panel: 'architecture' | 'vor-sequence') {
+  return panel === 'architecture' ? 'architecture-topology.mmd' : 'vor-sequence-topology.mmd'
+}
+
 export default function App() {
   const store = useDiagramStore()
   const { actions } = store
@@ -317,7 +321,7 @@ export default function App() {
               downloadText(`aea-architecture-${mode}.svg`, exportDocument.svg, 'image/svg+xml')
             }}
             onExportPdf={(mode) => void exportPdf(mode)}
-            onExportMermaid={(panel) => downloadText(`${panel}.mmd`, toMermaid(panel), 'text/plain')}
+            onExportMermaid={(panel) => downloadText(mermaidDownloadName(panel), toMermaid(panel), 'text/plain')}
             onExportGraphJson={() => downloadText('graph.json', getGraphManifestJson(), 'application/json')}
             onExportProjection={() => downloadText('projection.json', JSON.stringify(store.projection, null, 2), 'application/json')}
           />

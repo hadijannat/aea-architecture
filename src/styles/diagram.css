@@ -769,6 +769,17 @@
   box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.1);
 }
 
+.sequence-step:focus-visible,
+.sequence-step.is-selected:focus-visible,
+.sequence-step.is-highlighted:focus-visible,
+.sequence-terminal:focus-visible,
+.sequence-terminal.is-selected:focus-visible,
+.sequence-terminal.is-highlighted:focus-visible {
+  outline: none;
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.14), 0 16px 32px rgba(17, 24, 39, 0.08);
+}
+
 .sequence-edge-label {
   position: absolute;
   z-index: 2;
@@ -806,6 +817,15 @@
 .sequence-edge-label.is-highlighted {
   border-color: rgba(211, 84, 0, 0.52);
   box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.1);
+}
+
+.sequence-edge-label:focus-visible,
+.sequence-edge-label.is-selected:focus-visible,
+.sequence-edge-label.is-highlighted:focus-visible {
+  outline: none;
+  transform: translate(-50%, -50%);
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 4px rgba(17, 24, 39, 0.14), 0 10px 22px rgba(15, 23, 42, 0.08);
 }
 
 .sequence-edge-label--sequence {
