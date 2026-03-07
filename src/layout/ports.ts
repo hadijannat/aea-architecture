@@ -18,15 +18,6 @@ const fallbackByDirection: Record<EdgeSpec['direction'], { source: HandleId; tar
   btt: { source: 'top', target: 'bottom' },
 }
 
-const boardHandleOverrides: Partial<Record<string, { sourceHandle: HandleId; targetHandle: HandleId }>> = {
-  F3e: { sourceHandle: 'bottom', targetHandle: 'top' },
-  F3g: { sourceHandle: 'bottom', targetHandle: 'top' },
-  F3i: { sourceHandle: 'right', targetHandle: 'left' },
-  F_KPI: { sourceHandle: 'right', targetHandle: 'left' },
-  F7b: { sourceHandle: 'bottom', targetHandle: 'top' },
-  F7_sub: { sourceHandle: 'top', targetHandle: 'bottom' },
-}
-
 export function getHandlePosition(handle: HandleId): Position {
   return handlePositionMap[handle]
 }
@@ -36,18 +27,15 @@ export function resolveEdgeHandles(
   overrides: ProjectionOverrides['edgeHandles'],
 ): { sourceHandle: HandleId; targetHandle: HandleId } {
   const override = overrides[edge.id]
-  const boardOverride = boardHandleOverrides[edge.id]
   const fallback = fallbackByDirection[edge.direction]
 
   return {
     sourceHandle:
       override?.sourceHandle ??
-      boardOverride?.sourceHandle ??
       edge.interactive.sourceHandle ??
       fallback.source,
     targetHandle:
       override?.targetHandle ??
-      boardOverride?.targetHandle ??
       edge.interactive.targetHandle ??
       fallback.target,
   }

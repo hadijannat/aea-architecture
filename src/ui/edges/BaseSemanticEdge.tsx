@@ -45,6 +45,8 @@ export function BaseSemanticEdge({
   const strokeDasharray = getSemanticStrokeDash(data.spec.semantic, data.spec.style)
   const showExpandedLabel = data.selected || data.highlighted || zoom >= 0.9
   const displayLabel = data.spec.displayLabel ?? data.spec.label
+  const expandedLabel = `${data.spec.id} · ${displayLabel}${data.optional ? ' (optional)' : ''}`
+  const compactLabel = `${data.spec.id}${data.spec.markers.includes('diode') ? ' ⊘' : ''}`
 
   return (
     <g
@@ -52,16 +54,19 @@ export function BaseSemanticEdge({
         'semantic-edge',
         `semantic-edge--${data.spec.semantic}`,
         `semantic-edge-family--${presentation.family}`,
+        data.optional && 'is-optional',
         data.selected && 'is-selected',
         data.highlighted && 'is-highlighted',
         data.dimmed && 'is-dimmed',
       )}
       data-edge-id={id}
+      data-edge-optional={data.optional ? 'true' : 'false'}
       data-edge-semantic={data.spec.semantic}
       data-edge-family={presentation.family}
       data-edge-style={data.spec.style}
       data-edge-points={edgePoints}
       data-label-position={`${labelPosition.x},${labelPosition.y}`}
+      style={data.optional ? ({ opacity: 0.6 } as CSSProperties) : undefined}
       onMouseEnter={() => data.callbacks.onHover(edgeEntityKey(id))}
       onMouseLeave={() => data.callbacks.onHover(undefined)}
       onClick={() => data.callbacks.onSelectEdge(id)}
@@ -88,14 +93,17 @@ export function BaseSemanticEdge({
           className={clsx(
             'edge-label',
             `edge-label--${data.spec.semantic}`,
+            data.optional && 'is-optional',
             data.selected && 'is-selected',
             data.highlighted && 'is-highlighted',
           )}
           aria-label={data.ariaLabel}
           data-edge-id={id}
+          data-edge-optional={data.optional ? 'true' : 'false'}
           data-edge-label-mode={showExpandedLabel ? 'expanded' : 'compact'}
           style={{
             '--semantic-stroke': presentation.stroke,
+            opacity: data.optional ? 0.6 : 1,
             transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
           } as CSSProperties}
           onFocus={() => data.callbacks.onHover(edgeEntityKey(id))}
@@ -109,9 +117,7 @@ export function BaseSemanticEdge({
             data.callbacks.onSelectEdge(id)
           }}
         >
-          {showExpandedLabel
-            ? `${data.spec.id} · ${displayLabel}`
-            : `${data.spec.id}${data.spec.markers.includes('diode') ? ' ⊘' : ''}`}
+          {showExpandedLabel ? expandedLabel : compactLabel}
         </button>
       </EdgeLabelRenderer>
     </g>

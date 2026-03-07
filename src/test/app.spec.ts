@@ -318,18 +318,21 @@ test('write corridor preset stays single-line in the 2x2 focus grid', async ({ p
   expect(Math.abs(writeHeight - overviewHeight)).toBeLessThanOrEqual(2)
 })
 
-test('reduce motion toggle disables animated writeback edges while secondary paths stay static', async ({ page }) => {
+test('reduce motion toggle disables animated writeback and tool-call edges', async ({ page }) => {
   await page.goto('/')
 
   const reduceMotion = page.getByRole('button', { name: 'Reduce motion' })
   await expect(reduceMotion).toHaveAttribute('aria-pressed', 'false')
   await expect.poll(() => architectureEdgeIsAnimated(page, 'F5')).toBe(true)
   await expect.poll(() => architectureEdgeIsAnimated(page, 'F_VoR_ACK')).toBe(false)
-  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_T1')).toBe(false)
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_T1')).toBe(true)
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_T2')).toBe(true)
 
   await reduceMotion.click()
   await expect(reduceMotion).toHaveAttribute('aria-pressed', 'true')
   await expect.poll(() => architectureEdgeIsAnimated(page, 'F5')).toBe(false)
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_T1')).toBe(false)
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_T2')).toBe(false)
 })
 
 test('system reduced-motion preference disables animated architecture edges', async ({ page }) => {
@@ -338,6 +341,26 @@ test('system reduced-motion preference disables animated architecture edges', as
 
   await expect(page.getByRole('button', { name: 'Reduce motion' })).toHaveAttribute('aria-pressed', 'false')
   await expect.poll(() => architectureEdgeIsAnimated(page, 'F5')).toBe(false)
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_T1')).toBe(false)
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_T2')).toBe(false)
+})
+
+test('optional architecture edges expose reduced-emphasis state and expanded labels', async ({ page }) => {
+  await page.goto('/?edge=F7_sub')
+
+  const edge = page.locator('.semantic-edge[data-edge-id="F7_sub"]')
+  const label = page.locator('.edge-label[data-edge-id="F7_sub"]')
+
+  await expect(edge).toHaveAttribute('data-edge-optional', 'true')
+  await expect(label).toHaveAttribute('data-edge-optional', 'true')
+  await expect(label).toContainText('(optional)')
+
+  const styles = await Promise.all([
+    edge.evaluate((element) => getComputedStyle(element).opacity),
+    label.evaluate((element) => getComputedStyle(element).opacity),
+  ])
+
+  expect(styles).toEqual(['0.6', '0.6'])
 })
 
 test('compact nodes summarize metadata and reveal the full chips on hover', async ({ page }) => {

@@ -1060,8 +1060,8 @@
       "markers": ["diode"],
       "interactive": {
         "relatedStepIds": [],
-        "sourceHandle": "bottom",
-        "targetHandle": "top",
+        "sourceHandle": "right",
+        "targetHandle": "left",
         "highlightGroup": "telemetry"
       },
       "inspector": {
@@ -1112,8 +1112,8 @@
       "tags": ["telemetry-path", "read-only"],
       "interactive": {
         "relatedStepIds": [],
-        "sourceHandle": "right",
-        "targetHandle": "left",
+        "sourceHandle": "bottom",
+        "targetHandle": "top",
         "highlightGroup": "telemetry"
       },
       "inspector": {
@@ -1282,8 +1282,8 @@
       "tags": ["policy-path", "write-path"],
       "interactive": {
         "relatedStepIds": ["PB1", "PB2"],
-        "sourceHandle": "right",
-        "targetHandle": "left",
+        "sourceHandle": "bottom",
+        "targetHandle": "top",
         "highlightGroup": "policy"
       },
       "inspector": {
@@ -1329,7 +1329,7 @@
       "interactive": {
         "relatedStepIds": ["PB4"],
         "sourceHandle": "bottom",
-        "targetHandle": "bottom",
+        "targetHandle": "left",
         "highlightGroup": "policy"
       },
       "inspector": {
@@ -1352,7 +1352,7 @@
       "tags": ["policy-path"],
       "interactive": {
         "relatedStepIds": ["PB2", "PB5"],
-        "sourceHandle": "right",
+        "sourceHandle": "bottom",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
@@ -1377,7 +1377,7 @@
       "tags": ["policy-path", "telemetry-path", "t0"],
       "interactive": {
         "relatedStepIds": ["PB2", "PB5"],
-        "sourceHandle": "bottom",
+        "sourceHandle": "right",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
@@ -1402,8 +1402,8 @@
       "tags": ["policy-path", "write-path"],
       "interactive": {
         "relatedStepIds": ["PB1"],
-        "sourceHandle": "left",
-        "targetHandle": "right",
+        "sourceHandle": "right",
+        "targetHandle": "left",
         "highlightGroup": "write"
       },
       "inspector": {
@@ -1428,7 +1428,7 @@
       "tags": ["policy-path", "telemetry-path", "tool-call"],
       "interactive": {
         "relatedStepIds": [],
-        "sourceHandle": "bottom",
+        "sourceHandle": "left",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
@@ -1500,8 +1500,8 @@
       "tags": ["telemetry-path"],
       "interactive": {
         "relatedStepIds": [],
-        "sourceHandle": "bottom",
-        "targetHandle": "top",
+        "sourceHandle": "right",
+        "targetHandle": "left",
         "highlightGroup": "telemetry"
       },
       "inspector": {
@@ -1622,8 +1622,8 @@
       "tags": ["write-path"],
       "interactive": {
         "relatedStepIds": ["PB5"],
-        "sourceHandle": "top",
-        "targetHandle": "bottom",
+        "sourceHandle": "left",
+        "targetHandle": "left",
         "highlightGroup": "write",
         "optional": true
       },
@@ -1670,8 +1670,8 @@
       "tags": ["telemetry-path"],
       "interactive": {
         "relatedStepIds": [],
-        "sourceHandle": "right",
-        "targetHandle": "left",
+        "sourceHandle": "bottom",
+        "targetHandle": "top",
         "highlightGroup": "telemetry"
       },
       "inspector": {
@@ -1692,8 +1692,8 @@
       "tags": ["telemetry-path", "subscription"],
       "interactive": {
         "relatedStepIds": [],
-        "sourceHandle": "left",
-        "targetHandle": "right",
+        "sourceHandle": "top",
+        "targetHandle": "bottom",
         "highlightGroup": "telemetry",
         "optional": true
       },

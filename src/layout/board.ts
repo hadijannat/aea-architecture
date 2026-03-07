@@ -102,15 +102,20 @@ function buildLabel(edge: EdgeSpec, points: Point[]): RoutedBoardLabel {
       return segmentLabel(points, 0, 'top', 14)
     case 'F3d':
     case 'F3e':
-    case 'F3g':
-    case 'F3h':
     case 'F3i':
       return segmentLabel(points, 1, 'top', 16)
+    case 'F3g':
+      return segmentLabel(points, 1, 'bottom', 18)
+    case 'F3h':
+      return segmentLabel(points, 2, 'left', 18)
     case 'F3f_reject':
       return segmentLabel(points, 1, 'bottom', 18)
     case 'F_T1':
+      return segmentLabel(points, 2, 'bottom', 18)
     case 'F_T2':
-      return segmentLabel(points, 1, 'bottom', 18)
+      return segmentLabel(points, 2, 'left', 18)
+    case 'F_CPC_INT':
+      return segmentLabel(points, 1, 'right', 16)
     case 'F4':
       return segmentLabel(points, 1, 'top', 18)
     case 'F_KPI':
@@ -141,12 +146,14 @@ const channels = {
   telemetryY: aea.y + 160,
   policyY: aea.y + 446,
   validationY: aea.y + 598,
-  rejectionY: aea.y + 692,
-  toolY: aea.y + 760,
+  rejectionY: aea.y + 642,
+  toolCrossY: aea.y + 242,
+  toolEntryY: aea.y + 78,
   actTelemetryY: aea.y + 756,
   writeY: aea.y + 846,
   ackY: aea.y + 786,
   laneCSpineX: lanes.C.x + lanes.C.width - 28,
+  cpcSpineX: lanes.A.x + 24,
 }
 
 export function buildBoardEdgeRoute(
@@ -227,12 +234,28 @@ export function buildBoardEdgeRoute(
       points = [
         source,
         point(source.x, channels.rejectionY),
-        point(target.x, channels.rejectionY),
+        point(target.x - 30, channels.rejectionY),
+        point(target.x - 30, target.y),
         target,
       ]
       break
     case 'F3g':
+      points = [
+        source,
+        point(source.x, channels.validationY),
+        point(target.x, channels.validationY),
+        target,
+      ]
+      break
     case 'F3h':
+      points = [
+        source,
+        point(source.x, target.y - 12),
+        point(target.x - 36, target.y - 12),
+        point(target.x - 36, target.y),
+        target,
+      ]
+      break
     case 'F3i':
       points = [
         source,
@@ -242,11 +265,22 @@ export function buildBoardEdgeRoute(
       ]
       break
     case 'F_T1':
+      points = [
+        source,
+        point(source.x - 20, source.y),
+        point(source.x - 20, channels.toolCrossY),
+        point(target.x - 118, channels.toolCrossY),
+        point(target.x - 118, channels.toolEntryY),
+        point(target.x, channels.toolEntryY),
+        target,
+      ]
+      break
     case 'F_T2':
       points = [
         source,
-        point(source.x, channels.toolY),
-        point(target.x, channels.toolY),
+        point(source.x, target.y + 74),
+        point(target.x + 16, target.y + 74),
+        point(target.x + 16, target.y),
         target,
       ]
       break
@@ -305,6 +339,14 @@ export function buildBoardEdgeRoute(
         source,
         point(channels.laneCSpineX, source.y),
         point(channels.laneCSpineX, target.y),
+        target,
+      ]
+      break
+    case 'F_CPC_INT':
+      points = [
+        source,
+        point(channels.cpcSpineX, source.y),
+        point(channels.cpcSpineX, target.y),
         target,
       ]
       break

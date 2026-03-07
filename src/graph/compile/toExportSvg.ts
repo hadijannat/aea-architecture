@@ -173,6 +173,14 @@ function edgeMarker(edge: EdgeSpec) {
   return `marker-${edge.semantic}`
 }
 
+function edgeOpacity(edge: EdgeSpec) {
+  return edge.interactive.optional ? 0.6 : 1
+}
+
+function architectureEdgeLabel(edge: EdgeSpec) {
+  return `${edge.id}${edge.markers.includes('diode') ? ' ⊘' : ''} · ${edge.label}${edge.interactive.optional ? ' (optional)' : ''}`
+}
+
 function markerMarkup(marker: ReturnType<typeof getSemanticPresentation>['marker'], color: string) {
   const geometry = getSemanticMarkerGeometry(marker)
 
@@ -369,11 +377,11 @@ function renderArchitectureEdges(
       const labelPoint = scaledPoint(resolveBoardLabelPosition(route.label), transform)
 
       return `
-  <g id="edge-${edge.id}">
+  <g id="edge-${edge.id}" data-edge-optional="${edge.interactive.optional ? 'true' : 'false'}" opacity="${edgeOpacity(edge)}">
     <title>${esc(edge.id)}: ${esc(edge.label)}</title>
     <desc>${esc(edge.inspector.rationale)}</desc>
     <path d="${translateScaledPath(route.path, transform)}" fill="none" stroke="${edgeStroke(edge)}" stroke-width="${edgeWidth(edge, tokens)}" ${edgeDash(edge)} marker-end="url(#${edgeMarker(edge)})" />
-    <text id="edge-label-${edge.id}" x="${labelPoint.x}" y="${labelPoint.y}" text-anchor="middle" fill="${edgeStroke(edge)}" font-size="${tokens.edgeLabelSize}" font-family="Arial, sans-serif">${esc(edge.id)}${edge.markers.includes('diode') ? ' ⊘' : ''} · ${esc(edge.label)}</text>
+    <text id="edge-label-${edge.id}" x="${labelPoint.x}" y="${labelPoint.y}" text-anchor="middle" fill="${edgeStroke(edge)}" font-size="${tokens.edgeLabelSize}" font-family="Arial, sans-serif">${esc(architectureEdgeLabel(edge))}</text>
   </g>`
     })
     .join('\n')

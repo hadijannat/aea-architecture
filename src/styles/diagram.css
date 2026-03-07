@@ -1825,6 +1825,11 @@
   opacity: 0.34;
 }
 
+.semantic-edge.is-optional,
+.edge-label.is-optional {
+  opacity: 0.6;
+}
+
 .semantic-edge--writeback .react-flow__edge-path,
 .edge-label--writeback {
   filter: drop-shadow(0 0 6px rgba(211, 84, 0, 0.12));
@@ -1863,8 +1868,25 @@
   }
 }
 
-.architecture-canvas .react-flow__edge.animated .react-flow__edge-path {
+@keyframes tool-call-pulse {
+  0%,
+  100% {
+    opacity: 0.84;
+    filter: drop-shadow(0 0 4px rgba(15, 155, 168, 0.14));
+  }
+
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(15, 155, 168, 0.24));
+  }
+}
+
+.architecture-canvas .react-flow__edge.animated .semantic-edge--writeback .react-flow__edge-path {
   animation: writeback-pulse 1.6s ease-in-out infinite;
+}
+
+.architecture-canvas .react-flow__edge.animated .semantic-edge--tool-call .react-flow__edge-path {
+  animation: tool-call-pulse 1.35s ease-in-out infinite;
 }
 
 @media (max-width: 1380px) {

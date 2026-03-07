@@ -10,7 +10,7 @@ import { buildExportSvgDocument } from '@/graph/compile/toExportSvg'
 import mermaid from 'mermaid'
 import { describe, expect, it } from 'vitest'
 
-import { deriveDiagramState } from '@/graph/compile/toReactFlow'
+import { compileArchitectureEdges, deriveDiagramState, type CompileCallbacks } from '@/graph/compile/toReactFlow'
 import { toMermaid } from '@/graph/compile/toMermaid'
 import { defaultProjectionOverrides, graphManifest, resolveGraphEdge, resolveGraphNode } from '@/graph/spec/manifest'
 import { projectionOverridesSchema } from '@/graph/spec/schema'
@@ -117,6 +117,16 @@ function nodeBounds(state: DiagramStore, nodeId: string) {
     right: position.x + node.width,
     bottom: position.y + node.height,
   }
+}
+
+const callbacks: CompileCallbacks = {
+  onSelectNode() {},
+  onSelectEdge() {},
+  onSelectStep() {},
+  onBadgeClaim() {},
+  onBadgeStandard() {},
+  onPathAction() {},
+  onHover() {},
 }
 
 function containsPoint(bounds: ReturnType<typeof nodeBounds>, point: { x: number; y: number }) {
@@ -251,6 +261,37 @@ describe('derived projections', () => {
     expect(getSemanticPresentation('retrieval').stroke).toBe('#15803d')
   })
 
+  it('marks optional architecture edges explicitly and animates tool-call edges', async () => {
+    const state = await createState()
+    const derived = deriveDiagramState(state)
+    const edges = compileArchitectureEdges(state, callbacks, derived)
+
+    expect(edges.find((edge) => edge.id === 'F_CPC_INT')).toMatchObject({
+      animated: false,
+      data: {
+        optional: true,
+      },
+    })
+    expect(edges.find((edge) => edge.id === 'F7_sub')).toMatchObject({
+      animated: false,
+      data: {
+        optional: true,
+      },
+    })
+    expect(edges.find((edge) => edge.id === 'F_T1')).toMatchObject({
+      animated: true,
+      data: {
+        optional: false,
+      },
+    })
+    expect(edges.find((edge) => edge.id === 'F_T2')).toMatchObject({
+      animated: true,
+      data: {
+        optional: false,
+      },
+    })
+  })
+
   it('filters claim C4 to the VoR path and sequence', async () => {
     const state = await createState({
       filters: {
@@ -375,6 +416,34 @@ describe('exports', () => {
   it('keeps critical architecture routes on their reserved board channels', async () => {
     const state = await createState()
     const expectedRoutes = {
+      F3e: {
+        path: 'M 1335 590 L 1335 720 L 1064 720 L 1064 618',
+        labelPoint: { x: 1199.5, y: 704 },
+      },
+      F3f_reject: {
+        path: 'M 1064 738 L 1064 792 L 1180 792 L 1180 525 L 1210 525',
+        labelPoint: { x: 1122, y: 810 },
+      },
+      F3g: {
+        path: 'M 774 586 L 774 748 L 1326 748 L 1326 612',
+        labelPoint: { x: 1050, y: 766 },
+      },
+      F3h: {
+        path: 'M 1198 310 L 1198 600 L 1290 600 L 1290 612 L 1326 612',
+        labelPoint: { x: 1272, y: 606 },
+      },
+      F3i: {
+        path: 'M 534 823 L 534 748 L 1206 748 L 1206 676',
+        labelPoint: { x: 870, y: 732 },
+      },
+      F_T1: {
+        path: 'M 1210 525 L 1190 525 L 1190 392 L 640 392 L 640 228 L 758 228 L 758 256',
+        labelPoint: { x: 915, y: 410 },
+      },
+      F_T2: {
+        path: 'M 1210 525 L 1210 600 L 900 600 L 900 526 L 884 526',
+        labelPoint: { x: 882, y: 563 },
+      },
       F4: {
         path: 'M 1326 740 L 1326 812 L 790 812 L 790 840',
         labelPoint: { x: 1058, y: 794 },
@@ -390,6 +459,10 @@ describe('exports', () => {
       F_VoR_ACK: {
         path: 'M 534 823 L 562 823 L 562 936 L 640 936 L 640 900 L 670 900',
         labelPoint: { x: 590, y: 879.5 },
+      },
+      F_CPC_INT: {
+        path: 'M 80 843 L 48 843 L 48 265 L 80 265',
+        labelPoint: { x: 64, y: 554 },
       },
       F7a: {
         path: 'M 1438 893 L 1472 893 L 1472 914 L 1584 914 L 1584 902 L 1610 902',
@@ -410,7 +483,7 @@ describe('exports', () => {
 
   it('keeps critical architecture routes axis-aligned', async () => {
     const state = await createState()
-    const edgeIds = ['F4', 'F5', 'F6', 'F_VoR_ACK', 'F_AUDIT', 'F7a', 'F7_sub']
+    const edgeIds = ['F3e', 'F3f_reject', 'F3g', 'F3h', 'F3i', 'F_T1', 'F_T2', 'F4', 'F5', 'F6', 'F_VoR_ACK', 'F_AUDIT', 'F_CPC_INT', 'F7a', 'F7_sub']
 
     for (const edgeId of edgeIds) {
       expect(routeIsAxisAligned(buildArchitectureRoute(state, edgeId).points)).toBe(true)
@@ -430,6 +503,24 @@ describe('exports', () => {
     }
 
     expect(new Set(labelPoints.map((label) => `${label.point.x}:${label.point.y}`)).size).toBe(labelPoints.length)
+  })
+
+  it('keeps newly rerouted labels outside their guarded node boxes', async () => {
+    const state = await createState()
+    const checks = [
+      { edgeId: 'F3h', nodes: ['DEC_R2', 'DEC_G1', 'DEC_G2'] },
+      { edgeId: 'F_T1', nodes: ['S1', 'S2', 'DEC_R2'] },
+      { edgeId: 'F_CPC_INT', nodes: ['A1', 'A2', 'A3'] },
+    ] as const
+
+    for (const check of checks) {
+      const point = resolveBoardLabelPosition(buildArchitectureRoute(state, check.edgeId).label)
+      const guardedBounds = check.nodes.map((nodeId) => nodeBounds(state, nodeId))
+      expect(
+        guardedBounds.some((bounds) => containsPoint(bounds, point)),
+        `${check.edgeId} label overlaps a guarded node`,
+      ).toBe(false)
+    }
   })
 
   it('keeps Panel B acknowledgement and rejection routes on the shared sequence geometry', async () => {
@@ -471,12 +562,16 @@ describe('exports', () => {
     expect(viewportDocument.svg).toContain('<title>AEA Architecture Viewport Export</title>')
     expect(viewportDocument.svg).toContain('data-export-theme="default"')
     expect(viewportDocument.svg).toContain('viewBox="60 40 320 180"')
-    for (const edgeId of ['F4', 'F5', 'F6', 'F_VoR_ACK', 'F7a', 'F7_sub']) {
+    for (const edgeId of ['F3h', 'F_T1', 'F4', 'F5', 'F6', 'F_VoR_ACK', 'F_CPC_INT', 'F7a', 'F7_sub']) {
       const route = buildArchitectureRoute(state, edgeId)
       const label = resolveBoardLabelPosition(route.label)
       expect(viewportDocument.svg).toContain(`d="${route.path}"`)
       expect(viewportDocument.svg).toContain(`id="edge-label-${edgeId}" x="${label.x}" y="${label.y}"`)
     }
+    expect(viewportDocument.svg).toContain('id="edge-F7_sub" data-edge-optional="true" opacity="0.6"')
+    expect(viewportDocument.svg).toContain('F7_sub · subscribe (optional)')
+    expect(viewportDocument.svg).toContain('id="edge-F_CPC_INT" data-edge-optional="true" opacity="0.6"')
+    expect(viewportDocument.svg).toContain('F_CPC_INT · execute verified change (optional)')
     expect(viewportDocument.svg).toContain(`d="${ackEdge?.path}"`)
     expect(viewportDocument.svg).toContain(`d="${rejectEdge?.path}"`)
     expect(viewportDocument.svg).toContain('id="sequence-node-PB_AEA"')

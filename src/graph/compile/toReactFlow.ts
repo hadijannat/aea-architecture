@@ -54,6 +54,7 @@ export interface CompiledEdgeData extends Record<string, unknown> {
   targetTitle: string
   standards: ReturnType<typeof getStandardsForSpec>
   claims: ReturnType<typeof getClaimsForSpec>
+  optional: boolean
   selected: boolean
   highlighted: boolean
   dimmed: boolean
@@ -566,6 +567,7 @@ export function compileArchitectureEdges(
         animated:
           !state.ui.reduceMotion &&
           !state.ui.systemReduceMotion &&
+          !edge.interactive.optional &&
           getSemanticShouldAnimate(edge.semantic),
         data: {
           spec: edge,
@@ -574,6 +576,7 @@ export function compileArchitectureEdges(
           targetTitle: resolveGraphNode(edge.target)?.title ?? edge.target,
           standards: getStandardsForSpec(edge.standardIds, manifest),
           claims: getClaimsForSpec(edge.claimIds, manifest),
+          optional: edge.interactive.optional,
           selected: state.ui.selectedEdgeId === edge.id,
           highlighted,
           dimmed: hasHighlights && !highlighted,

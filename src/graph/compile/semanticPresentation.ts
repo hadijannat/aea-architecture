@@ -261,6 +261,7 @@ const semanticDashMap: Partial<Record<EdgeSemantic, string>> = {
 }
 
 const semanticAnimationMap: Partial<Record<EdgeSemantic, boolean>> = {
+  'tool-call': true,
   writeback: true,
 }
 
