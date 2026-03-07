@@ -50,6 +50,7 @@ export default function App() {
   const architectureCanvasRef = useRef<HTMLDivElement>(null)
   const sequencePanelRef = useRef<HTMLElement>(null)
   const [snapshotName, setSnapshotName] = useState('')
+  const [snapshotComposerOpen, setSnapshotComposerOpen] = useState(false)
 
   const overviewMetrics = useMemo(
     () => [
@@ -71,7 +72,7 @@ export default function App() {
       {
         label: 'Mode',
         value: store.ui.mode === 'author' ? 'Author projection' : 'Explore semantics',
-        detail: store.ui.panelBVisible ? 'Panel B synced' : 'Panel B hidden',
+        detail: store.ui.panelBVisible ? 'VoR sequence synced' : 'VoR sequence hidden',
       },
     ],
     [store.ui.mode, store.ui.panelBVisible],
@@ -178,6 +179,7 @@ export default function App() {
 
     actions.saveSnapshot(trimmedName)
     setSnapshotName('')
+    setSnapshotComposerOpen(false)
   }
 
   const selectedNode = store.ui.selectedNodeId ? resolveGraphNode(store.ui.selectedNodeId) : undefined
@@ -487,31 +489,45 @@ export default function App() {
           ) : null}
           <section className="inspector-section">
             <h2>Projection snapshots</h2>
-            <form
-              className="snapshot-composer"
-              onSubmit={(event) => {
-                event.preventDefault()
-                saveSnapshot()
-              }}
-            >
-              <label className="snapshot-composer__field">
-                <span>Snapshot name</span>
-                <input
-                  type="text"
-                  value={snapshotName}
-                  placeholder="Name this projection state"
-                  onChange={(event) => setSnapshotName(event.target.value)}
-                />
-              </label>
+            {snapshotComposerOpen ? (
+              <form
+                className="snapshot-composer"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  saveSnapshot()
+                }}
+              >
+                <label className="snapshot-composer__field">
+                  <span>Snapshot name</span>
+                  <input
+                    type="text"
+                    value={snapshotName}
+                    placeholder="Name this projection state"
+                    onChange={(event) => setSnapshotName(event.target.value)}
+                  />
+                </label>
+                <div className="inspector-actions">
+                  <button type="submit" disabled={snapshotName.trim().length === 0}>
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSnapshotName('')
+                      setSnapshotComposerOpen(false)
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
               <div className="inspector-actions">
-                <button type="submit" disabled={snapshotName.trim().length === 0}>
-                  Save
-                </button>
-                <button type="button" onClick={() => setSnapshotName('')} disabled={snapshotName.length === 0}>
-                  Cancel
+                <button type="button" onClick={() => setSnapshotComposerOpen(true)}>
+                  Save snapshot
                 </button>
               </div>
-            </form>
+            )}
             <div className="snapshot-list">
               {store.projection.snapshots.length === 0 ? <p>No saved snapshots yet.</p> : null}
               {store.projection.snapshots.map((snapshot) => (

@@ -144,7 +144,7 @@ export function SequencePanel({
                     fill="none"
                     stroke={presentation.stroke}
                     strokeWidth={edgeStrokeWidth(edge.edge.style)}
-                    strokeDasharray={getSemanticStrokeDash(edge.edge.semantic)}
+                    strokeDasharray={getSemanticStrokeDash(edge.edge.semantic, edge.edge.style)}
                     markerEnd={`url(#sequence-marker-${edge.edge.semantic})`}
                   />
                 </g>

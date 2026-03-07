@@ -31,6 +31,12 @@ const laneDescriptions: Record<'A' | 'B' | 'C', string> = {
   C: 'Lane C: central analytics / historian',
 }
 
+const laneLabels: Record<'A' | 'B' | 'C', string> = {
+  A: 'CPC',
+  B: 'psM+O',
+  C: 'Central M+O',
+}
+
 export function FilterPanel({
   filters,
   mode,
@@ -78,7 +84,7 @@ export function FilterPanel({
             aria-pressed={filters.lanes.includes(lane)}
             onClick={() => onLaneToggle(lane)}
           >
-            {lane}
+            {laneLabels[lane]}
           </button>
         ))}
       </div>
@@ -112,7 +118,7 @@ export function FilterPanel({
           aria-pressed={panelBVisible}
           onClick={onTogglePanelB}
         >
-          {panelBVisible ? 'Hide Panel B' : 'Show Panel B'}
+          {panelBVisible ? 'Hide VoR sequence' : 'Show VoR sequence'}
         </button>
         <button
           type="button"

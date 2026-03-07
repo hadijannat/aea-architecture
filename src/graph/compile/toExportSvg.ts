@@ -5,6 +5,7 @@ import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
 import type { DiagramStore } from '@/state/diagramStore'
 
 import { compileSequenceBoard, type SequenceBoardModel } from './sequenceBoard'
+import { resolveNodeVisual } from './nodeVisuals'
 import {
   getSemanticMarkerGeometry,
   getSemanticMarkerRefX,
@@ -164,7 +165,7 @@ function edgeWidth(edge: EdgeSpec, tokens: ExportTokens) {
 }
 
 function edgeDash(edge: EdgeSpec) {
-  const dash = getSemanticStrokeDash(edge.semantic)
+  const dash = getSemanticStrokeDash(edge.semantic, edge.style)
   return dash ? `stroke-dasharray="${dash}"` : ''
 }
 
@@ -325,6 +326,7 @@ function renderArchitectureNodes(
         return ''
       }
 
+      const visual = resolveNodeVisual(node)
       const isStructural = node.kind === 'lane' || node.kind === 'container' || node.kind === 'band'
       const x = transform.offsetX + position.x * transform.scale
       const y = transform.offsetY + position.y * transform.scale
@@ -343,10 +345,11 @@ function renderArchitectureNodes(
   <g id="node-${node.id}">
     <title>${esc(node.id)}: ${esc(node.title)}</title>
     <desc>${esc(node.description)}</desc>
-    <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${Math.max(4, (isStructural ? 20 : 16) * transform.scale)}" fill="${node.visual.fill}" stroke="${node.visual.border}" stroke-width="${isStructural ? 1.1 : 1.3}" />
+    <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${Math.max(4, (isStructural ? 20 : 16) * transform.scale)}" fill="${visual.fill}" stroke="${visual.border}" stroke-width="${isStructural ? 1.1 : 1.3}" />
+    <text x="${x + 16 * transform.scale}" y="${y + 15 * transform.scale}" fill="${visual.accent}" font-size="${tokens.badgeSize}" font-family="Arial, sans-serif" font-weight="700">${esc(visual.badgeText)}</text>
     <text x="${x + 16 * transform.scale}" y="${titleY}" fill="#1f2937" font-size="${isStructural ? tokens.structuralTitleSize : tokens.nodeTitleSize}" font-family="Arial, sans-serif" font-weight="700">${esc(node.id === node.title ? node.title : `${node.id} · ${node.title}`)}</text>
     ${node.subtitle ? `<text x="${x + 16 * transform.scale}" y="${subtitleY}" fill="#4b5563" font-size="${tokens.subtitleSize}" font-family="Arial, sans-serif">${esc(node.subtitle)}</text>` : ''}
-    ${standards ? `<text x="${x + 16 * transform.scale}" y="${badgeY}" fill="#455a75" font-size="${tokens.badgeSize}" font-family="Arial, sans-serif">${esc(standards)}</text>` : ''}
+    ${standards ? `<text x="${x + 16 * transform.scale}" y="${badgeY}" fill="${visual.accent}" font-size="${tokens.badgeSize}" font-family="Arial, sans-serif">${esc(standards)}</text>` : ''}
   </g>`
     })
     .join('\n')
@@ -400,6 +403,7 @@ function renderSequenceBoard(
 
   const terminals = visibleTerminals
     .map((terminal) => {
+      const visual = resolveNodeVisual(terminal.node)
       const x = transform.offsetX + terminal.rect.x * transform.scale
       const y = transform.offsetY + terminal.rect.y * transform.scale
       const width = terminal.rect.width * transform.scale
@@ -416,8 +420,8 @@ function renderSequenceBoard(
   <g id="sequence-node-${terminal.node.id}">
     <title>${esc(terminal.node.id)}: ${esc(terminal.node.title)}</title>
     <desc>${esc(terminal.node.description)}</desc>
-    <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${Math.max(4, 18 * transform.scale)}" fill="${terminal.node.visual.fill}" stroke="${terminal.node.visual.border}" stroke-width="1.2" />
-    <text x="${x + 14 * transform.scale}" y="${y + 22 * transform.scale}" fill="#7c5a32" font-size="${tokens.eyebrowSize}" font-family="Arial, sans-serif" letter-spacing="0.16em">${esc(terminal.node.id)}</text>
+    <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${Math.max(4, 18 * transform.scale)}" fill="${visual.fill}" stroke="${visual.border}" stroke-width="1.2" />
+    <text x="${x + 14 * transform.scale}" y="${y + 22 * transform.scale}" fill="${visual.accent}" font-size="${tokens.eyebrowSize}" font-family="Arial, sans-serif" letter-spacing="0.16em">${esc(terminal.node.id)}</text>
     <text x="${x + 14 * transform.scale}" y="${y + 42 * transform.scale}" fill="#1f2937" font-size="${tokens.stepTitleSize}" font-family="Arial, sans-serif" font-weight="700">${esc(terminal.node.title)}</text>
     ${
       subtitleLines.length > 0

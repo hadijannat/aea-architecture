@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState, type RefObject } from 'react'
 import clsx from 'clsx'
 import { useReactFlow, useViewport } from '@xyflow/react'
 
+import { isStructuralNodeSpec, resolveNodeVisual } from '@/graph/compile/nodeVisuals'
 import type { DiagramFlowEdge, DiagramFlowNode } from '@/graph/compile/toReactFlow'
 import { graphManifest } from '@/graph/spec/manifest'
-import { buildBoardEdgeRoute, resolveBoardLabelPosition, type Point } from '@/layout/board'
+import { buildBoardEdgeRoute, type Point } from '@/layout/board'
 import type { HandleId } from '@/layout/ports'
 
 import {
@@ -25,7 +26,18 @@ interface OverviewWriteRoute {
   id: string
   path: string
   points: Point[]
-  label: Point
+}
+
+interface OverviewNodeRect {
+  id: string
+  x: number
+  y: number
+  width: number
+  height: number
+  fill: string
+  border: string
+  accent: string
+  selected: boolean
 }
 
 const { canvas, gateway } = graphManifest.layoutDefaults
@@ -104,6 +116,7 @@ export function SemanticOverviewMap({
   const { fitView, setCenter } = useReactFlow()
   const [compactMode, setCompactMode] = useState(() => window.innerWidth < 900)
   const [open, setOpen] = useState(() => window.innerWidth >= 900)
+  const [legendOpen, setLegendOpen] = useState(false)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
 
   useEffect(() => {
@@ -141,10 +154,10 @@ export function SemanticOverviewMap({
 
   const selectionLabel = useMemo(() => {
     if (!activeSelectionLabel) {
-      return 'Jump to a clean board region.'
+      return 'Navigate the topology or jump to a corridor.'
     }
 
-    return `Selection active: ${activeSelectionLabel}`
+    return `Selection: ${activeSelectionLabel}`
   }, [activeSelectionLabel])
 
   const viewportRect = useMemo(() => {
@@ -193,11 +206,32 @@ export function SemanticOverviewMap({
           id: edge.id,
           path: route.path,
           points: route.points,
-          label: resolveBoardLabelPosition(route.label),
         }
       })
       .filter((route): route is OverviewWriteRoute => Boolean(route))
   }, [edges, nodes])
+
+  const overviewNodes = useMemo<OverviewNodeRect[]>(() => {
+    return nodes
+      .filter((node) => !node.hidden && !isStructuralNodeSpec(node.data.spec))
+      .map((node) => {
+        const visual = resolveNodeVisual(node.data.spec)
+        const width = node.width ?? node.data.spec.width
+        const height = node.height ?? node.data.spec.height
+
+        return {
+          id: node.id,
+          x: node.position.x,
+          y: node.position.y,
+          width,
+          height,
+          fill: visual.fill,
+          border: visual.border,
+          accent: visual.accent,
+          selected: node.selected || node.data.selected,
+        }
+      })
+  }, [nodes])
 
   function onMapClick(event: React.MouseEvent<HTMLDivElement>) {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -217,8 +251,8 @@ export function SemanticOverviewMap({
     <div className={clsx('semantic-overview', compactMode && 'is-compact', !open && 'is-collapsed')}>
       <div className="semantic-overview__header">
         <div className="semantic-overview__copy">
-          <span className="semantic-overview__eyebrow">Board overview</span>
-          <strong>Map + presets</strong>
+          <span className="semantic-overview__eyebrow">Canvas navigator</span>
+          <strong>Map + focus</strong>
           {(!compactMode || open) ? <p>{selectionLabel}</p> : null}
         </div>
         {compactMode ? (
@@ -229,7 +263,7 @@ export function SemanticOverviewMap({
             aria-expanded={open}
             data-overview-toggle
           >
-            {open ? 'Hide map' : 'Overview'}
+            {open ? 'Hide map' : 'Show map'}
           </button>
         ) : null}
       </div>
@@ -244,6 +278,14 @@ export function SemanticOverviewMap({
             data-overview-map
           >
             <svg className="semantic-overview__map" viewBox={`0 0 ${canvas.width} ${canvas.height}`} aria-hidden="true">
+              <rect
+                x={overviewRegions.find((region) => region.id === 'write')?.x ?? 0}
+                y={overviewRegions.find((region) => region.id === 'write')?.y ?? 0}
+                width={overviewRegions.find((region) => region.id === 'write')?.width ?? 0}
+                height={overviewRegions.find((region) => region.id === 'write')?.height ?? 0}
+                rx="36"
+                className="semantic-overview__write-band"
+              />
               {overviewRegions
                 .filter((region) => region.accent !== 'write')
                 .map((region) => (
@@ -257,14 +299,30 @@ export function SemanticOverviewMap({
                     className={`semantic-overview__region semantic-overview__region--${region.accent}`}
                   />
                 ))}
-              <rect
-                x={overviewRegions.find((region) => region.id === 'write')?.x ?? 0}
-                y={overviewRegions.find((region) => region.id === 'write')?.y ?? 0}
-                width={overviewRegions.find((region) => region.id === 'write')?.width ?? 0}
-                height={overviewRegions.find((region) => region.id === 'write')?.height ?? 0}
-                rx="36"
-                className="semantic-overview__write-band"
-              />
+              {overviewNodes.map((node) => (
+                <g key={node.id}>
+                  <rect
+                    x={node.x}
+                    y={node.y}
+                    width={node.width}
+                    height={node.height}
+                    rx="18"
+                    className={clsx('semantic-overview__node', node.selected && 'is-selected')}
+                    data-overview-node-id={node.id}
+                    fill={node.fill}
+                    stroke={node.border}
+                  />
+                  <rect
+                    x={node.x}
+                    y={node.y}
+                    width={node.width}
+                    height="8"
+                    rx="8"
+                    className="semantic-overview__node-accent"
+                    fill={node.accent}
+                  />
+                </g>
+              ))}
               {writeRoutes.map((route) => (
                 <g key={route.id}>
                   <path d={route.path} className="semantic-overview__write-path" data-write-route-id={route.id} />
@@ -273,7 +331,6 @@ export function SemanticOverviewMap({
                     className="semantic-overview__write-arrow"
                     data-write-arrow-id={route.id}
                   />
-                  <circle cx={route.label.x} cy={route.label.y} r="14" className="semantic-overview__write-marker" />
                 </g>
               ))}
               <rect
@@ -332,7 +389,20 @@ export function SemanticOverviewMap({
               </button>
             ))}
           </div>
-          <SemanticLegend />
+          <button
+            type="button"
+            className={clsx('chip semantic-overview__legend-toggle', legendOpen && 'is-active')}
+            aria-expanded={legendOpen}
+            data-overview-legend-toggle
+            onClick={() => setLegendOpen((current) => !current)}
+          >
+            {legendOpen ? 'Hide legend' : 'Show legend'}
+          </button>
+          {legendOpen ? (
+            <div className="semantic-overview__legend-shell" data-overview-legend-panel>
+              <SemanticLegend />
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

@@ -1,7 +1,8 @@
-import { useState, type FocusEvent, type MouseEvent as ReactMouseEvent } from 'react'
+import { useState, type CSSProperties, type FocusEvent, type MouseEvent as ReactMouseEvent } from 'react'
 import { Handle, useViewport, type NodeProps } from '@xyflow/react'
 import clsx from 'clsx'
 
+import { resolveNodeVisual } from '@/graph/compile/nodeVisuals'
 import type { DiagramFlowNode } from '@/graph/compile/toReactFlow'
 import { nodeEntityKey } from '@/graph/spec/manifest'
 import { focusRingClassName } from '@/a11y/focus'
@@ -46,7 +47,8 @@ export function BaseNodeCard({
   variant,
 }: NodeProps<DiagramFlowNode> & { variant: string }) {
   const { spec, claims, standards, annotation } = data
-  const isStructural = spec.kind === 'lane' || spec.kind === 'container' || spec.kind === 'band'
+  const visual = resolveNodeVisual(spec)
+  const isStructural = visual.isStructural
   const { zoom } = useViewport()
   const [compactMetaVisible, setCompactMetaVisible] = useState(false)
   const density =
@@ -71,11 +73,25 @@ export function BaseNodeCard({
     setCompactMetaVisible(false)
   }
 
+  const badge = (
+    <span
+      className={clsx(
+        'node-card__badge',
+        `node-card__badge--${visual.badgeStyle}`,
+        isStructural && 'node-card__badge--structural',
+      )}
+      aria-hidden="true"
+    >
+      {visual.badgeText}
+    </span>
+  )
+
   return (
     <div
       className={clsx(
         'node-card',
         `node-card--${variant}`,
+        `node-card--kind-${spec.kind}`,
         `node-card--${density}`,
         focusRingClassName,
         data.highlighted && 'is-highlighted',
@@ -85,8 +101,19 @@ export function BaseNodeCard({
       )}
       data-node-id={spec.id}
       data-node-density={density}
+      data-node-kind={spec.kind}
+      data-node-badge-style={visual.badgeStyle}
       aria-label={data.ariaLabel}
       title={data.ariaLabel}
+      style={
+        {
+          backgroundColor: visual.fill,
+          borderColor: visual.border,
+          '--node-fill': visual.fill,
+          '--node-border': visual.border,
+          '--node-accent': visual.accent,
+        } as CSSProperties
+      }
       onClick={() => data.callbacks.onSelectNode(spec.id)}
       onMouseEnter={() => {
         setCompactMetaVisible(true)
@@ -101,9 +128,15 @@ export function BaseNodeCard({
     >
       {!isStructural ? <NodeHandles /> : null}
       <div className="node-card__header">
-        <div>
-          <div className="node-card__eyebrow">{spec.id}</div>
-          <h3 className="node-card__title">{spec.title}</h3>
+        <div className="node-card__header-main">
+          {visual.badgeStyle === 'pill' && !isStructural ? badge : null}
+          <div className="node-card__heading">
+            <div className="node-card__eyebrow-row">
+              <div className="node-card__eyebrow">{spec.id}</div>
+              {visual.badgeStyle === 'inline' || isStructural ? badge : null}
+            </div>
+            <h3 className="node-card__title">{spec.title}</h3>
+          </div>
           {spec.subtitle ? <p className="node-card__subtitle">{spec.subtitle}</p> : null}
         </div>
         {!isStructural ? (

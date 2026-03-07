@@ -493,12 +493,12 @@ describe('exports', () => {
     expect(publicationDocument.svg).toContain('font-size="9pt"')
     expect(publicationDocument.svg).toContain('font-size="6.5pt"')
     expect(publicationDocument.svg).toContain('font-size="5pt"')
-    expect(publicationDocument.svg).toContain('stroke-dasharray="18 5 4 5"')
+    expect(publicationDocument.svg).toContain('stroke-dasharray="11 7"')
     expect(publicationDocument.svg).toContain('id="sequence-edge-PB_ACK"')
     expect(publicationDocument.svg).toContain('VoR Domain-Transition Sequence')
   })
 
-  it('exports shared marker definitions and semantic-family dash rhythms', async () => {
+  it('exports shared marker definitions and semantic-specific dash rhythms', async () => {
     const state = await createState()
     const viewportDocument = buildExportSvgDocument(state, { mode: 'viewport' })
 
@@ -506,9 +506,9 @@ describe('exports', () => {
     expect(viewportDocument.svg).toContain('id="marker-tool-call"')
     expect(viewportDocument.svg).toContain('id="marker-rejection"')
     expect(viewportDocument.svg).toContain('markerUnits="userSpaceOnUse"')
-    expect(viewportDocument.svg).toContain('stroke-dasharray="12 6"')
-    expect(viewportDocument.svg).toContain('stroke-dasharray="7 4"')
-    expect(viewportDocument.svg).toContain('stroke-dasharray="18 5 4 5"')
+    expect(viewportDocument.svg).toContain('stroke-dasharray="3.2 7.2 1.6 7.2"')
+    expect(viewportDocument.svg).toContain('stroke-dasharray="5 7"')
+    expect(viewportDocument.svg).toContain('stroke-dasharray="1.2 8.4"')
   })
 
   it('respects the active viewport theme while forcing publication exports to analysis mode', async () => {

@@ -31,8 +31,8 @@ export const focusPresetNodeIds: Record<FocusPreset, string[]> = {
 export const focusPresetOptions: FocusPresetOption[] = [
   { id: 'gateway', label: 'Gateway + AEA' },
   { id: 'overview', label: 'Full map' },
-  { id: 'write', label: 'Write path' },
-  { id: 'lane-c', label: 'Lane C' },
+  { id: 'write', label: 'Write corridor focus' },
+  { id: 'lane-c', label: 'Central M+O' },
 ]
 
 const presetViewOptions: Record<FocusPreset, { padding: number; maxZoom: number }> = {
@@ -75,7 +75,7 @@ export const overviewRegions: OverviewRegion[] = [
   },
   {
     id: 'lane-c',
-    label: 'Lane C',
+    label: 'Central M+O',
     x: lanes.C.x,
     y: lanes.C.y,
     width: lanes.C.width,

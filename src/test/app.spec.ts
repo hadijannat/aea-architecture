@@ -69,6 +69,29 @@ async function architectureEdgeIsAnimated(page: Page, edgeId: string) {
   })
 }
 
+async function nodeSurfaceStyles(page: Page, nodeId: string) {
+  return page.locator(`.node-card[data-node-id="${nodeId}"]`).evaluate((element) => {
+    const computed = getComputedStyle(element)
+    return {
+      backgroundColor: computed.backgroundColor,
+      borderColor: computed.borderColor,
+    }
+  })
+}
+
+function hexToRgbString(hex: string) {
+  const normalized = hex.replace('#', '')
+  const value = normalized.length === 3
+    ? normalized
+        .split('')
+        .map((char) => `${char}${char}`)
+        .join('')
+    : normalized
+
+  const [r, g, b] = [0, 2, 4].map((index) => Number.parseInt(value.slice(index, index + 2), 16))
+  return `rgb(${r}, ${g}, ${b})`
+}
+
 async function expandedNoteIds(page: Page) {
   return page.evaluate(() => {
     const stored = window.localStorage.getItem('aea-architecture-ui')
@@ -174,19 +197,19 @@ test('keyboard navigation exposes focus-visible states across Panel B controls',
   await assertFocusVisible(ackEdgeLabel)
 })
 
-test('desktop canvas includes the overview map and grouped semantic legend', async ({ page }) => {
+test('desktop canvas keeps topology visible while the legend stays collapsed by default', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/?node=ACT1')
 
   await expect(page.locator('.canvas-hud')).toHaveCount(0)
   await expect(page.locator('.semantic-overview')).toBeVisible()
   await expect(page.locator('[data-overview-map]')).toBeVisible()
-  await expect(page.locator('[data-write-arrow-id="F_AUDIT"]')).toBeVisible()
-  await expect(page.locator('[data-write-arrow-id="F3e"]')).toBeVisible()
-  await expect(page.locator('[data-legend-family="feedback"]')).toBeVisible()
+  await expect(page.locator('[data-overview-node-id="VOI"]')).toBeVisible()
+  await expect(page.locator('[data-overview-node-id="ACT1"]')).toBeVisible()
+  await expect(page.locator('[data-overview-legend-panel]')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Show legend' }).click()
+  await expect(page.locator('[data-overview-legend-panel]')).toBeVisible()
   await expect(page.locator('[data-legend-item="status-ack"]')).toBeVisible()
-  await expect(page.locator('[data-legend-item="rejection"]')).toBeVisible()
-
   await page.locator('[data-focus-preset="lane-c"]').click({ force: true })
   await page.locator('[data-hotspot-id="gateway"]').click({ force: true })
   await expect(page.locator('[data-overview-map]')).toBeVisible()
@@ -239,13 +262,20 @@ test('architecture edge labels expand with zoom and truncate to human-readable l
   await expect(edgeLabel).toContainText('validated candidate plan')
 })
 
-test('toggle chips expose pressed state and descriptive lane labels', async ({ page }) => {
+test('toggle chips expose pressed state and the updated lane copy', async ({ page }) => {
   await page.goto('/')
 
   const laneA = page.getByRole('button', { name: 'Lane A: CPC / external systems' })
   await expect(laneA).toHaveAttribute('aria-pressed', 'false')
+  await expect(laneA).toContainText('CPC')
   await laneA.click()
   await expect(laneA).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Lane B: AEA / gateway / decisioning' })).toContainText('psM+O')
+  await expect(page.getByRole('button', { name: 'Lane C: central analytics / historian' })).toContainText(
+    'Central M+O',
+  )
+  await expect(page.getByRole('button', { name: 'Hide VoR sequence' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Write corridor focus' })).toBeVisible()
 
   const claimC4 = page.getByRole('button', { name: 'C4' }).first()
   await expect(claimC4).toHaveAttribute('aria-pressed', 'false')
@@ -253,16 +283,18 @@ test('toggle chips expose pressed state and descriptive lane labels', async ({ p
   await expect(claimC4).toHaveAttribute('aria-pressed', 'true')
 })
 
-test('reduce motion toggle disables animated architecture edges', async ({ page }) => {
+test('reduce motion toggle disables animated writeback edges while secondary paths stay static', async ({ page }) => {
   await page.goto('/')
 
   const reduceMotion = page.getByRole('button', { name: 'Reduce motion' })
   await expect(reduceMotion).toHaveAttribute('aria-pressed', 'false')
-  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_VoR_ACK')).toBe(true)
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F5')).toBe(true)
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_VoR_ACK')).toBe(false)
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_T1')).toBe(false)
 
   await reduceMotion.click()
   await expect(reduceMotion).toHaveAttribute('aria-pressed', 'true')
-  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_VoR_ACK')).toBe(false)
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F5')).toBe(false)
 })
 
 test('system reduced-motion preference disables animated architecture edges', async ({ page }) => {
@@ -270,7 +302,7 @@ test('system reduced-motion preference disables animated architecture edges', as
   await page.goto('/')
 
   await expect(page.getByRole('button', { name: 'Reduce motion' })).toHaveAttribute('aria-pressed', 'false')
-  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_VoR_ACK')).toBe(false)
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F5')).toBe(false)
 })
 
 test('compact nodes summarize metadata and reveal the full chips on hover', async ({ page }) => {
@@ -328,8 +360,11 @@ test('notes control toggles the expanded note set', async ({ page }) => {
   await expect(await expandedNoteIds(page)).toHaveLength(0)
 })
 
-test('projection snapshots use the inline composer', async ({ page }) => {
+test('projection snapshots reveal the composer only when saving is requested', async ({ page }) => {
   await page.goto('/')
+
+  await expect(page.getByLabel('Snapshot name')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Save snapshot' }).click()
 
   const snapshotName = page.getByLabel('Snapshot name')
   const saveButton = page.getByRole('button', { name: 'Save' })
@@ -339,7 +374,45 @@ test('projection snapshots use the inline composer', async ({ page }) => {
   await snapshotName.press('Enter')
 
   await expect(page.locator('.snapshot-card').first()).toContainText('Review checkpoint')
-  await expect(snapshotName).toHaveValue('')
+  await expect(page.getByLabel('Snapshot name')).toHaveCount(0)
+})
+
+test('runtime node surfaces consume the manifest visual tokens', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+
+  await expect(page.locator('.node-card[data-node-id="VOI"]')).toBeVisible()
+
+  expect(await nodeSurfaceStyles(page, 'VOI')).toEqual({
+    backgroundColor: hexToRgbString('#fff7ef'),
+    borderColor: hexToRgbString('#d35400'),
+  })
+  expect(await nodeSurfaceStyles(page, 'DEC_G1')).toEqual({
+    backgroundColor: hexToRgbString('#ffffff'),
+    borderColor: hexToRgbString('#455a75'),
+  })
+  expect(await nodeSurfaceStyles(page, 'LANE_A')).toEqual({
+    backgroundColor: hexToRgbString('#f7f7f7'),
+    borderColor: hexToRgbString('#c9d0d8'),
+  })
+  expect(await nodeSurfaceStyles(page, 'BAND_SENSE')).toEqual({
+    backgroundColor: hexToRgbString('#f8fbff'),
+    borderColor: hexToRgbString('#c9d4e3'),
+  })
+})
+
+test('hover cards stay clear of the overview panel', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+
+  await page.locator('.node-card[data-node-id="ACT1"]').hover()
+
+  const hoverCardBox = await page.locator('.hover-card').boundingBox()
+  const overviewBox = await page.locator('.semantic-overview').boundingBox()
+
+  expect(hoverCardBox).not.toBeNull()
+  expect(overviewBox).not.toBeNull()
+  expect(boxesOverlap(hoverCardBox!, overviewBox!, 12)).toBe(false)
 })
 
 test('write-corridor routes stay orthogonal and labels avoid nearby nodes', async ({ page }) => {

@@ -2,6 +2,7 @@ import type { Edge as FlowEdge, Node as FlowNode } from '@xyflow/react'
 
 import { buildEdgeAriaLabel, buildNodeAriaLabel } from '@/a11y/aria'
 import {
+  getSemanticShouldAnimate,
   matchesSemanticFamilies,
 } from '@/graph/compile/semanticPresentation'
 import {
@@ -207,7 +208,7 @@ function buildBreadcrumbs(state: DiagramStore, manifest: GraphManifest): Breadcr
       return []
     }
     return [
-      { id: 'panel-b', label: 'Panel B' },
+      { id: 'panel-b', label: 'VoR sequence' },
       { id: step.id, label: step.title },
     ]
   }
@@ -565,9 +566,7 @@ export function compileArchitectureEdges(
         animated:
           !state.ui.reduceMotion &&
           !state.ui.systemReduceMotion &&
-          (edge.semantic === 'status-ack' ||
-            edge.semantic === 'rejection' ||
-            edge.semantic === 'tool-call'),
+          getSemanticShouldAnimate(edge.semantic),
         data: {
           spec: edge,
           ariaLabel: buildEdgeAriaLabel(edge, manifest),

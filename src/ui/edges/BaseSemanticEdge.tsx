@@ -42,7 +42,7 @@ export function BaseSemanticEdge({
   const presentation = getSemanticPresentation(data.spec.semantic)
   const strokeColor = presentation.stroke
   const strokeWidth = edgeStrokeWidth(data.spec.style)
-  const strokeDasharray = getSemanticStrokeDash(data.spec.semantic)
+  const strokeDasharray = getSemanticStrokeDash(data.spec.semantic, data.spec.style)
   const showExpandedLabel = data.selected || data.highlighted || zoom >= 0.9
   const displayLabel = data.spec.displayLabel ?? data.spec.label
 
@@ -59,6 +59,7 @@ export function BaseSemanticEdge({
       data-edge-id={id}
       data-edge-semantic={data.spec.semantic}
       data-edge-family={presentation.family}
+      data-edge-style={data.spec.style}
       data-edge-points={edgePoints}
       data-label-position={`${labelPosition.x},${labelPosition.y}`}
       onMouseEnter={() => data.callbacks.onHover(edgeEntityKey(id))}

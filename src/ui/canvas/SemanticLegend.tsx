@@ -1,6 +1,8 @@
 import clsx from 'clsx'
 
 import {
+  edgeStrokeWidth,
+  getSemanticLegendStyle,
   getSemanticMarkerGeometry,
   getSemanticMarkerRefX,
   getSemanticPresentationsForFamily,
@@ -82,9 +84,12 @@ export function SemanticLegend() {
                       d="M 3 8 L 35 8"
                       fill="none"
                       stroke={presentation.stroke}
-                      strokeWidth="2.4"
+                      strokeWidth={Math.max(2.2, edgeStrokeWidth(getSemanticLegendStyle(presentation.semantic)))}
                       strokeLinecap="round"
-                      strokeDasharray={getSemanticStrokeDash(presentation.semantic)}
+                      strokeDasharray={getSemanticStrokeDash(
+                        presentation.semantic,
+                        getSemanticLegendStyle(presentation.semantic),
+                      )}
                       markerEnd={`url(#legend-marker-${presentation.semantic})`}
                     />
                   </svg>
