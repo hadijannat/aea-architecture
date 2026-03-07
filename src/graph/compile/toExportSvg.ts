@@ -1,7 +1,7 @@
 import { graphManifest, resolveGraphNode } from '@/graph/spec/manifest'
 import type { EdgeSpec, GraphManifest, ProjectionOverrides } from '@/graph/spec/schema'
 import { resolveEdgeHandles } from '@/layout/ports'
-import { buildBoardEdgeRoute } from '@/layout/board'
+import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
 import type { DiagramStore } from '@/state/diagramStore'
 
 import { compileSequenceBoard, type SequenceBoardModel } from './sequenceBoard'
@@ -359,14 +359,14 @@ function renderArchitectureEdges(
     .filter((edge) => edge.panel.includes('architecture') && visibleEdgeIds.has(edge.id))
     .map((edge) => {
       const route = buildArchitectureEdgePath(edge, state, state.projection)
-      const labelPoint = scaledPoint({ x: route.labelX, y: route.labelY }, transform)
+      const labelPoint = scaledPoint(resolveBoardLabelPosition(route.label), transform)
 
       return `
   <g id="edge-${edge.id}">
     <title>${esc(edge.id)}: ${esc(edge.label)}</title>
     <desc>${esc(edge.inspector.rationale)}</desc>
     <path d="${translateScaledPath(route.path, transform)}" fill="none" stroke="${edgeStroke(edge)}" stroke-width="${edgeWidth(edge, tokens)}" ${edgeDash(edge, tokens)} marker-end="url(#${edgeMarker(edge)})" />
-    <text x="${labelPoint.x}" y="${labelPoint.y}" text-anchor="middle" fill="#334155" font-size="${tokens.edgeLabelSize}" font-family="Arial, sans-serif">${esc(edge.id)}${edge.markers.includes('diode') ? ' ⊘' : ''} · ${esc(edge.label)}</text>
+    <text id="edge-label-${edge.id}" x="${labelPoint.x}" y="${labelPoint.y}" text-anchor="middle" fill="#334155" font-size="${tokens.edgeLabelSize}" font-family="Arial, sans-serif">${esc(edge.id)}${edge.markers.includes('diode') ? ' ⊘' : ''} · ${esc(edge.label)}</text>
   </g>`
     })
     .join('\n')

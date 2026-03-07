@@ -7,7 +7,7 @@ import clsx from 'clsx'
 
 import type { DiagramFlowEdge } from '@/graph/compile/toReactFlow'
 import { edgeEntityKey } from '@/graph/spec/manifest'
-import { buildBoardEdgeRoute } from '@/layout/board'
+import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
 
 const strokeColors: Record<string, string> = {
   writeback: '#d35400',
@@ -42,44 +42,44 @@ export function BaseSemanticEdge({
     return null
   }
 
-  const { path: edgePath, labelX, labelY } = buildBoardEdgeRoute(
+  const route = buildBoardEdgeRoute(
     data.spec,
     { x: sourceX, y: sourceY },
     { x: targetX, y: targetY },
   )
+  const edgePath = route.path
+  const labelPosition = resolveBoardLabelPosition(route.label)
+  const edgePoints = route.points.map((point) => `${point.x},${point.y}`).join(' ')
 
   const strokeColor = strokeColors[data.spec.semantic] ?? strokeColors.default
   const strokeWidth = strokeWidths[data.spec.style] ?? 1.5
   const strokeDasharray =
     data.spec.style === 'dashed' ? '8 4' : data.spec.style === 'dotted' ? '2 5' : undefined
-  const labelYOffset =
-    data.spec.semantic === 'status-ack'
-      ? 22
-      : data.spec.semantic === 'rejection'
-        ? 22
-      : data.spec.semantic === 'writeback'
-        ? -18
-        : data.spec.semantic === 'tool-call'
-          ? 16
-          : 0
 
   return (
     <g
       className={clsx('semantic-edge', data.selected && 'is-selected', data.highlighted && 'is-highlighted', data.dimmed && 'is-dimmed')}
+      data-edge-id={id}
+      data-edge-points={edgePoints}
+      data-label-position={`${labelPosition.x},${labelPosition.y}`}
       onMouseEnter={() => data.callbacks.onHover(edgeEntityKey(id))}
       onMouseLeave={() => data.callbacks.onHover(undefined)}
       onClick={() => data.callbacks.onSelectEdge(id)}
     >
       <title>{data.ariaLabel}</title>
       <desc>{data.spec.inspector.rationale}</desc>
-      <path d={edgePath} fill="none" stroke="transparent" strokeWidth={18} />
+      <path d={edgePath} data-edge-id={id} data-edge-path={edgePath} fill="none" stroke="transparent" strokeWidth={18} />
       <BaseEdge
         path={edgePath}
         markerEnd={markerEnd}
+        interactionWidth={18}
         style={{
           stroke: strokeColor,
           strokeWidth,
           strokeDasharray,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          vectorEffect: 'non-scaling-stroke',
         }}
       />
       <EdgeLabelRenderer>
@@ -87,8 +87,9 @@ export function BaseSemanticEdge({
           type="button"
           className={clsx('edge-label', data.selected && 'is-selected', data.highlighted && 'is-highlighted')}
           aria-label={data.ariaLabel}
+          data-edge-id={id}
           style={{
-            transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY + labelYOffset}px)`,
+            transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
           }}
           onFocus={() => data.callbacks.onHover(edgeEntityKey(id))}
           onBlur={() => data.callbacks.onHover(undefined)}

@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest'
 import { deriveDiagramState } from '@/graph/compile/toReactFlow'
 import { toMermaid } from '@/graph/compile/toMermaid'
 import { defaultProjectionOverrides, graphManifest, resolveGraphEdge, resolveGraphNode } from '@/graph/spec/manifest'
-import { buildBoardEdgeRoute } from '@/layout/board'
+import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
 import { validateGraphManifest } from '@/graph/spec/validators'
 import { computeBoardNodePositions } from '@/layout/boardLayout'
 import { resolveEdgeHandles, type HandleId } from '@/layout/ports'
@@ -80,6 +80,37 @@ function buildArchitectureRoute(state: DiagramStore, edgeId: string) {
     anchorPoint(state, edge.source, handles.sourceHandle),
     anchorPoint(state, edge.target, handles.targetHandle),
   )
+}
+
+function routeIsAxisAligned(points: Array<{ x: number; y: number }>) {
+  return points.every((point, index) => {
+    if (index === 0) {
+      return true
+    }
+
+    const previous = points[index - 1]
+    return previous.x === point.x || previous.y === point.y
+  })
+}
+
+function nodeBounds(state: DiagramStore, nodeId: string) {
+  const node = resolveGraphNode(nodeId)
+  const position = state.layout.positions[nodeId]
+
+  if (!node || !position) {
+    throw new Error(`Missing bounds for ${nodeId}`)
+  }
+
+  return {
+    left: position.x,
+    top: position.y,
+    right: position.x + node.width,
+    bottom: position.y + node.height,
+  }
+}
+
+function containsPoint(bounds: ReturnType<typeof nodeBounds>, point: { x: number; y: number }) {
+  return point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom
 }
 
 describe('graph manifest', () => {
@@ -270,36 +301,61 @@ describe('exports', () => {
   it('keeps critical architecture routes on their reserved board channels', async () => {
     const state = await createState()
     const expectedRoutes = {
+      F4: {
+        path: 'M 1326 740 L 1326 812 L 790 812 L 790 840',
+        labelPoint: { x: 1058, y: 794 },
+      },
       F5: {
         path: 'M 670 900 L 634 900 L 634 996 L 562 996 L 562 823 L 534 823',
-        labelX: 562,
-        labelY: 909.5,
+        labelPoint: { x: 598, y: 1020 },
       },
       F6: {
         path: 'M 424 823 L 360 823 L 360 996 L 336 996 L 336 843 L 308 843',
-        labelX: 360,
-        labelY: 909.5,
+        labelPoint: { x: 380, y: 909.5 },
       },
       F_VoR_ACK: {
         path: 'M 534 823 L 562 823 L 562 936 L 640 936 L 640 900 L 670 900',
-        labelX: 562,
-        labelY: 879.5,
+        labelPoint: { x: 590, y: 879.5 },
       },
       F7a: {
         path: 'M 1438 893 L 1472 893 L 1472 914 L 1584 914 L 1584 902 L 1610 902',
-        labelX: 1528,
-        labelY: 914,
+        labelPoint: { x: 1528, y: 934 },
       },
       F7_sub: {
         path: 'M 1710 1020 L 1868 1020 L 1868 956 L 1710 956',
-        labelX: 1789,
-        labelY: 1020,
+        labelPoint: { x: 1789, y: 1002 },
       },
     } as const
 
     for (const [edgeId, expected] of Object.entries(expectedRoutes)) {
-      expect(buildArchitectureRoute(state, edgeId)).toEqual(expected)
+      const route = buildArchitectureRoute(state, edgeId)
+      expect(route.path).toBe(expected.path)
+      expect(resolveBoardLabelPosition(route.label)).toEqual(expected.labelPoint)
     }
+  })
+
+  it('keeps critical architecture routes axis-aligned', async () => {
+    const state = await createState()
+    const edgeIds = ['F4', 'F5', 'F6', 'F_VoR_ACK', 'F_AUDIT', 'F7a', 'F7_sub']
+
+    for (const edgeId of edgeIds) {
+      expect(routeIsAxisAligned(buildArchitectureRoute(state, edgeId).points)).toBe(true)
+    }
+  })
+
+  it('keeps write-corridor label anchors outside nearby node boxes', async () => {
+    const state = await createState()
+    const guardedBounds = ['VOI', 'ACT1', 'A3'].map((nodeId) => nodeBounds(state, nodeId))
+    const labelPoints = ['F5', 'F6', 'F_VoR_ACK'].map((edgeId) => ({
+      edgeId,
+      point: resolveBoardLabelPosition(buildArchitectureRoute(state, edgeId).label),
+    }))
+
+    for (const label of labelPoints) {
+      expect(guardedBounds.some((bounds) => containsPoint(bounds, label.point)), `${label.edgeId} label overlaps a guarded node`).toBe(false)
+    }
+
+    expect(new Set(labelPoints.map((label) => `${label.point.x}:${label.point.y}`)).size).toBe(labelPoints.length)
   })
 
   it('keeps Panel B acknowledgement and rejection routes on the shared sequence geometry', async () => {
@@ -340,11 +396,12 @@ describe('exports', () => {
 
     expect(viewportDocument.svg).toContain('<title>AEA Architecture Viewport Export</title>')
     expect(viewportDocument.svg).toContain('viewBox="60 40 320 180"')
-    expect(viewportDocument.svg).toContain(`d="${buildArchitectureRoute(state, 'F5').path}"`)
-    expect(viewportDocument.svg).toContain(`d="${buildArchitectureRoute(state, 'F6').path}"`)
-    expect(viewportDocument.svg).toContain(`d="${buildArchitectureRoute(state, 'F_VoR_ACK').path}"`)
-    expect(viewportDocument.svg).toContain(`d="${buildArchitectureRoute(state, 'F7a').path}"`)
-    expect(viewportDocument.svg).toContain(`d="${buildArchitectureRoute(state, 'F7_sub').path}"`)
+    for (const edgeId of ['F4', 'F5', 'F6', 'F_VoR_ACK', 'F7a', 'F7_sub']) {
+      const route = buildArchitectureRoute(state, edgeId)
+      const label = resolveBoardLabelPosition(route.label)
+      expect(viewportDocument.svg).toContain(`d="${route.path}"`)
+      expect(viewportDocument.svg).toContain(`id="edge-label-${edgeId}" x="${label.x}" y="${label.y}"`)
+    }
     expect(viewportDocument.svg).toContain(`d="${ackEdge?.path}"`)
     expect(viewportDocument.svg).toContain(`d="${rejectEdge?.path}"`)
     expect(viewportDocument.svg).toContain('id="sequence-node-PB_AEA"')

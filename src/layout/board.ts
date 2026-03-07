@@ -1,15 +1,24 @@
 import { graphManifest } from '@/graph/spec/manifest'
 import type { EdgeSpec } from '@/graph/spec/schema'
 
-interface Point {
+export interface Point {
   x: number
   y: number
 }
 
+export type RoutedLabelSide = 'top' | 'right' | 'bottom' | 'left'
+
+export interface RoutedBoardLabel {
+  x: number
+  y: number
+  side: RoutedLabelSide
+  offset: number
+}
+
 export interface RoutedBoardEdge {
   path: string
-  labelX: number
-  labelY: number
+  points: Point[]
+  label: RoutedBoardLabel
 }
 
 function point(x: number, y: number): Point {
@@ -20,24 +29,109 @@ function polyline(points: Point[]): string {
   return points.map((entry, index) => `${index === 0 ? 'M' : 'L'} ${entry.x} ${entry.y}`).join(' ')
 }
 
-function labelPoint(points: Point[]): Point {
-  let longestDistance = -1
-  let longestMidpoint = points[0] ?? { x: 0, y: 0 }
-
-  for (let index = 0; index < points.length - 1; index += 1) {
-    const current = points[index]
-    const next = points[index + 1]
-    const distance = Math.abs(current.x - next.x) + Math.abs(current.y - next.y)
-    if (distance > longestDistance) {
-      longestDistance = distance
-      longestMidpoint = {
-        x: (current.x + next.x) / 2,
-        y: (current.y + next.y) / 2,
-      }
+function compactPoints(points: Point[]): Point[] {
+  return points.filter((entry, index) => {
+    if (index === 0) {
+      return true
     }
-  }
 
-  return longestMidpoint
+    const previous = points[index - 1]
+    return previous.x !== entry.x || previous.y !== entry.y
+  })
+}
+
+function midpoint(start: Point, end: Point): Point {
+  return {
+    x: (start.x + end.x) / 2,
+    y: (start.y + end.y) / 2,
+  }
+}
+
+function doglegX(source: Point, target: Point, viaX = Math.round((source.x + target.x) / 2)) {
+  return compactPoints([source, point(viaX, source.y), point(viaX, target.y), target])
+}
+
+function doglegY(source: Point, target: Point, viaY = Math.round((source.y + target.y) / 2)) {
+  return compactPoints([source, point(source.x, viaY), point(target.x, viaY), target])
+}
+
+function segmentLabel(points: Point[], segmentIndex: number, side: RoutedLabelSide, offset: number): RoutedBoardLabel {
+  const start = points[Math.max(0, Math.min(segmentIndex, points.length - 2))] ?? point(0, 0)
+  const end = points[Math.max(1, Math.min(segmentIndex + 1, points.length - 1))] ?? point(0, 0)
+  const mid = midpoint(start, end)
+
+  return {
+    x: mid.x,
+    y: mid.y,
+    side,
+    offset,
+  }
+}
+
+export function resolveBoardLabelPosition(label: RoutedBoardLabel): Point {
+  switch (label.side) {
+    case 'top':
+      return { x: label.x, y: label.y - label.offset }
+    case 'right':
+      return { x: label.x + label.offset, y: label.y }
+    case 'bottom':
+      return { x: label.x, y: label.y + label.offset }
+    case 'left':
+      return { x: label.x - label.offset, y: label.y }
+  }
+}
+
+function buildLabel(edge: EdgeSpec, points: Point[]): RoutedBoardLabel {
+  switch (edge.id) {
+    case 'F_GW1':
+      return segmentLabel(points, 1, 'left', 20)
+    case 'F_GW2':
+    case 'F_GW3':
+      return segmentLabel(points, 0, 'right', 18)
+    case 'F1':
+      return segmentLabel(points, 3, 'top', 18)
+    case 'F2':
+      return segmentLabel(points, 0, 'top', 16)
+    case 'F3a':
+      return segmentLabel(points, 0, 'top', 14)
+    case 'F3b':
+      return segmentLabel(points, 2, 'top', 18)
+    case "F3b'":
+    case 'F3c':
+    case 'F3f':
+      return segmentLabel(points, 0, 'top', 14)
+    case 'F3d':
+    case 'F3e':
+    case 'F3g':
+    case 'F3h':
+    case 'F3i':
+      return segmentLabel(points, 1, 'top', 16)
+    case 'F3f_reject':
+      return segmentLabel(points, 1, 'bottom', 18)
+    case 'F_T1':
+    case 'F_T2':
+      return segmentLabel(points, 1, 'bottom', 18)
+    case 'F4':
+      return segmentLabel(points, 1, 'top', 18)
+    case 'F_KPI':
+      return segmentLabel(points, 2, 'bottom', 18)
+    case 'F_AUDIT':
+      return segmentLabel(points, 0, 'top', 16)
+    case 'F5':
+      return segmentLabel(points, 2, 'bottom', 24)
+    case 'F6':
+      return segmentLabel(points, 1, 'right', 20)
+    case 'F_VoR_ACK':
+      return segmentLabel(points, 1, 'right', 28)
+    case 'F7a':
+      return segmentLabel(points, 2, 'bottom', 20)
+    case 'F7b':
+      return segmentLabel(points, 1, 'left', 24)
+    case 'F7_sub':
+      return segmentLabel(points, 0, 'top', 18)
+    default:
+      return segmentLabel(points, 0, 'top', 16)
+  }
 }
 
 const { lanes, gateway, aea } = graphManifest.layoutDefaults
@@ -86,14 +180,22 @@ export function buildBoardEdgeRoute(
       ]
       break
     case 'F2':
+      points = doglegX(source, target)
+      break
     case 'F3a':
-    case 'F3b\'':
+      points = source.y === target.y || source.x === target.x ? [source, target] : doglegX(source, target)
+      break
+    case "F3b'":
     case 'F3c':
     case 'F3f':
-    case 'F4':
     case 'F_AUDIT':
+      points = doglegX(source, target)
+      break
+    case 'F4':
+      points = doglegY(source, target, target.y - 28)
+      break
     case 'F7b':
-      points = [source, target]
+      points = doglegX(source, target, channels.laneCSpineX)
       break
     case 'F3b':
       points = [
@@ -207,18 +309,16 @@ export function buildBoardEdgeRoute(
       ]
       break
     default:
-      points = [
-        source,
-        point((source.x + target.x) / 2, source.y),
-        point((source.x + target.x) / 2, target.y),
-        target,
-      ]
+      points =
+        source.x === target.x || source.y === target.y
+          ? [source, target]
+          : doglegX(source, target)
   }
 
-  const label = labelPoint(points)
+  const compactedPoints = compactPoints(points)
   return {
-    path: polyline(points),
-    labelX: label.x,
-    labelY: label.y,
+    path: polyline(compactedPoints),
+    points: compactedPoints,
+    label: buildLabel(edge, compactedPoints),
   }
 }

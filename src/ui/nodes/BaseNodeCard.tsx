@@ -67,6 +67,7 @@ export function BaseNodeCard({
         data.dimmed && 'is-dimmed',
         isStructural && 'is-structural',
       )}
+      data-node-id={spec.id}
       aria-label={data.ariaLabel}
       title={data.ariaLabel}
       onClick={() => data.callbacks.onSelectNode(spec.id)}

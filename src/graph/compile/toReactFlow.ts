@@ -565,6 +565,8 @@ export function compileArchitectureEdges(
           edge.semantic === 'tool-call',
         markerEnd: {
           type: 'arrowclosed',
+          width: 20,
+          height: 20,
         },
         data: {
           spec: edge,
