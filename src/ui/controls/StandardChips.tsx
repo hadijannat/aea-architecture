@@ -14,6 +14,7 @@ export function StandardChips({ manifest, selected, onToggle }: StandardChipsPro
           key={standard.id}
           type="button"
           className={selected.includes(standard.id) ? 'chip is-active' : 'chip'}
+          aria-pressed={selected.includes(standard.id)}
           onClick={() => onToggle(standard.id)}
         >
           {standard.label}
@@ -22,4 +23,3 @@ export function StandardChips({ manifest, selected, onToggle }: StandardChipsPro
     </div>
   )
 }
-

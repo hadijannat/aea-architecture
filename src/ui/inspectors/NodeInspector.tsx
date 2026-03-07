@@ -66,7 +66,10 @@ export function NodeInspector({
           </span>
         ))}
       </div>
-      <p>{node.inspector.rationale}</p>
+      <div className="inspector-subsection">
+        <strong>Rationale</strong>
+        <p>{node.inspector.rationale}</p>
+      </div>
       {claims.length > 0 ? (
         <div className="inspector-subsection">
           <strong>Claim coverage</strong>

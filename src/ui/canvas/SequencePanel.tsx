@@ -2,9 +2,12 @@ import { type CSSProperties, type RefObject } from 'react'
 import clsx from 'clsx'
 
 import {
-  edgeStrokeDash,
   edgeStrokeWidth,
+  getSemanticMarkerGeometry,
+  getSemanticMarkerRefX,
   getSemanticPresentation,
+  getSemanticStrokeDash,
+  semanticMarkerDimensions,
 } from '@/graph/compile/semanticPresentation'
 import { type SequenceBoardModel } from '@/graph/compile/sequenceBoard'
 import { edgeEntityKey, nodeEntityKey, stepEntityKey } from '@/graph/spec/manifest'
@@ -20,30 +23,22 @@ interface SequencePanelProps {
   onHover(key?: EntityKey): void
 }
 
-function markerPath(marker: ReturnType<typeof getSemanticPresentation>['marker']) {
-  switch (marker) {
-    case 'arrow':
-      return <path d="M 1 1 L 9 4 L 1 7" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-    case 'circle':
-      return <circle cx="5" cy="4" r="3" fill="currentColor" />
-    case 'tee':
-      return <path d="M 1 1 L 1 7 M 1 4 L 9 4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    case 'diamond':
-      return <path d="M 5 0.8 L 9.2 4 L 5 7.2 L 0.8 4 z" fill="currentColor" />
-    case 'arrowclosed':
-    default:
-      return <path d="M 0 0 L 10 4 L 0 8 z" fill="currentColor" />
-  }
-}
+function renderMarkerShape(marker: ReturnType<typeof getSemanticPresentation>['marker'], color: string) {
+  const geometry = getSemanticMarkerGeometry(marker)
 
-function markerRefX(marker: ReturnType<typeof getSemanticPresentation>['marker']) {
-  if (marker === 'tee') {
-    return 2
+  if (geometry.element === 'circle') {
+    return <circle cx={geometry.cx} cy={geometry.cy} r={geometry.r} fill={color} />
   }
-  if (marker === 'circle') {
-    return 5
-  }
-  return 9
+
+  return (
+    <path
+      d={geometry.d}
+      fill={geometry.fill === 'currentColor' ? color : geometry.fill}
+      stroke={geometry.stroke === 'currentColor' ? color : undefined}
+      strokeWidth={geometry.strokeWidth}
+      strokeLinecap={geometry.strokeLinecap}
+    />
+  )
 }
 
 export function SequencePanel({
@@ -58,6 +53,7 @@ export function SequencePanel({
   const visibleSteps = model.steps.filter((step) => !step.hidden)
   const visibleTerminals = model.terminals.filter((terminal) => !terminal.hidden)
   const visibleEdges = model.edges.filter((edge) => !edge.hidden)
+  const visibleSemantics = [...new Set(visibleEdges.map((edge) => edge.edge.semantic))]
 
   return (
     <section
@@ -90,31 +86,43 @@ export function SequencePanel({
             aria-hidden="true"
           >
             <defs>
-              {visibleEdges.map((edge) => {
-                const presentation = getSemanticPresentation(edge.edge.semantic)
+              {visibleSemantics.map((semantic) => {
+                const presentation = getSemanticPresentation(semantic)
                 return (
                   <marker
-                    key={edge.edge.id}
-                    id={`sequence-marker-${edge.edge.id}`}
-                    markerWidth="10"
-                    markerHeight="8"
-                    refX={markerRefX(presentation.marker)}
-                    refY="4"
+                    key={semantic}
+                    id={`sequence-marker-${semantic}`}
+                    viewBox={semanticMarkerDimensions.viewBox}
+                    markerWidth={semanticMarkerDimensions.width}
+                    markerHeight={semanticMarkerDimensions.height}
+                    refX={getSemanticMarkerRefX(presentation.marker)}
+                    refY={semanticMarkerDimensions.refY}
                     orient="auto"
-                    markerUnits="strokeWidth"
+                    markerUnits="userSpaceOnUse"
                   >
-                    <g style={{ color: presentation.stroke }}>{markerPath(presentation.marker)}</g>
+                    {renderMarkerShape(presentation.marker, presentation.stroke)}
                   </marker>
                 )
               })}
             </defs>
-            <rect x="0" y="0" width={model.width} height={model.height} rx="26" fill="#fff9f1" />
+            <rect
+              x="0"
+              y="0"
+              width={model.width}
+              height={model.height}
+              rx="26"
+              data-sequence-background
+              style={{ fill: 'var(--sequence-bg, #fff9f1)' }}
+            />
             <path
               d={`M 24 ${model.ribbonY + 48} L ${model.width - 24} ${model.ribbonY + 48}`}
               fill="none"
               stroke="rgba(211, 161, 109, 0.3)"
               strokeWidth="1"
             />
+            <text x="36" y={model.ribbonY + 42} className="sequence-board__ribbon-label">
+              VoR boundary
+            </text>
             {visibleEdges.map((edge) => {
               const presentation = getSemanticPresentation(edge.edge.semantic)
 
@@ -136,8 +144,8 @@ export function SequencePanel({
                     fill="none"
                     stroke={presentation.stroke}
                     strokeWidth={edgeStrokeWidth(edge.edge.style)}
-                    strokeDasharray={edgeStrokeDash(edge.edge.style)}
-                    markerEnd={`url(#sequence-marker-${edge.edge.id})`}
+                    strokeDasharray={getSemanticStrokeDash(edge.edge.semantic)}
+                    markerEnd={`url(#sequence-marker-${edge.edge.semantic})`}
                   />
                 </g>
               )

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, type RefObject } from 'react'
 import {
   Background,
   ControlButton,
@@ -10,7 +10,13 @@ import {
 } from '@xyflow/react'
 
 import type { DiagramFlowEdge, DiagramFlowNode } from '@/graph/compile/toReactFlow'
-import { graphManifest } from '@/graph/spec/manifest'
+import {
+  getSemanticMarkerGeometry,
+  getSemanticMarkerRefX,
+  getSemanticPresentation,
+  semanticMarkerDimensions,
+} from '@/graph/compile/semanticPresentation'
+import { graphManifest, resolveGraphEdge, resolveGraphNode, resolveSequenceStep } from '@/graph/spec/manifest'
 import type { ProjectionTheme } from '@/graph/spec/schema'
 import type { DiagramStore } from '@/state/diagramStore'
 
@@ -54,6 +60,53 @@ const edgeTypes = {
   ReadEdge,
   ToolCallEdge,
   WriteBackEdge,
+}
+
+const architectureMarkerSemantics = [...new Set(graphManifest.edges.map((edge) => edge.semantic))]
+
+function renderMarkerShape(marker: ReturnType<typeof getSemanticPresentation>['marker'], color: string) {
+  const geometry = getSemanticMarkerGeometry(marker)
+
+  if (geometry.element === 'circle') {
+    return <circle cx={geometry.cx} cy={geometry.cy} r={geometry.r} fill={color} />
+  }
+
+  return (
+    <path
+      d={geometry.d}
+      fill={geometry.fill === 'currentColor' ? color : geometry.fill}
+      stroke={geometry.stroke === 'currentColor' ? color : undefined}
+      strokeWidth={geometry.strokeWidth}
+      strokeLinecap={geometry.strokeLinecap}
+    />
+  )
+}
+
+function ArchitectureEdgeMarkers() {
+  return (
+    <svg className="architecture-edge-markers" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        {architectureMarkerSemantics.map((semantic) => {
+          const presentation = getSemanticPresentation(semantic)
+          return (
+            <marker
+              key={semantic}
+              id={`architecture-marker-${semantic}`}
+              viewBox={semanticMarkerDimensions.viewBox}
+              markerWidth={semanticMarkerDimensions.width}
+              markerHeight={semanticMarkerDimensions.height}
+              refX={getSemanticMarkerRefX(presentation.marker)}
+              refY={semanticMarkerDimensions.refY}
+              orient="auto"
+              markerUnits="userSpaceOnUse"
+            >
+              {renderMarkerShape(presentation.marker, presentation.stroke)}
+            </marker>
+          )
+        })}
+      </defs>
+    </svg>
+  )
 }
 
 function hasCustomViewport(viewport: DiagramStore['ui']['viewport']) {
@@ -151,6 +204,27 @@ export function ArchitectureCanvas({
   onNodeDragStop,
   onResetLayout,
 }: ArchitectureCanvasProps) {
+  const activeSelectionLabel = useMemo(() => {
+    if (ui.selectedNodeId) {
+      return resolveGraphNode(ui.selectedNodeId)?.title ?? ui.selectedNodeId
+    }
+    if (ui.selectedEdgeId) {
+      const edge = resolveGraphEdge(ui.selectedEdgeId)
+      if (!edge) {
+        return ui.selectedEdgeId
+      }
+      return `${edge.id} · ${edge.displayLabel ?? edge.label}`
+    }
+    if (ui.selectedStepId) {
+      const step = resolveSequenceStep(ui.selectedStepId)
+      if (!step) {
+        return ui.selectedStepId
+      }
+      return `${step.id} · ${step.title}`
+    }
+    return undefined
+  }, [ui.selectedEdgeId, ui.selectedNodeId, ui.selectedStepId])
+
   return (
     <div
       ref={containerRef}
@@ -158,6 +232,7 @@ export function ArchitectureCanvas({
       data-theme={theme}
       aria-label="Panel A architecture canvas"
     >
+      <ArchitectureEdgeMarkers />
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -194,7 +269,7 @@ export function ArchitectureCanvas({
             containerRef={containerRef}
             nodes={nodes}
             edges={edges}
-            activeSelection={ui.selectedNodeId ?? ui.selectedEdgeId ?? ui.selectedStepId}
+            activeSelectionLabel={activeSelectionLabel}
           />
         </FlowPanel>
       </ReactFlow>

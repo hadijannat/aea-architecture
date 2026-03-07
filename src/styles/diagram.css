@@ -171,7 +171,8 @@
 }
 
 .search-bar input,
-.annotation-field textarea {
+.annotation-field textarea,
+.snapshot-composer__field input {
   border: 1px solid var(--border-strong);
   border-radius: 14px;
   padding: 13px 14px;
@@ -182,7 +183,8 @@
 }
 
 .search-bar input:focus-visible,
-.annotation-field textarea:focus-visible {
+.annotation-field textarea:focus-visible,
+.snapshot-composer__field input:focus-visible {
   border-color: var(--read-edge);
   box-shadow: 0 0 0 4px rgba(45, 108, 223, 0.12);
   outline: none;
@@ -419,12 +421,7 @@
 .architecture-canvas {
   position: relative;
   height: 100%;
-  background:
-    radial-gradient(circle at 18px 18px, rgba(44, 72, 104, 0.08) 0 1.2px, transparent 1.5px),
-    linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(241, 246, 251, 0.96)),
-    linear-gradient(90deg, rgba(145, 164, 188, 0.14) 1px, transparent 1px),
-    linear-gradient(rgba(145, 164, 188, 0.14) 1px, transparent 1px);
-  background-size: 28px 28px, auto, 28px 28px, 28px 28px;
+  background: linear-gradient(180deg, rgba(248, 251, 255, 0.98), rgba(241, 246, 251, 0.96));
 }
 
 .app-shell--theme-analysis .architecture-canvas {
@@ -451,6 +448,14 @@
 .architecture-canvas .react-flow__viewport {
   background: transparent;
   z-index: 1;
+}
+
+.architecture-edge-markers {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .architecture-canvas .react-flow__node.rf-node--structural {
@@ -720,70 +725,10 @@
 }
 
 .semantic-legend__swatch {
-  position: relative;
   flex: 0 0 auto;
-  width: 40px;
-  height: 0;
-  border-top: 3px solid var(--legend-stroke, #455a75);
-  border-radius: 999px;
-}
-
-.semantic-legend__swatch::after,
-.semantic-legend__swatch::before {
-  content: '';
-  position: absolute;
-}
-
-.semantic-legend__swatch-marker--arrowclosed::after {
-  right: -1px;
-  top: -6px;
-  border-top: 6px solid transparent;
-  border-bottom: 6px solid transparent;
-  border-left: 8px solid var(--legend-stroke, #455a75);
-}
-
-.semantic-legend__swatch-marker--arrow::after {
-  right: 0;
-  top: -5px;
-  width: 8px;
-  height: 8px;
-  border-top: 2px solid var(--legend-stroke, #455a75);
-  border-right: 2px solid var(--legend-stroke, #455a75);
-  transform: rotate(45deg);
-}
-
-.semantic-legend__swatch-marker--circle::after {
-  right: -1px;
-  top: -5px;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--legend-stroke, #455a75);
-}
-
-.semantic-legend__swatch-marker--diamond::after {
-  right: 0;
-  top: -5px;
-  width: 10px;
-  height: 10px;
-  background: var(--legend-stroke, #455a75);
-  transform: rotate(45deg);
-}
-
-.semantic-legend__swatch-marker--tee::before {
-  right: 0;
-  top: -5px;
-  width: 2px;
-  height: 10px;
-  background: var(--legend-stroke, #455a75);
-}
-
-.semantic-legend__swatch-marker--tee::after {
-  right: 0;
-  top: -1px;
-  width: 10px;
-  height: 2px;
-  background: var(--legend-stroke, #455a75);
+  width: 44px;
+  height: 16px;
+  overflow: visible;
 }
 
 .semantic-legend__state {
@@ -939,6 +884,17 @@
   gap: 10px;
 }
 
+.snapshot-composer,
+.snapshot-composer__field {
+  display: grid;
+  gap: 10px;
+}
+
+.snapshot-composer__field span {
+  color: var(--text-subtle);
+  font-size: 0.82rem;
+}
+
 .snapshot-card {
   display: grid;
   gap: 8px;
@@ -960,6 +916,7 @@
 }
 
 .sequence-panel {
+  --sequence-bg: #fff9f1;
   min-height: 100%;
   padding: 18px;
   display: grid;
@@ -970,6 +927,7 @@
 }
 
 .app-shell--theme-analysis .sequence-panel {
+  --sequence-bg: #ffffff;
   background: linear-gradient(180deg, rgba(252, 253, 255, 0.98) 0%, rgba(255, 255, 255, 0.96) 100%);
 }
 
@@ -1019,6 +977,13 @@
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+.sequence-board__ribbon-label {
+  fill: rgba(124, 90, 50, 0.78);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
 }
 
 .sequence-board__edge {
@@ -1234,7 +1199,7 @@
 }
 
 .node-card.is-dimmed {
-  opacity: 0.4;
+  opacity: 0.62;
 }
 
 .node-card.is-structural {
@@ -1387,6 +1352,13 @@
   backdrop-filter: blur(10px);
   color: var(--semantic-stroke, #334155);
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.edge-label[data-edge-label-mode='expanded'] {
+  max-width: 16ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .edge-label.is-highlighted {

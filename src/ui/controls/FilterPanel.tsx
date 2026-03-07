@@ -11,6 +11,8 @@ interface FilterPanelProps {
   theme: ProjectionTheme
   panelBVisible: boolean
   viewportLocked: boolean
+  reduceMotion: boolean
+  hasExpandedNotes: boolean
   onPathPreset(value: DiagramStore['ui']['filters']['pathPreset']): void
   onLaneToggle(value: 'A' | 'B' | 'C'): void
   onSemanticFamilyToggle(value: DiagramStore['ui']['filters']['semanticFamilies'][number]): void
@@ -18,8 +20,15 @@ interface FilterPanelProps {
   onThemeToggle(): void
   onTogglePanelB(): void
   onToggleViewportLock(): void
+  onToggleReduceMotion(): void
   onResetLayout(): void
-  onExpandNotes(): void
+  onToggleNotes(): void
+}
+
+const laneDescriptions: Record<'A' | 'B' | 'C', string> = {
+  A: 'Lane A: CPC / external systems',
+  B: 'Lane B: AEA / gateway / decisioning',
+  C: 'Lane C: central analytics / historian',
 }
 
 export function FilterPanel({
@@ -28,6 +37,8 @@ export function FilterPanel({
   theme,
   panelBVisible,
   viewportLocked,
+  reduceMotion,
+  hasExpandedNotes,
   onPathPreset,
   onLaneToggle,
   onSemanticFamilyToggle,
@@ -35,8 +46,9 @@ export function FilterPanel({
   onThemeToggle,
   onTogglePanelB,
   onToggleViewportLock,
+  onToggleReduceMotion,
   onResetLayout,
-  onExpandNotes,
+  onToggleNotes,
 }: FilterPanelProps) {
   return (
     <section className="filter-panel">
@@ -47,6 +59,7 @@ export function FilterPanel({
             key={option}
             type="button"
             className={filters.pathPreset === option ? 'chip is-active' : 'chip'}
+            aria-pressed={filters.pathPreset === option}
             onClick={() => onPathPreset(option)}
           >
             {option === 'all' ? 'All' : option}
@@ -60,6 +73,9 @@ export function FilterPanel({
             key={lane}
             type="button"
             className={filters.lanes.includes(lane) ? 'chip is-active' : 'chip'}
+            title={laneDescriptions[lane]}
+            aria-label={laneDescriptions[lane]}
+            aria-pressed={filters.lanes.includes(lane)}
             onClick={() => onLaneToggle(lane)}
           >
             {lane}
@@ -73,6 +89,7 @@ export function FilterPanel({
             key={family}
             type="button"
             className={filters.semanticFamilies.includes(family) ? 'chip is-active' : 'chip'}
+            aria-pressed={filters.semanticFamilies.includes(family)}
             onClick={() => onSemanticFamilyToggle(family)}
           >
             {getSemanticFamilyLabel(family)}
@@ -81,27 +98,56 @@ export function FilterPanel({
       </div>
       <div className="filter-group">
         <span className="filter-group__label">View</span>
-        <button type="button" className={mode === 'author' ? 'chip is-active' : 'chip'} onClick={onModeToggle}>
+        <button
+          type="button"
+          className={mode === 'author' ? 'chip is-active' : 'chip'}
+          aria-pressed={mode === 'author'}
+          onClick={onModeToggle}
+        >
           {mode === 'author' ? 'Author mode' : 'Explore mode'}
         </button>
-        <button type="button" className={panelBVisible ? 'chip is-active' : 'chip'} onClick={onTogglePanelB}>
+        <button
+          type="button"
+          className={panelBVisible ? 'chip is-active' : 'chip'}
+          aria-pressed={panelBVisible}
+          onClick={onTogglePanelB}
+        >
           {panelBVisible ? 'Hide Panel B' : 'Show Panel B'}
         </button>
-        <button type="button" className={theme === 'analysis' ? 'chip is-active' : 'chip'} onClick={onThemeToggle}>
+        <button
+          type="button"
+          className={theme === 'analysis' ? 'chip is-active' : 'chip'}
+          aria-pressed={theme === 'analysis'}
+          onClick={onThemeToggle}
+        >
           Analysis theme
         </button>
         <button
           type="button"
           className={viewportLocked ? 'chip is-active' : 'chip'}
+          aria-pressed={viewportLocked}
           onClick={onToggleViewportLock}
         >
           {viewportLocked ? 'Unlock viewport' : 'Lock viewport'}
         </button>
+        <button
+          type="button"
+          className={reduceMotion ? 'chip is-active' : 'chip'}
+          aria-pressed={reduceMotion}
+          onClick={onToggleReduceMotion}
+        >
+          Reduce motion
+        </button>
         <button type="button" className="chip" onClick={onResetLayout}>
           Reset layout
         </button>
-        <button type="button" className="chip" onClick={onExpandNotes}>
-          Expand all notes
+        <button
+          type="button"
+          className={hasExpandedNotes ? 'chip is-active' : 'chip'}
+          aria-pressed={hasExpandedNotes}
+          onClick={onToggleNotes}
+        >
+          {hasExpandedNotes ? 'Collapse all notes' : 'Expand all notes'}
         </button>
       </div>
     </section>

@@ -2,6 +2,30 @@ import type { EdgeSemantic, EdgeSemanticFamily, EdgeStyle } from '@/graph/spec/s
 
 export type SemanticMarkerKind = 'arrow' | 'arrowclosed' | 'circle' | 'tee' | 'diamond'
 
+export interface SemanticMarkerDimensions {
+  width: number
+  height: number
+  refY: number
+  viewBox: string
+}
+
+export type SemanticMarkerGeometry =
+  | {
+      element: 'path'
+      d: string
+      fill: 'currentColor' | 'none'
+      stroke?: 'currentColor'
+      strokeWidth?: number
+      strokeLinecap?: 'round'
+    }
+  | {
+      element: 'circle'
+      cx: number
+      cy: number
+      r: number
+      fill: 'currentColor'
+    }
+
 export interface SemanticPresentation {
   semantic: EdgeSemantic
   family: EdgeSemanticFamily
@@ -32,6 +56,23 @@ export const semanticFamilyLabels: Record<EdgeSemanticFamily, string> = {
   sequence: 'Sequence',
 }
 
+const semanticFamilyDashMap: Record<EdgeSemanticFamily, string | undefined> = {
+  context: undefined,
+  policy: '12 6',
+  runtime: '2 6',
+  write: '18 5 4 5',
+  feedback: '7 4',
+  telemetry: '1 5',
+  sequence: '10 4 2 4',
+}
+
+export const semanticMarkerDimensions: SemanticMarkerDimensions = {
+  width: 10,
+  height: 8,
+  refY: 4,
+  viewBox: '0 0 10 8',
+}
+
 export const semanticFamilyMembers: Record<EdgeSemanticFamily, EdgeSemantic[]> = {
   context: ['gateway-internal', 'read-only', 'normalization', 'retrieval'],
   policy: ['proposal', 'policy-soft', 'policy-hard', 'validation'],
@@ -57,7 +98,7 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'context',
     familyLabel: semanticFamilyLabels.context,
     label: 'Read-only',
-    stroke: '#2d6cdf',
+    stroke: '#2563eb',
     marker: 'arrow',
     icon: 'RO',
   },
@@ -66,7 +107,7 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'context',
     familyLabel: semanticFamilyLabels.context,
     label: 'Normalization',
-    stroke: '#6a8bd6',
+    stroke: '#7c3aed',
     marker: 'arrow',
     icon: 'NM',
   },
@@ -75,7 +116,7 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'context',
     familyLabel: semanticFamilyLabels.context,
     label: 'Retrieval',
-    stroke: '#4c7bc1',
+    stroke: '#15803d',
     marker: 'arrow',
     icon: 'RT',
   },
@@ -84,7 +125,7 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'policy',
     familyLabel: semanticFamilyLabels.policy,
     label: 'Proposal',
-    stroke: '#946a14',
+    stroke: '#b45309',
     marker: 'diamond',
     icon: 'PR',
   },
@@ -93,7 +134,7 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'policy',
     familyLabel: semanticFamilyLabels.policy,
     label: 'Policy soft gate',
-    stroke: '#918129',
+    stroke: '#7c6f18',
     marker: 'diamond',
     icon: 'PS',
   },
@@ -102,7 +143,7 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'policy',
     familyLabel: semanticFamilyLabels.policy,
     label: 'Policy hard gate',
-    stroke: '#6b5f1a',
+    stroke: '#9a3412',
     marker: 'diamond',
     icon: 'PH',
   },
@@ -120,7 +161,7 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'runtime',
     familyLabel: semanticFamilyLabels.runtime,
     label: 'Tool call',
-    stroke: '#148a8a',
+    stroke: '#0f9ba8',
     marker: 'circle',
     icon: 'TC',
   },
@@ -138,7 +179,7 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'feedback',
     familyLabel: semanticFamilyLabels.feedback,
     label: 'Status acknowledgement',
-    stroke: '#5a6f94',
+    stroke: '#475569',
     marker: 'arrow',
     icon: 'AK',
   },
@@ -147,7 +188,7 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'feedback',
     familyLabel: semanticFamilyLabels.feedback,
     label: 'Rejection',
-    stroke: '#b45309',
+    stroke: '#b91c1c',
     marker: 'tee',
     icon: 'RJ',
   },
@@ -156,7 +197,7 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'telemetry',
     familyLabel: semanticFamilyLabels.telemetry,
     label: 'KPI',
-    stroke: '#2563eb',
+    stroke: '#0284c7',
     marker: 'circle',
     icon: 'KP',
   },
@@ -165,7 +206,7 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'telemetry',
     familyLabel: semanticFamilyLabels.telemetry,
     label: 'Subscription',
-    stroke: '#0f766e',
+    stroke: '#059669',
     marker: 'circle',
     icon: 'SB',
   },
@@ -233,14 +274,66 @@ export function describeSemanticForSearch(semantic: EdgeSemantic): string {
   return `${presentation.familyLabel} · ${semantic}`
 }
 
-export function edgeStrokeDash(style: EdgeStyle): string | undefined {
-  if (style === 'dashed') {
-    return '8 4'
+export function getSemanticFamilyStrokeDash(family: EdgeSemanticFamily): string | undefined {
+  return semanticFamilyDashMap[family]
+}
+
+export function getSemanticStrokeDash(semantic: EdgeSemantic): string | undefined {
+  return getSemanticFamilyStrokeDash(getSemanticPresentation(semantic).family)
+}
+
+export function getSemanticMarkerRefX(marker: SemanticMarkerKind): number {
+  if (marker === 'tee') {
+    return 2
   }
-  if (style === 'dotted') {
-    return '2 5'
+  if (marker === 'circle') {
+    return 5
   }
-  return undefined
+  return 9
+}
+
+export function getSemanticMarkerGeometry(marker: SemanticMarkerKind): SemanticMarkerGeometry {
+  switch (marker) {
+    case 'arrow':
+      return {
+        element: 'path',
+        d: 'M 1 1 L 9 4 L 1 7',
+        fill: 'none',
+        stroke: 'currentColor',
+        strokeWidth: 1.7,
+        strokeLinecap: 'round',
+      }
+    case 'circle':
+      return {
+        element: 'circle',
+        cx: 5,
+        cy: 4,
+        r: 3,
+        fill: 'currentColor',
+      }
+    case 'tee':
+      return {
+        element: 'path',
+        d: 'M 1 1 L 1 7 M 1 4 L 9 4',
+        fill: 'none',
+        stroke: 'currentColor',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+      }
+    case 'diamond':
+      return {
+        element: 'path',
+        d: 'M 5 0.8 L 9.2 4 L 5 7.2 L 0.8 4 z',
+        fill: 'currentColor',
+      }
+    case 'arrowclosed':
+    default:
+      return {
+        element: 'path',
+        d: 'M 0 0 L 10 4 L 0 8 z',
+        fill: 'currentColor',
+      }
+  }
 }
 
 export function edgeStrokeWidth(style: EdgeStyle): number {

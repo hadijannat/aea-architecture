@@ -41,6 +41,45 @@ async function ensureCompactDensity(page: Page, nodeId: string) {
   throw new Error(`Node ${nodeId} did not enter compact density`)
 }
 
+async function ensureEdgeLabelMode(
+  page: Page,
+  edgeId: string,
+  mode: 'compact' | 'expanded',
+  action: 'zoom-in' | 'zoom-out',
+  maxClicks = 8,
+) {
+  const edgeLabel = page.locator(`.edge-label[data-edge-id="${edgeId}"]`)
+  const control = page.locator('.react-flow__controls-button').nth(action === 'zoom-in' ? 0 : 1)
+
+  for (let index = 0; index < maxClicks; index += 1) {
+    if ((await edgeLabel.getAttribute('data-edge-label-mode')) === mode) {
+      return edgeLabel
+    }
+    await control.click()
+    await page.waitForTimeout(160)
+  }
+
+  throw new Error(`Edge ${edgeId} did not enter ${mode} label mode`)
+}
+
+async function architectureEdgeIsAnimated(page: Page, edgeId: string) {
+  return page.locator(`.semantic-edge[data-edge-id="${edgeId}"]`).evaluate((element) => {
+    const edge = element.closest('.react-flow__edge')
+    return edge?.classList.contains('animated') ?? false
+  })
+}
+
+async function expandedNoteIds(page: Page) {
+  return page.evaluate(() => {
+    const stored = window.localStorage.getItem('aea-architecture-ui')
+    if (!stored) {
+      return []
+    }
+    const parsed = JSON.parse(stored)
+    return parsed.state?.projection?.expandedNoteIds ?? []
+  })
+}
+
 function parseEdgePoints(value: string) {
   return value
     .split(' ')
@@ -142,7 +181,8 @@ test('desktop canvas includes the overview map and grouped semantic legend', asy
   await expect(page.locator('.canvas-hud')).toHaveCount(0)
   await expect(page.locator('.semantic-overview')).toBeVisible()
   await expect(page.locator('[data-overview-map]')).toBeVisible()
-  await expect(page.locator('[data-write-arrow-id]')).toHaveCount(4)
+  await expect(page.locator('[data-write-arrow-id="F_AUDIT"]')).toBeVisible()
+  await expect(page.locator('[data-write-arrow-id="F3e"]')).toBeVisible()
   await expect(page.locator('[data-legend-family="feedback"]')).toBeVisible()
   await expect(page.locator('[data-legend-item="status-ack"]')).toBeVisible()
   await expect(page.locator('[data-legend-item="rejection"]')).toBeVisible()
@@ -187,6 +227,52 @@ test('selected sequence edges expand from ids into human-readable action labels'
   await expect(sequenceLabel).toHaveText('PB_F1')
 })
 
+test('architecture edge labels expand with zoom and truncate to human-readable labels', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+
+  const edgeLabel = await ensureEdgeLabelMode(page, 'F4', 'compact', 'zoom-out')
+  await expect(edgeLabel).toHaveText('F4')
+
+  await ensureEdgeLabelMode(page, 'F4', 'expanded', 'zoom-in')
+  await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'expanded')
+  await expect(edgeLabel).toContainText('validated candidate plan')
+})
+
+test('toggle chips expose pressed state and descriptive lane labels', async ({ page }) => {
+  await page.goto('/')
+
+  const laneA = page.getByRole('button', { name: 'Lane A: CPC / external systems' })
+  await expect(laneA).toHaveAttribute('aria-pressed', 'false')
+  await laneA.click()
+  await expect(laneA).toHaveAttribute('aria-pressed', 'true')
+
+  const claimC4 = page.getByRole('button', { name: 'C4' }).first()
+  await expect(claimC4).toHaveAttribute('aria-pressed', 'false')
+  await claimC4.click()
+  await expect(claimC4).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('reduce motion toggle disables animated architecture edges', async ({ page }) => {
+  await page.goto('/')
+
+  const reduceMotion = page.getByRole('button', { name: 'Reduce motion' })
+  await expect(reduceMotion).toHaveAttribute('aria-pressed', 'false')
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_VoR_ACK')).toBe(true)
+
+  await reduceMotion.click()
+  await expect(reduceMotion).toHaveAttribute('aria-pressed', 'true')
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_VoR_ACK')).toBe(false)
+})
+
+test('system reduced-motion preference disables animated architecture edges', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+
+  await expect(page.getByRole('button', { name: 'Reduce motion' })).toHaveAttribute('aria-pressed', 'false')
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_VoR_ACK')).toBe(false)
+})
+
 test('compact nodes summarize metadata and reveal the full chips on hover', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
@@ -212,9 +298,57 @@ test('analysis theme persists across reloads', async ({ page }) => {
   await expect(page.locator('.app-shell')).toHaveClass(/app-shell--theme-analysis/)
 })
 
+test('sequence background and ribbon label follow the active theme', async ({ page }) => {
+  await page.goto('/')
+
+  const sequenceBackground = page.locator('[data-sequence-background]')
+  await expect(page.getByText('VoR boundary')).toBeVisible()
+  await expect
+    .poll(() => sequenceBackground.evaluate((element) => getComputedStyle(element).fill))
+    .toBe('rgb(255, 249, 241)')
+
+  await page.getByRole('button', { name: 'Analysis theme' }).click()
+  await expect
+    .poll(() => sequenceBackground.evaluate((element) => getComputedStyle(element).fill))
+    .toBe('rgb(255, 255, 255)')
+})
+
+test('notes control toggles the expanded note set', async ({ page }) => {
+  await page.goto('/')
+
+  const notesToggle = page.getByRole('button', { name: 'Expand all notes' })
+  await expect(notesToggle).toHaveAttribute('aria-pressed', 'false')
+  await notesToggle.click()
+  const collapseToggle = page.getByRole('button', { name: 'Collapse all notes' })
+  await expect(collapseToggle).toHaveAttribute('aria-pressed', 'true')
+  await expect(await expandedNoteIds(page)).not.toHaveLength(0)
+
+  await collapseToggle.click()
+  await expect(page.getByRole('button', { name: 'Expand all notes' })).toHaveAttribute('aria-pressed', 'false')
+  await expect(await expandedNoteIds(page)).toHaveLength(0)
+})
+
+test('projection snapshots use the inline composer', async ({ page }) => {
+  await page.goto('/')
+
+  const snapshotName = page.getByLabel('Snapshot name')
+  const saveButton = page.getByRole('button', { name: 'Save' })
+
+  await expect(saveButton).toBeDisabled()
+  await snapshotName.fill('Review checkpoint')
+  await snapshotName.press('Enter')
+
+  await expect(page.locator('.snapshot-card').first()).toContainText('Review checkpoint')
+  await expect(snapshotName).toHaveValue('')
+})
+
 test('write-corridor routes stay orthogonal and labels avoid nearby nodes', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/?edge=F_VoR_ACK')
+  await page.keyboard.press('Escape')
+  await ensureEdgeLabelMode(page, 'F5', 'compact', 'zoom-out')
+  await ensureEdgeLabelMode(page, 'F6', 'compact', 'zoom-out')
+  await ensureEdgeLabelMode(page, 'F_VoR_ACK', 'compact', 'zoom-out')
 
   const edgePointsValue = await page.locator('.semantic-edge[data-edge-id="F4"]').getAttribute('data-edge-points')
   expect(edgePointsValue).toBeTruthy()

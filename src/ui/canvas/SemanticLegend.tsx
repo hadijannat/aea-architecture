@@ -1,9 +1,12 @@
-import type { CSSProperties } from 'react'
 import clsx from 'clsx'
 
 import {
+  getSemanticMarkerGeometry,
+  getSemanticMarkerRefX,
   getSemanticPresentationsForFamily,
+  getSemanticStrokeDash,
   semanticFamilyOrder,
+  semanticMarkerDimensions,
 } from '@/graph/compile/semanticPresentation'
 
 const stateItems = [
@@ -12,6 +15,27 @@ const stateItems = [
   { id: 'dimmed', label: 'Dimmed context' },
   { id: 'write-overlay', label: 'Write-path overview overlay' },
 ] as const
+
+function renderMarkerShape(
+  marker: ReturnType<typeof getSemanticPresentationsForFamily>[number],
+  color: string,
+) {
+  const geometry = getSemanticMarkerGeometry(marker.marker)
+
+  if (geometry.element === 'circle') {
+    return <circle cx={geometry.cx} cy={geometry.cy} r={geometry.r} fill={color} />
+  }
+
+  return (
+    <path
+      d={geometry.d}
+      fill={geometry.fill === 'currentColor' ? color : geometry.fill}
+      stroke={geometry.stroke === 'currentColor' ? color : undefined}
+      strokeWidth={geometry.strokeWidth}
+      strokeLinecap={geometry.strokeLinecap}
+    />
+  )
+}
 
 export function SemanticLegend() {
   return (
@@ -35,15 +59,35 @@ export function SemanticLegend() {
                   className="semantic-legend__item"
                   data-legend-item={presentation.semantic}
                 >
-                  <span
-                    className={clsx(
-                      'semantic-legend__swatch',
-                      `semantic-legend__swatch--${presentation.semantic}`,
-                      `semantic-legend__swatch-marker--${presentation.marker}`,
-                    )}
-                    style={{ '--legend-stroke': presentation.stroke } as CSSProperties}
+                  <svg
+                    className={clsx('semantic-legend__swatch', `semantic-legend__swatch--${presentation.semantic}`)}
+                    viewBox="0 0 44 16"
                     aria-hidden="true"
-                  />
+                  >
+                    <defs>
+                      <marker
+                        id={`legend-marker-${presentation.semantic}`}
+                        viewBox={semanticMarkerDimensions.viewBox}
+                        markerWidth={semanticMarkerDimensions.width}
+                        markerHeight={semanticMarkerDimensions.height}
+                        refX={getSemanticMarkerRefX(presentation.marker)}
+                        refY={semanticMarkerDimensions.refY}
+                        orient="auto"
+                        markerUnits="userSpaceOnUse"
+                      >
+                        {renderMarkerShape(presentation, presentation.stroke)}
+                      </marker>
+                    </defs>
+                    <path
+                      d="M 3 8 L 35 8"
+                      fill="none"
+                      stroke={presentation.stroke}
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeDasharray={getSemanticStrokeDash(presentation.semantic)}
+                      markerEnd={`url(#legend-marker-${presentation.semantic})`}
+                    />
+                  </svg>
                   <div>
                     <strong>{presentation.label}</strong>
                     <span>{presentation.semantic}</span>

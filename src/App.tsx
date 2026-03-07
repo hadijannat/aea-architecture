@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels'
 import type { OnNodeDrag } from '@xyflow/react'
 import { jsPDF } from 'jspdf'
@@ -49,6 +49,7 @@ export default function App() {
   const { actions } = store
   const architectureCanvasRef = useRef<HTMLDivElement>(null)
   const sequencePanelRef = useRef<HTMLElement>(null)
+  const [snapshotName, setSnapshotName] = useState('')
 
   const overviewMetrics = useMemo(
     () => [
@@ -75,6 +76,10 @@ export default function App() {
     ],
     [store.ui.mode, store.ui.panelBVisible],
   )
+  const noteNodeIds = useMemo(
+    () => graphManifest.nodes.filter((node) => node.inspector.notes.length > 0).map((node) => node.id),
+    [],
+  )
 
   useEffect(() => {
     void actions.initialize()
@@ -90,6 +95,15 @@ export default function App() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
+  }, [actions])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const syncReduceMotion = () => actions.setSystemReduceMotion(mediaQuery.matches)
+
+    syncReduceMotion()
+    mediaQuery.addEventListener('change', syncReduceMotion)
+    return () => mediaQuery.removeEventListener('change', syncReduceMotion)
   }, [actions])
 
   useEffect(() => {
@@ -155,6 +169,16 @@ export default function App() {
     () => buildSearchResults(store.ui.filters.search, graphManifest),
     [store.ui.filters.search],
   )
+
+  function saveSnapshot() {
+    const trimmedName = snapshotName.trim()
+    if (!trimmedName) {
+      return
+    }
+
+    actions.saveSnapshot(trimmedName)
+    setSnapshotName('')
+  }
 
   const selectedNode = store.ui.selectedNodeId ? resolveGraphNode(store.ui.selectedNodeId) : undefined
   const selectedEdge = store.ui.selectedEdgeId ? resolveGraphEdge(store.ui.selectedEdgeId) : undefined
@@ -310,6 +334,8 @@ export default function App() {
           theme={store.projection.theme}
           panelBVisible={store.ui.panelBVisible}
           viewportLocked={store.ui.viewportLocked}
+          reduceMotion={store.ui.reduceMotion}
+          hasExpandedNotes={store.projection.expandedNoteIds.length > 0}
           onPathPreset={(value) => actions.setFilter('pathPreset', value)}
           onLaneToggle={(value) => actions.setFilter('lanes', toggleInList(store.ui.filters.lanes, value))}
           onSemanticFamilyToggle={(value) =>
@@ -319,11 +345,10 @@ export default function App() {
           onThemeToggle={() => actions.setTheme(store.projection.theme === 'analysis' ? 'default' : 'analysis')}
           onTogglePanelB={actions.togglePanelB}
           onToggleViewportLock={actions.toggleViewportLock}
+          onToggleReduceMotion={actions.toggleReduceMotion}
           onResetLayout={() => void actions.resetLayout()}
-          onExpandNotes={() =>
-            actions.setExpandedNoteIds(
-              graphManifest.nodes.filter((node) => node.inspector.notes.length > 0).map((node) => node.id),
-            )
+          onToggleNotes={() =>
+            actions.setExpandedNoteIds(store.projection.expandedNoteIds.length > 0 ? [] : noteNodeIds)
           }
         />
         <div className="toolbar__chips">
@@ -361,14 +386,14 @@ export default function App() {
           >
             <Panel id="architecture" defaultSize={100 - store.ui.panelBSize} minSize={48}>
               <ArchitectureCanvas
-              containerRef={architectureCanvasRef}
-              nodes={architectureNodes}
-              edges={architectureEdges}
-              ui={store.ui}
-              theme={store.projection.theme}
-              layoutReady={store.layout.ready}
-              onViewport={actions.setViewport}
-              onClearSelection={actions.clearSelection}
+                containerRef={architectureCanvasRef}
+                nodes={architectureNodes}
+                edges={architectureEdges}
+                ui={store.ui}
+                theme={store.projection.theme}
+                layoutReady={store.layout.ready}
+                onViewport={actions.setViewport}
+                onClearSelection={actions.clearSelection}
                 onNodeDragStop={onNodeDragStop}
                 onResetLayout={() => void actions.resetLayout()}
               />
@@ -462,19 +487,31 @@ export default function App() {
           ) : null}
           <section className="inspector-section">
             <h2>Projection snapshots</h2>
-            <div className="inspector-actions">
-              <button
-                type="button"
-                onClick={() => {
-                  const name = window.prompt('Snapshot name')
-                  if (name) {
-                    actions.saveSnapshot(name)
-                  }
-                }}
-              >
-                Save snapshot
-              </button>
-            </div>
+            <form
+              className="snapshot-composer"
+              onSubmit={(event) => {
+                event.preventDefault()
+                saveSnapshot()
+              }}
+            >
+              <label className="snapshot-composer__field">
+                <span>Snapshot name</span>
+                <input
+                  type="text"
+                  value={snapshotName}
+                  placeholder="Name this projection state"
+                  onChange={(event) => setSnapshotName(event.target.value)}
+                />
+              </label>
+              <div className="inspector-actions">
+                <button type="submit" disabled={snapshotName.trim().length === 0}>
+                  Save
+                </button>
+                <button type="button" onClick={() => setSnapshotName('')} disabled={snapshotName.length === 0}>
+                  Cancel
+                </button>
+              </div>
+            </form>
             <div className="snapshot-list">
               {store.projection.snapshots.length === 0 ? <p>No saved snapshots yet.</p> : null}
               {store.projection.snapshots.map((snapshot) => (

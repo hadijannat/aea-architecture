@@ -14,6 +14,7 @@ export function ClaimChips({ manifest, selected, onToggle }: ClaimChipsProps) {
           key={claim.id}
           type="button"
           className={selected.includes(claim.id) ? 'chip is-active' : 'chip'}
+          aria-pressed={selected.includes(claim.id)}
           onClick={() => onToggle(claim.id)}
         >
           {claim.id}

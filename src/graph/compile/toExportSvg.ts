@@ -5,7 +5,13 @@ import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
 import type { DiagramStore } from '@/state/diagramStore'
 
 import { compileSequenceBoard, type SequenceBoardModel } from './sequenceBoard'
-import { getSemanticPresentation } from './semanticPresentation'
+import {
+  getSemanticMarkerGeometry,
+  getSemanticMarkerRefX,
+  getSemanticPresentation,
+  getSemanticStrokeDash,
+  semanticMarkerDimensions,
+} from './semanticPresentation'
 import { deriveDiagramState } from './toReactFlow'
 
 export type ExportMode = 'viewport' | 'publication'
@@ -32,8 +38,6 @@ export interface ExportSvgDocument {
 interface ExportTokens {
   markerWidth: number
   markerHeight: number
-  markerRefX: number
-  markerRefY: number
   titleSize?: string
   nodeTitleSize: string
   structuralTitleSize: string
@@ -44,8 +48,6 @@ interface ExportTokens {
   stepSummarySize: string
   eyebrowSize: string
   strokeWidths: Record<EdgeSpec['style'], number>
-  dashedPattern: string
-  dottedPattern: string
 }
 
 interface ExportRenderState {
@@ -161,48 +163,28 @@ function edgeWidth(edge: EdgeSpec, tokens: ExportTokens) {
   return tokens.strokeWidths[edge.style]
 }
 
-function edgeDash(edge: EdgeSpec, tokens: ExportTokens) {
-  if (edge.style === 'dashed') {
-    return `stroke-dasharray="${tokens.dashedPattern}"`
-  }
-  if (edge.style === 'dotted') {
-    return `stroke-dasharray="${tokens.dottedPattern}"`
-  }
-  return ''
+function edgeDash(edge: EdgeSpec) {
+  const dash = getSemanticStrokeDash(edge.semantic)
+  return dash ? `stroke-dasharray="${dash}"` : ''
 }
 
 function edgeMarker(edge: EdgeSpec) {
   return `marker-${edge.semantic}`
 }
 
-function markerRefX(marker: ReturnType<typeof getSemanticPresentation>['marker'], tokens: ExportTokens) {
-  if (marker === 'tee') {
-    return 2
-  }
-  if (marker === 'circle') {
-    return tokens.markerRefY + 1.25
-  }
-  return tokens.markerRefX
-}
+function markerMarkup(marker: ReturnType<typeof getSemanticPresentation>['marker'], color: string) {
+  const geometry = getSemanticMarkerGeometry(marker)
 
-function markerMarkup(
-  marker: ReturnType<typeof getSemanticPresentation>['marker'],
-  tokens: ExportTokens,
-  color: string,
-) {
-  switch (marker) {
-    case 'arrow':
-      return `<path d="M 1 0.8 L ${tokens.markerWidth - 1} ${tokens.markerRefY} L 1 ${tokens.markerHeight - 0.8}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" />`
-    case 'circle':
-      return `<circle cx="${tokens.markerRefY + 1.25}" cy="${tokens.markerRefY}" r="${tokens.markerRefY - 0.4}" fill="${color}" />`
-    case 'tee':
-      return `<path d="M 1 0.8 L 1 ${tokens.markerHeight - 0.8} M 1 ${tokens.markerRefY} L ${tokens.markerWidth - 1} ${tokens.markerRefY}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" />`
-    case 'diamond':
-      return `<path d="M ${tokens.markerWidth / 2} 0.6 L ${tokens.markerWidth - 0.6} ${tokens.markerRefY} L ${tokens.markerWidth / 2} ${tokens.markerHeight - 0.6} L 0.6 ${tokens.markerRefY} z" fill="${color}" />`
-    case 'arrowclosed':
-    default:
-      return `<path d="M 0 0 L ${tokens.markerWidth} ${tokens.markerRefY} L 0 ${tokens.markerHeight} z" fill="${color}" />`
+  if (geometry.element === 'circle') {
+    return `<circle cx="${geometry.cx}" cy="${geometry.cy}" r="${geometry.r}" fill="${color}" />`
   }
+
+  const stroke = geometry.stroke === 'currentColor' ? ` stroke="${color}"` : ''
+  const strokeWidth = geometry.strokeWidth ? ` stroke-width="${geometry.strokeWidth}"` : ''
+  const strokeLinecap = geometry.strokeLinecap ? ` stroke-linecap="${geometry.strokeLinecap}"` : ''
+  const fill = geometry.fill === 'currentColor' ? color : geometry.fill
+
+  return `<path d="${geometry.d}" fill="${fill}"${stroke}${strokeWidth}${strokeLinecap} />`
 }
 
 function renderMarkerDefs(tokens: ExportTokens, manifest: GraphManifest) {
@@ -213,8 +195,8 @@ function renderMarkerDefs(tokens: ExportTokens, manifest: GraphManifest) {
     ${semantics
       .map((semantic) => {
         const presentation = getSemanticPresentation(semantic)
-        return `<marker id="marker-${semantic}" markerWidth="${tokens.markerWidth}" markerHeight="${tokens.markerHeight}" refX="${markerRefX(presentation.marker, tokens)}" refY="${tokens.markerRefY}" orient="auto" markerUnits="strokeWidth">
-      ${markerMarkup(presentation.marker, tokens, presentation.stroke)}
+        return `<marker id="marker-${semantic}" viewBox="${semanticMarkerDimensions.viewBox}" markerWidth="${tokens.markerWidth}" markerHeight="${tokens.markerHeight}" refX="${getSemanticMarkerRefX(presentation.marker)}" refY="${semanticMarkerDimensions.refY}" orient="auto" markerUnits="userSpaceOnUse">
+      ${markerMarkup(presentation.marker, presentation.stroke)}
     </marker>`
       })
       .join('\n')}
@@ -287,8 +269,6 @@ function viewportTokens(): ExportTokens {
   return {
     markerWidth: 10,
     markerHeight: 8,
-    markerRefX: 9,
-    markerRefY: 4,
     nodeTitleSize: '15',
     structuralTitleSize: '18',
     subtitleSize: '12',
@@ -304,8 +284,6 @@ function viewportTokens(): ExportTokens {
       dashed: 1.8,
       dotted: 1.4,
     },
-    dashedPattern: '8 4',
-    dottedPattern: '2 5',
   }
 }
 
@@ -313,8 +291,6 @@ function publicationTokens(): ExportTokens {
   return {
     markerWidth: 7,
     markerHeight: 5.5,
-    markerRefX: 6.4,
-    markerRefY: 2.75,
     titleSize: '9pt',
     nodeTitleSize: '6.5pt',
     structuralTitleSize: '6.5pt',
@@ -331,8 +307,6 @@ function publicationTokens(): ExportTokens {
       dashed: 1.0,
       dotted: 0.5,
     },
-    dashedPattern: '4 2',
-    dottedPattern: '1 3',
   }
 }
 
@@ -395,7 +369,7 @@ function renderArchitectureEdges(
   <g id="edge-${edge.id}">
     <title>${esc(edge.id)}: ${esc(edge.label)}</title>
     <desc>${esc(edge.inspector.rationale)}</desc>
-    <path d="${translateScaledPath(route.path, transform)}" fill="none" stroke="${edgeStroke(edge)}" stroke-width="${edgeWidth(edge, tokens)}" ${edgeDash(edge, tokens)} marker-end="url(#${edgeMarker(edge)})" />
+    <path d="${translateScaledPath(route.path, transform)}" fill="none" stroke="${edgeStroke(edge)}" stroke-width="${edgeWidth(edge, tokens)}" ${edgeDash(edge)} marker-end="url(#${edgeMarker(edge)})" />
     <text id="edge-label-${edge.id}" x="${labelPoint.x}" y="${labelPoint.y}" text-anchor="middle" fill="${edgeStroke(edge)}" font-size="${tokens.edgeLabelSize}" font-family="Arial, sans-serif">${esc(edge.id)}${edge.markers.includes('diode') ? ' ⊘' : ''} · ${esc(edge.label)}</text>
   </g>`
     })
@@ -503,7 +477,7 @@ function renderSequenceBoard(
   <g id="sequence-edge-${edge.edge.id}">
     <title>${esc(edge.edge.id)}: ${esc(edge.edge.label)}</title>
     <desc>${esc(edge.edge.inspector.rationale)}</desc>
-    <path d="${translateScaledPath(edge.path, transform)}" fill="none" stroke="${semanticStroke}" stroke-width="${edgeWidth(edge.edge, tokens)}" ${edgeDash(edge.edge, tokens)} marker-end="url(#${edgeMarker(edge.edge)})" />
+    <path d="${translateScaledPath(edge.path, transform)}" fill="none" stroke="${semanticStroke}" stroke-width="${edgeWidth(edge.edge, tokens)}" ${edgeDash(edge.edge)} marker-end="url(#${edgeMarker(edge.edge)})" />
     <text x="${labelPoint.x}" y="${labelY}" text-anchor="middle" fill="${semanticStroke}" font-size="${tokens.edgeLabelSize}" font-family="Arial, sans-serif">${esc(edge.edge.id)}</text>
   </g>`
     })

@@ -38,6 +38,8 @@ export interface DiagramUiState {
   panelBVisible: boolean
   panelBSize: number
   viewportLocked: boolean
+  reduceMotion: boolean
+  systemReduceMotion: boolean
 }
 
 interface LayoutState {
@@ -61,6 +63,8 @@ interface DiagramActions {
   togglePanelB(): void
   setPanelBSize(size: number): void
   toggleViewportLock(): void
+  toggleReduceMotion(): void
+  setSystemReduceMotion(value: boolean): void
   setMode(mode: DiagramUiState['mode']): void
   setTheme(theme: ProjectionTheme): void
   updateNodePosition(nodeId: string, position: { x: number; y: number }): void
@@ -107,6 +111,8 @@ export const useDiagramStore = create<DiagramStore>()(
           panelBVisible: defaultProjectionOverrides.panelBVisible,
           panelBSize: defaultProjectionOverrides.panelBSize,
           viewportLocked: false,
+          reduceMotion: false,
+          systemReduceMotion: false,
         },
         projection: defaultProjectionOverrides,
         layout: {
@@ -270,6 +276,24 @@ export const useDiagramStore = create<DiagramStore>()(
               ui: {
                 ...state.ui,
                 viewportLocked: !state.ui.viewportLocked,
+              },
+            }))
+          },
+          toggleReduceMotion() {
+            set((state) => ({
+              ...state,
+              ui: {
+                ...state.ui,
+                reduceMotion: !state.ui.reduceMotion,
+              },
+            }))
+          },
+          setSystemReduceMotion(value) {
+            set((state) => ({
+              ...state,
+              ui: {
+                ...state.ui,
+                systemReduceMotion: value,
               },
             }))
           },
@@ -444,6 +468,7 @@ export const useDiagramStore = create<DiagramStore>()(
             panelBVisible: state.ui.panelBVisible,
             panelBSize: state.ui.panelBSize,
             viewportLocked: state.ui.viewportLocked,
+            reduceMotion: state.ui.reduceMotion,
           },
           projection: state.projection,
         }),

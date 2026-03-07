@@ -18,7 +18,7 @@ interface SemanticOverviewMapProps {
   containerRef?: RefObject<HTMLDivElement | null>
   nodes: DiagramFlowNode[]
   edges: DiagramFlowEdge[]
-  activeSelection?: string
+  activeSelectionLabel?: string
 }
 
 interface OverviewWriteRoute {
@@ -28,7 +28,6 @@ interface OverviewWriteRoute {
   label: Point
 }
 
-const writeEdgeIds = new Set(['F4', 'F5', 'F6', 'F_VoR_ACK'])
 const { canvas, gateway } = graphManifest.layoutDefaults
 
 function isHandleId(value?: string | null): value is HandleId {
@@ -99,7 +98,7 @@ export function SemanticOverviewMap({
   containerRef,
   nodes,
   edges,
-  activeSelection,
+  activeSelectionLabel,
 }: SemanticOverviewMapProps) {
   const viewport = useViewport()
   const { fitView, setCenter } = useReactFlow()
@@ -141,12 +140,12 @@ export function SemanticOverviewMap({
   }, [containerRef])
 
   const selectionLabel = useMemo(() => {
-    if (!activeSelection) {
+    if (!activeSelectionLabel) {
       return 'Jump to a clean board region.'
     }
 
-    return `Selection active: ${activeSelection}`
-  }, [activeSelection])
+    return `Selection active: ${activeSelectionLabel}`
+  }, [activeSelectionLabel])
 
   const viewportRect = useMemo(() => {
     const { width, height } = containerSize
@@ -166,7 +165,13 @@ export function SemanticOverviewMap({
     const nodesById = new Map(nodes.map((node) => [node.id, node]))
 
     return edges
-      .filter((edge) => writeEdgeIds.has(edge.id) && !edge.hidden)
+      .filter((edge) => {
+        const spec = edge.data?.spec
+        if (edge.hidden || !spec) {
+          return false
+        }
+        return spec.semantic === 'writeback' || spec.tags.includes('write-path')
+      })
       .map((edge) => {
         if (!edge.data) {
           return undefined

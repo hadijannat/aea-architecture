@@ -1,6 +1,8 @@
 import { buildSearchResults } from '@/graph/compile/searchIndex'
 import {
+  getSemanticFamilyStrokeDash,
   getSemanticPresentation,
+  semanticFamilyOrder,
   resolveSemanticFamilies,
 } from '@/graph/compile/semanticPresentation'
 import { compileSequenceBoard } from '@/graph/compile/sequenceBoard'
@@ -44,6 +46,8 @@ async function createState(overrides?: Partial<DiagramStore['ui']>): Promise<Dia
       panelBVisible: true,
       panelBSize: 24,
       viewportLocked: false,
+      reduceMotion: false,
+      systemReduceMotion: false,
       ...overrides,
     },
     actions: {} as DiagramStore['actions'],
@@ -230,6 +234,21 @@ describe('derived projections', () => {
       label: 'Status acknowledgement',
     })
     expect(getSemanticPresentation('rejection').stroke).not.toBe(getSemanticPresentation('status-ack').stroke)
+  })
+
+  it('assigns a unique dash rhythm to each semantic family', () => {
+    const dashes = semanticFamilyOrder.map((family) => getSemanticFamilyStrokeDash(family) ?? 'solid')
+
+    expect(new Set(dashes).size).toBe(semanticFamilyOrder.length)
+    expect(getSemanticPresentation('tool-call')).toMatchObject({
+      marker: 'circle',
+      stroke: '#0f9ba8',
+    })
+    expect(getSemanticPresentation('rejection')).toMatchObject({
+      marker: 'tee',
+      stroke: '#b91c1c',
+    })
+    expect(getSemanticPresentation('retrieval').stroke).toBe('#15803d')
   })
 
   it('filters claim C4 to the VoR path and sequence', async () => {
@@ -474,9 +493,22 @@ describe('exports', () => {
     expect(publicationDocument.svg).toContain('font-size="9pt"')
     expect(publicationDocument.svg).toContain('font-size="6.5pt"')
     expect(publicationDocument.svg).toContain('font-size="5pt"')
-    expect(publicationDocument.svg).toContain('stroke-dasharray="4 2"')
+    expect(publicationDocument.svg).toContain('stroke-dasharray="18 5 4 5"')
     expect(publicationDocument.svg).toContain('id="sequence-edge-PB_ACK"')
     expect(publicationDocument.svg).toContain('VoR Domain-Transition Sequence')
+  })
+
+  it('exports shared marker definitions and semantic-family dash rhythms', async () => {
+    const state = await createState()
+    const viewportDocument = buildExportSvgDocument(state, { mode: 'viewport' })
+
+    expect(viewportDocument.svg).toContain('id="marker-gateway-internal"')
+    expect(viewportDocument.svg).toContain('id="marker-tool-call"')
+    expect(viewportDocument.svg).toContain('id="marker-rejection"')
+    expect(viewportDocument.svg).toContain('markerUnits="userSpaceOnUse"')
+    expect(viewportDocument.svg).toContain('stroke-dasharray="12 6"')
+    expect(viewportDocument.svg).toContain('stroke-dasharray="7 4"')
+    expect(viewportDocument.svg).toContain('stroke-dasharray="18 5 4 5"')
   })
 
   it('respects the active viewport theme while forcing publication exports to analysis mode', async () => {

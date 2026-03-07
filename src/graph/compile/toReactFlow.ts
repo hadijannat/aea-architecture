@@ -1,8 +1,7 @@
-import { MarkerType, type Edge as FlowEdge, type Node as FlowNode } from '@xyflow/react'
+import type { Edge as FlowEdge, Node as FlowNode } from '@xyflow/react'
 
 import { buildEdgeAriaLabel, buildNodeAriaLabel } from '@/a11y/aria'
 import {
-  getSemanticPresentation,
   matchesSemanticFamilies,
 } from '@/graph/compile/semanticPresentation'
 import {
@@ -564,18 +563,11 @@ export function compileArchitectureEdges(
         focusable: true,
         ariaLabel: buildEdgeAriaLabel(edge, manifest),
         animated:
-          edge.semantic === 'status-ack' ||
-          edge.semantic === 'rejection' ||
-          edge.semantic === 'tool-call',
-        markerEnd: {
-          type:
-            getSemanticPresentation(edge.semantic).marker === 'arrow'
-              ? MarkerType.Arrow
-              : MarkerType.ArrowClosed,
-          width: 20,
-          height: 20,
-          color: getSemanticPresentation(edge.semantic).stroke,
-        },
+          !state.ui.reduceMotion &&
+          !state.ui.systemReduceMotion &&
+          (edge.semantic === 'status-ack' ||
+            edge.semantic === 'rejection' ||
+            edge.semantic === 'tool-call'),
         data: {
           spec: edge,
           ariaLabel: buildEdgeAriaLabel(edge, manifest),

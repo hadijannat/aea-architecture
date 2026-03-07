@@ -3,13 +3,14 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   type EdgeProps,
+  useViewport,
 } from '@xyflow/react'
 import clsx from 'clsx'
 
 import {
-  edgeStrokeDash,
   edgeStrokeWidth,
   getSemanticPresentation,
+  getSemanticStrokeDash,
 } from '@/graph/compile/semanticPresentation'
 import type { DiagramFlowEdge } from '@/graph/compile/toReactFlow'
 import { edgeEntityKey } from '@/graph/spec/manifest'
@@ -18,12 +19,13 @@ import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
 export function BaseSemanticEdge({
   id,
   data,
-  markerEnd,
   sourceX,
   sourceY,
   targetX,
   targetY,
 }: EdgeProps<DiagramFlowEdge>) {
+  const { zoom } = useViewport()
+
   if (!data) {
     return null
   }
@@ -40,7 +42,9 @@ export function BaseSemanticEdge({
   const presentation = getSemanticPresentation(data.spec.semantic)
   const strokeColor = presentation.stroke
   const strokeWidth = edgeStrokeWidth(data.spec.style)
-  const strokeDasharray = edgeStrokeDash(data.spec.style)
+  const strokeDasharray = getSemanticStrokeDash(data.spec.semantic)
+  const showExpandedLabel = data.selected || data.highlighted || zoom >= 0.9
+  const displayLabel = data.spec.displayLabel ?? data.spec.label
 
   return (
     <g
@@ -66,7 +70,7 @@ export function BaseSemanticEdge({
       <path d={edgePath} data-edge-id={id} data-edge-path={edgePath} fill="none" stroke="transparent" strokeWidth={18} />
       <BaseEdge
         path={edgePath}
-        markerEnd={markerEnd}
+        markerEnd={`url(#architecture-marker-${data.spec.semantic})`}
         interactionWidth={18}
         style={{
           stroke: strokeColor,
@@ -88,7 +92,7 @@ export function BaseSemanticEdge({
           )}
           aria-label={data.ariaLabel}
           data-edge-id={id}
-          data-edge-label-mode="compact"
+          data-edge-label-mode={showExpandedLabel ? 'expanded' : 'compact'}
           style={{
             '--semantic-stroke': presentation.stroke,
             transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
@@ -104,8 +108,9 @@ export function BaseSemanticEdge({
             data.callbacks.onSelectEdge(id)
           }}
         >
-          {data.spec.id}
-          {data.spec.markers.includes('diode') ? ' ⊘' : ''}
+          {showExpandedLabel
+            ? `${data.spec.id} · ${displayLabel}`
+            : `${data.spec.id}${data.spec.markers.includes('diode') ? ' ⊘' : ''}`}
         </button>
       </EdgeLabelRenderer>
     </g>
