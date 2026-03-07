@@ -123,6 +123,19 @@ async function viewportTransform(page: Page) {
   return page.locator('.react-flow__viewport').evaluate((element) => getComputedStyle(element).transform)
 }
 
+async function dispatchCtrlWheel(page: Page, selector: string, deltaY: number) {
+  await page.locator(selector).evaluate((element, wheelDelta) => {
+    element.dispatchEvent(
+      new WheelEvent('wheel', {
+        deltaY: wheelDelta,
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+  }, deltaY)
+}
+
 function parseEdgePoints(value: string) {
   return value
     .split(' ')
@@ -391,24 +404,67 @@ test('architecture marker defs stay stroke-relative and the write ribbon follows
   await expect(ribbon).toHaveAttribute('data-write-ribbon-visible', 'false')
 })
 
-test('wheel zoom still works when the cursor is over the write ribbon', async ({ page }) => {
+test('page scroll can reach the sequence while pinch-style zoom still works over the write ribbon', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
 
+  const beforeScroll = await page.evaluate(() => window.scrollY)
+  await page.locator('.architecture-canvas').hover()
+  await page.mouse.wheel(0, 900)
+  await page.waitForTimeout(220)
+  const afterScroll = await page.evaluate(() => window.scrollY)
+
+  expect(afterScroll).toBeGreaterThan(beforeScroll)
+
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
   await page.locator('[data-focus-preset="write"]').click({ force: true })
   const ribbon = page.locator('[data-write-ribbon]')
   await expect(ribbon).toHaveAttribute('data-write-ribbon-visible', 'true')
 
-  const ribbonBox = await ribbon.boundingBox()
-  expect(ribbonBox).not.toBeNull()
-
   const before = await viewportTransform(page)
-  await page.mouse.move((ribbonBox?.x ?? 0) + (ribbonBox?.width ?? 0) / 2, (ribbonBox?.y ?? 0) + (ribbonBox?.height ?? 0) / 2)
-  await page.mouse.wheel(0, -600)
+  await dispatchCtrlWheel(page, '[data-write-ribbon]', -600)
   await page.waitForTimeout(220)
   const after = await viewportTransform(page)
 
   expect(after).not.toBe(before)
+})
+
+test('short desktop viewports keep the sequence panel reachable even with a stale persisted split', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'aea-architecture-ui',
+      JSON.stringify({
+        state: {
+          ui: {
+            panelBVisible: true,
+            panelBSize: 6,
+          },
+          projection: {},
+        },
+        version: 0,
+      }),
+    )
+  })
+  await page.setViewportSize({ width: 1600, height: 760 })
+  await page.goto('/')
+
+  const sequencePanel = page.locator('.sequence-panel')
+  await expect(sequencePanel).toBeVisible()
+
+  const panelHeight = await sequencePanel.evaluate((element) => element.getBoundingClientRect().height)
+  expect(panelHeight).toBeGreaterThan(150)
+
+  const sequenceHeading = page.getByRole('heading', { name: 'VoR Domain-Transition Sequence' })
+  for (let index = 0; index < 6; index += 1) {
+    if (await sequenceHeading.isVisible()) {
+      break
+    }
+    await page.locator('.architecture-canvas').hover()
+    await page.mouse.wheel(0, 900)
+    await page.waitForTimeout(140)
+  }
+
+  await expect(sequenceHeading).toBeVisible()
 })
 
 test('edge inspector surfaces diode and optional rendering semantics', async ({ page }) => {

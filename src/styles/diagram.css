@@ -435,8 +435,8 @@
 
 .workspace__panels {
   position: relative;
-  height: clamp(820px, calc(100vh - 250px), 1080px);
-  min-height: 860px;
+  height: clamp(640px, calc(100vh - 250px), 1080px);
+  min-height: 640px;
 }
 
 .workspace__panels > [data-group] {

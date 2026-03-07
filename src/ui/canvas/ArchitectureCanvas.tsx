@@ -312,6 +312,7 @@ export function ArchitectureCanvas({
         maxZoom={1.55}
         nodesConnectable={false}
         elementsSelectable
+        preventScrolling={false}
         panOnDrag={!ui.viewportLocked}
         zoomOnScroll={!ui.viewportLocked}
         zoomOnPinch={!ui.viewportLocked}

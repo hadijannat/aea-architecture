@@ -44,6 +44,9 @@ function mermaidDownloadName(panel: 'architecture' | 'vor-sequence') {
   return panel === 'architecture' ? 'architecture-topology.mmd' : 'vor-sequence-topology.mmd'
 }
 
+const sequencePanelMinSize = 24
+const sequencePanelMaxSize = 42
+
 export default function App() {
   const store = useDiagramStore()
   const { actions } = store
@@ -202,6 +205,8 @@ export default function App() {
     const step = resolveSequenceStep(key.replace('step:', ''))
     return step ? { title: `${step.id} · ${step.title}`, summary: step.summary } : undefined
   }, [store.ui.hoveredEntityKey])
+
+  const sequencePanelSize = Math.min(sequencePanelMaxSize, Math.max(sequencePanelMinSize, store.ui.panelBSize))
 
   const onNodeDragStop: OnNodeDrag = (_, node) => {
     if (store.ui.mode !== 'author') {
@@ -386,7 +391,7 @@ export default function App() {
               }
             }}
           >
-            <Panel id="architecture" defaultSize={100 - store.ui.panelBSize} minSize={48}>
+            <Panel id="architecture" defaultSize={100 - sequencePanelSize} minSize={48}>
               <ArchitectureCanvas
                 containerRef={architectureCanvasRef}
                 nodes={architectureNodes}
@@ -403,7 +408,12 @@ export default function App() {
             {store.ui.panelBVisible ? (
               <>
                 <PanelResizeHandle className="panel-resize-handle" />
-                <Panel id="sequence" defaultSize={store.ui.panelBSize} minSize={18} maxSize={42}>
+                <Panel
+                  id="sequence"
+                  defaultSize={sequencePanelSize}
+                  minSize={sequencePanelMinSize}
+                  maxSize={sequencePanelMaxSize}
+                >
                   <SequencePanel
                     containerRef={sequencePanelRef}
                     model={sequenceModel}

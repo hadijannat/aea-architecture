@@ -98,6 +98,17 @@ const initialFilters: DiagramFilters = {
   pathPreset: 'all',
 }
 
+const minPanelBSize = 24
+const maxPanelBSize = 42
+
+function clampPanelBSize(size?: number) {
+  if (typeof size !== 'number' || !Number.isFinite(size)) {
+    return defaultProjectionOverrides.panelBSize
+  }
+
+  return Math.min(maxPanelBSize, Math.max(minPanelBSize, size))
+}
+
 export const useDiagramStore = create<DiagramStore>()(
   subscribeWithSelector(
     persist(
@@ -109,7 +120,7 @@ export const useDiagramStore = create<DiagramStore>()(
           highlightedEntityKeys: [],
           viewport: graphManifest.layoutDefaults.viewport,
           panelBVisible: defaultProjectionOverrides.panelBVisible,
-          panelBSize: defaultProjectionOverrides.panelBSize,
+          panelBSize: clampPanelBSize(defaultProjectionOverrides.panelBSize),
           viewportLocked: false,
           reduceMotion: false,
           systemReduceMotion: false,
@@ -258,6 +269,7 @@ export const useDiagramStore = create<DiagramStore>()(
               ui: {
                 ...state.ui,
                 panelBVisible: !state.ui.panelBVisible,
+                panelBSize: clampPanelBSize(state.ui.panelBSize),
               },
             }))
           },
@@ -266,7 +278,7 @@ export const useDiagramStore = create<DiagramStore>()(
               ...state,
               ui: {
                 ...state.ui,
-                panelBSize: size,
+                panelBSize: clampPanelBSize(size),
               },
             }))
           },
@@ -397,7 +409,7 @@ export const useDiagramStore = create<DiagramStore>()(
                     state: {
                       nodePositions: state.projection.nodePositions,
                       edgeHandles: state.projection.edgeHandles,
-                      panelBSize: state.ui.panelBSize,
+                      panelBSize: clampPanelBSize(state.ui.panelBSize),
                       panelBVisible: state.ui.panelBVisible,
                       theme: state.projection.theme,
                     },
@@ -421,7 +433,7 @@ export const useDiagramStore = create<DiagramStore>()(
               },
               ui: {
                 ...state.ui,
-                panelBSize: snapshot.state.panelBSize,
+                panelBSize: clampPanelBSize(snapshot.state.panelBSize),
                 panelBVisible: snapshot.state.panelBVisible,
               },
               layout: {
@@ -466,7 +478,7 @@ export const useDiagramStore = create<DiagramStore>()(
             filters: state.ui.filters,
             viewport: state.ui.viewport,
             panelBVisible: state.ui.panelBVisible,
-            panelBSize: state.ui.panelBSize,
+            panelBSize: clampPanelBSize(state.ui.panelBSize),
             viewportLocked: state.ui.viewportLocked,
             reduceMotion: state.ui.reduceMotion,
           },
@@ -479,6 +491,7 @@ export const useDiagramStore = create<DiagramStore>()(
             ui: {
               ...current.ui,
               ...typedPersisted.ui,
+              panelBSize: clampPanelBSize(typedPersisted.ui?.panelBSize ?? current.ui.panelBSize),
               filters: {
                 ...current.ui.filters,
                 ...typedPersisted.ui?.filters,
