@@ -119,6 +119,10 @@ async function svgBox(locator: Locator) {
   })
 }
 
+async function viewportTransform(page: Page) {
+  return page.locator('.react-flow__viewport').evaluate((element) => getComputedStyle(element).transform)
+}
+
 function parseEdgePoints(value: string) {
   return value
     .split(' ')
@@ -363,6 +367,64 @@ test('optional architecture edges expose reduced-emphasis state and expanded lab
   expect(styles).toEqual(['0.6', '0.6'])
 })
 
+test('architecture marker defs stay stroke-relative and the write ribbon follows zoom visibility', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+
+  await expect(page.locator('#architecture-marker-writeback')).toHaveAttribute('markerUnits', 'strokeWidth')
+
+  const writePreset = page.locator('[data-focus-preset="write"]')
+  await writePreset.click({ force: true })
+
+  const ribbon = page.locator('[data-write-ribbon]')
+  await expect.poll(() => ribbon.getAttribute('data-write-ribbon-visible')).toBe('true')
+
+  const zoomIn = page.locator('.react-flow__controls-button').first()
+  for (let index = 0; index < 6; index += 1) {
+    if ((await ribbon.getAttribute('data-write-ribbon-visible')) === 'false') {
+      break
+    }
+    await zoomIn.click()
+    await page.waitForTimeout(160)
+  }
+
+  await expect(ribbon).toHaveAttribute('data-write-ribbon-visible', 'false')
+})
+
+test('wheel zoom still works when the cursor is over the write ribbon', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+
+  await page.locator('[data-focus-preset="write"]').click({ force: true })
+  const ribbon = page.locator('[data-write-ribbon]')
+  await expect(ribbon).toHaveAttribute('data-write-ribbon-visible', 'true')
+
+  const ribbonBox = await ribbon.boundingBox()
+  expect(ribbonBox).not.toBeNull()
+
+  const before = await viewportTransform(page)
+  await page.mouse.move((ribbonBox?.x ?? 0) + (ribbonBox?.width ?? 0) / 2, (ribbonBox?.y ?? 0) + (ribbonBox?.height ?? 0) / 2)
+  await page.mouse.wheel(0, -600)
+  await page.waitForTimeout(220)
+  const after = await viewportTransform(page)
+
+  expect(after).not.toBe(before)
+})
+
+test('edge inspector surfaces diode and optional rendering semantics', async ({ page }) => {
+  await page.goto('/?edge=F_GW2')
+
+  const inspector = page.locator('.inspector-section').filter({ has: page.getByRole('heading', { name: 'F_GW2' }) })
+  await expect(inspector).toContainText('Diode marker')
+  await expect(inspector).toContainText('One-way boundary; the edge must not imply a return path.')
+
+  await page.goto('/?edge=F7_sub')
+
+  const optionalInspector = page.locator('.inspector-section').filter({ has: page.getByRole('heading', { name: 'F7_sub' }) })
+  await expect(optionalInspector).toContainText('Optional path')
+  await expect(optionalInspector).toContainText('Rendered with reduced emphasis because this flow is documentation-only or conditional.')
+})
+
 test('compact nodes summarize metadata and reveal the full chips on hover', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
@@ -480,7 +542,7 @@ test('overview navigator keeps corridor routes behind nodes and retains visible 
   const accentBox = await svgBox(actAccent)
   const arrowBox = await svgBox(corridorArrow)
 
-  expect(accentBox?.height ?? 0).toBeGreaterThan(20)
+  expect(accentBox?.height ?? 0).toBeGreaterThan(40)
   expect(arrowBox?.width ?? 0).toBeGreaterThan(60)
 
   const routePrecedesNode = await page.evaluate(() => {

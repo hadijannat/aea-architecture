@@ -44,7 +44,7 @@ export const focusPresetOptions: FocusPresetOption[] = [
 const presetViewOptions: Record<FocusPreset, { padding: number; maxZoom: number }> = {
   overview: { padding: 0.12, maxZoom: 0.92 },
   gateway: { padding: 0.04, maxZoom: 1.32 },
-  write: { padding: 0.08, maxZoom: 1.38 },
+  write: { padding: 0.12, maxZoom: 1.1 },
   'lane-c': { padding: 0.1, maxZoom: 1.22 },
 }
 

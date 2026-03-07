@@ -534,6 +534,16 @@
   background:
     linear-gradient(90deg, rgba(211, 84, 0, 0.14), rgba(255, 255, 255, 0.94) 20%, rgba(255, 255, 255, 0.92) 100%);
   box-shadow: 0 14px 34px rgba(211, 84, 0, 0.12);
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+
+.architecture-canvas__write-ribbon.is-hidden {
+  opacity: 0;
+  transform: translateY(8px);
 }
 
 .architecture-canvas__write-ribbon::before {
@@ -1321,7 +1331,7 @@
   content: '';
   position: absolute;
   inset: 0 0 auto 0;
-  height: 5px;
+  height: 7px;
   background: linear-gradient(
     90deg,
     var(--node-accent) 0%,
@@ -1582,7 +1592,7 @@
 }
 
 .edge-label[data-edge-label-mode='expanded'] {
-  max-width: 16ch;
+  max-width: 28ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

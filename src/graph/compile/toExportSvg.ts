@@ -119,8 +119,8 @@ function wrapText(value: string, maxChars: number, maxLines = 3) {
   return lines
 }
 
-function scalePathData(path: string, factor: number) {
-  return path.replace(/-?\d+(?:\.\d+)?/g, (value) => `${Number(value) * factor}`)
+function formatPathNumber(value: number) {
+  return Number.isInteger(value) ? `${value}` : `${Number(value.toFixed(2))}`
 }
 
 function scaledPoint(point: Point, transform: ExportTransform): Point {
@@ -388,16 +388,37 @@ function renderArchitectureEdges(
 }
 
 function translateScaledPath(path: string, transform: ExportTransform) {
-  const scaledPath = transform.scale === 1 ? path : scalePathData(path, transform.scale)
-  if (transform.offsetX === 0 && transform.offsetY === 0) {
-    return scaledPath
+  const tokens = path.match(/[MLQ]|-?\d+(?:\.\d+)?/g) ?? []
+  const segments: string[] = []
+
+  for (let index = 0; index < tokens.length;) {
+    const command = tokens[index]
+    index += 1
+
+    if (command === 'M' || command === 'L') {
+      const x = Number(tokens[index]) * transform.scale + transform.offsetX
+      const y = Number(tokens[index + 1]) * transform.scale + transform.offsetY
+      index += 2
+      segments.push(`${command} ${formatPathNumber(x)} ${formatPathNumber(y)}`)
+      continue
+    }
+
+    if (command === 'Q') {
+      const controlX = Number(tokens[index]) * transform.scale + transform.offsetX
+      const controlY = Number(tokens[index + 1]) * transform.scale + transform.offsetY
+      const endX = Number(tokens[index + 2]) * transform.scale + transform.offsetX
+      const endY = Number(tokens[index + 3]) * transform.scale + transform.offsetY
+      index += 4
+      segments.push(
+        `${command} ${formatPathNumber(controlX)} ${formatPathNumber(controlY)} ${formatPathNumber(endX)} ${formatPathNumber(endY)}`,
+      )
+      continue
+    }
+
+    throw new Error(`Unsupported path command in export transform: ${command}`)
   }
 
-  return scaledPath.replace(/([ML]) (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (_, command, xValue, yValue) => {
-    const x = Number(xValue) + transform.offsetX
-    const y = Number(yValue) + transform.offsetY
-    return `${command} ${x} ${y}`
-  })
+  return segments.join(' ')
 }
 
 function renderSequenceBoard(

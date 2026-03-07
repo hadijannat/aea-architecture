@@ -98,7 +98,7 @@ function ArchitectureEdgeMarkers() {
               refX={getSemanticMarkerRefX(presentation.marker)}
               refY={semanticMarkerDimensions.refY}
               orient="auto"
-              markerUnits="userSpaceOnUse"
+              markerUnits="strokeWidth"
             >
               {renderMarkerShape(presentation.marker, presentation.stroke)}
             </marker>
@@ -163,14 +163,18 @@ function OverviewWriteRibbon({
     }
   }, [nodes, viewport.x, viewport.y, viewport.zoom])
 
-  if (!ribbon || viewport.zoom > 0.76 || ribbon.width < 180) {
+  if (!ribbon) {
     return null
   }
 
+  const ribbonVisible = viewport.zoom <= 1.105
+
   return (
     <div
-      className="architecture-canvas__write-ribbon"
+      className={`architecture-canvas__write-ribbon${ribbonVisible ? '' : ' is-hidden'}`}
       data-write-ribbon
+      data-write-ribbon-visible={ribbonVisible ? 'true' : 'false'}
+      aria-hidden={!ribbonVisible}
       style={{
         left: `${ribbon.left}px`,
         top: `${ribbon.top}px`,
@@ -337,8 +341,8 @@ export function ArchitectureCanvas({
             activeSelectionLabel={activeSelectionLabel}
           />
         </FlowPanel>
+        <OverviewWriteRibbon nodes={nodes} viewport={ui.viewport} />
       </ReactFlow>
-      <OverviewWriteRibbon nodes={nodes} viewport={ui.viewport} />
     </div>
   )
 }

@@ -32,6 +32,29 @@ export function EdgeInspector({
     .filter((step): step is GraphManifest['steps'][number] => Boolean(step))
   const primaryTitle = edge.displayLabel ?? edge.label
   const showRawLabel = Boolean(edge.displayLabel)
+  const renderingSemantics = [
+    ...(edge.interactive.optional
+      ? [
+          {
+            label: 'Optional path',
+            description: 'Rendered with reduced emphasis because this flow is documentation-only or conditional.',
+          },
+        ]
+      : []),
+    ...edge.markers.map((marker) => {
+      if (marker === 'diode') {
+        return {
+          label: 'Diode marker',
+          description: 'One-way boundary; the edge must not imply a return path.',
+        }
+      }
+
+      return {
+        label: `${marker} marker`,
+        description: 'Additional edge annotation.',
+      }
+    }),
+  ]
 
   return (
     <section className="inspector-section">
@@ -83,6 +106,18 @@ export function EdgeInspector({
         ))}
       </div>
       <p>{edge.inspector.rationale}</p>
+      {renderingSemantics.length > 0 ? (
+        <div className="inspector-subsection">
+          <strong>Rendering semantics</strong>
+          <ul className="inspector-list">
+            {renderingSemantics.map((item) => (
+              <li key={item.label}>
+                <strong>{item.label}:</strong> {item.description}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {linkedSteps.length > 0 ? (
         <div className="inspector-subsection">
           <strong>Sequence mapping</strong>

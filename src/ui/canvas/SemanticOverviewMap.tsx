@@ -326,7 +326,7 @@ export function SemanticOverviewMap({
                     x={node.x}
                     y={node.y}
                     width={node.width}
-                    height={Math.max(20, Math.min(32, node.height * 0.18))}
+                    height={Math.max(48, Math.min(56, node.height * 0.24))}
                     rx="5"
                     className="semantic-overview__node-accent"
                     fill={node.accent}

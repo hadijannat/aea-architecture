@@ -119,6 +119,11 @@ function nodeBounds(state: DiagramStore, nodeId: string) {
   }
 }
 
+function exportArchitectureEdgePath(svg: string, edgeId: string) {
+  const match = svg.match(new RegExp(`<g id="edge-${edgeId}"[^>]*>[\\s\\S]*?<path d="([^"]+)"`))
+  return match?.[1]
+}
+
 const callbacks: CompileCallbacks = {
   onSelectNode() {},
   onSelectEdge() {},
@@ -417,59 +422,59 @@ describe('exports', () => {
     const state = await createState()
     const expectedRoutes = {
       F3e: {
-        path: 'M 1335 590 L 1335 720 L 1064 720 L 1064 618',
+        path: 'M 1335 590 L 1335 706 Q 1335 720 1321 720 L 1078 720 Q 1064 720 1064 706 L 1064 618',
         labelPoint: { x: 1199.5, y: 704 },
       },
       F3f_reject: {
-        path: 'M 1064 738 L 1064 792 L 1180 792 L 1180 525 L 1210 525',
+        path: 'M 1064 738 L 1064 778 Q 1064 792 1078 792 L 1166 792 Q 1180 792 1180 778 L 1180 539 Q 1180 525 1194 525 L 1210 525',
         labelPoint: { x: 1122, y: 810 },
       },
       F3g: {
-        path: 'M 774 586 L 774 748 L 1326 748 L 1326 612',
+        path: 'M 774 586 L 774 734 Q 774 748 788 748 L 1312 748 Q 1326 748 1326 734 L 1326 612',
         labelPoint: { x: 1050, y: 766 },
       },
       F3h: {
-        path: 'M 1198 310 L 1198 600 L 1290 600 L 1290 612 L 1326 612',
+        path: 'M 1198 310 L 1198 586 Q 1198 600 1212 600 L 1284 600 Q 1290 600 1290 606 L 1290 606 Q 1290 612 1296 612 L 1326 612',
         labelPoint: { x: 1272, y: 606 },
       },
       F3i: {
-        path: 'M 534 823 L 534 748 L 1206 748 L 1206 676',
+        path: 'M 534 823 L 534 762 Q 534 748 548 748 L 1192 748 Q 1206 748 1206 734 L 1206 676',
         labelPoint: { x: 870, y: 732 },
       },
       F_T1: {
-        path: 'M 1210 525 L 1190 525 L 1190 392 L 640 392 L 640 228 L 758 228 L 758 256',
+        path: 'M 1210 525 L 1200 525 Q 1190 525 1190 515 L 1190 406 Q 1190 392 1176 392 L 654 392 Q 640 392 640 378 L 640 242 Q 640 228 654 228 L 744 228 Q 758 228 758 242 L 758 256',
         labelPoint: { x: 915, y: 410 },
       },
       F_T2: {
-        path: 'M 1210 525 L 1210 600 L 900 600 L 900 526 L 884 526',
+        path: 'M 1210 525 L 1210 586 Q 1210 600 1196 600 L 914 600 Q 900 600 900 586 L 900 534 Q 900 526 892 526 L 884 526',
         labelPoint: { x: 882, y: 563 },
       },
       F4: {
-        path: 'M 1326 740 L 1326 812 L 790 812 L 790 840',
+        path: 'M 1326 740 L 1326 798 Q 1326 812 1312 812 L 804 812 Q 790 812 790 826 L 790 840',
         labelPoint: { x: 1058, y: 794 },
       },
       F5: {
-        path: 'M 670 900 L 634 900 L 634 996 L 562 996 L 562 823 L 534 823',
+        path: 'M 670 900 L 648 900 Q 634 900 634 914 L 634 982 Q 634 996 620 996 L 576 996 Q 562 996 562 982 L 562 837 Q 562 823 548 823 L 534 823',
         labelPoint: { x: 598, y: 1020 },
       },
       F6: {
-        path: 'M 424 823 L 360 823 L 360 996 L 336 996 L 336 843 L 308 843',
+        path: 'M 424 823 L 374 823 Q 360 823 360 837 L 360 984 Q 360 996 348 996 L 348 996 Q 336 996 336 984 L 336 857 Q 336 843 322 843 L 308 843',
         labelPoint: { x: 380, y: 909.5 },
       },
       F_VoR_ACK: {
-        path: 'M 534 823 L 562 823 L 562 936 L 640 936 L 640 900 L 670 900',
+        path: 'M 534 823 L 548 823 Q 562 823 562 837 L 562 922 Q 562 936 576 936 L 626 936 Q 640 936 640 922 L 640 914 Q 640 900 654 900 L 670 900',
         labelPoint: { x: 590, y: 879.5 },
       },
       F_CPC_INT: {
-        path: 'M 80 843 L 48 843 L 48 265 L 80 265',
+        path: 'M 80 843 L 62 843 Q 48 843 48 829 L 48 279 Q 48 265 62 265 L 80 265',
         labelPoint: { x: 64, y: 554 },
       },
       F7a: {
-        path: 'M 1438 893 L 1472 893 L 1472 914 L 1584 914 L 1584 902 L 1610 902',
+        path: 'M 1438 893 L 1461.5 893 Q 1472 893 1472 903.5 L 1472 903.5 Q 1472 914 1482.5 914 L 1578 914 Q 1584 914 1584 908 L 1584 908 Q 1584 902 1590 902 L 1610 902',
         labelPoint: { x: 1528, y: 934 },
       },
       F7_sub: {
-        path: 'M 1710 1020 L 1868 1020 L 1868 956 L 1710 956',
+        path: 'M 1710 1020 L 1854 1020 Q 1868 1020 1868 1006 L 1868 970 Q 1868 956 1854 956 L 1710 956',
         labelPoint: { x: 1789, y: 1002 },
       },
     } as const
@@ -488,6 +493,16 @@ describe('exports', () => {
     for (const edgeId of edgeIds) {
       expect(routeIsAxisAligned(buildArchitectureRoute(state, edgeId).points)).toBe(true)
     }
+  })
+
+  it('renders rounded board paths while keeping orthogonal control points intact', async () => {
+    const state = await createState()
+    const curvedRoute = buildArchitectureRoute(state, 'F5')
+    const straightRoute = buildArchitectureRoute(state, 'F_GW2')
+
+    expect(curvedRoute.path).toContain('Q')
+    expect(routeIsAxisAligned(curvedRoute.points)).toBe(true)
+    expect(straightRoute.path).not.toContain('Q')
   })
 
   it('keeps write-corridor label anchors outside nearby node boxes', async () => {
@@ -581,6 +596,12 @@ describe('exports', () => {
   it('builds a fixed-size publication export with both panels', async () => {
     const state = await createState({ panelBVisible: false })
     const publicationDocument = buildExportSvgDocument(state, { mode: 'publication' })
+    const publicationF5Path = exportArchitectureEdgePath(publicationDocument.svg, 'F5')
+    const route = buildArchitectureRoute(state, 'F5')
+    const figureWidthPt = (183 / 25.4) * 72
+    const scale = figureWidthPt / graphManifest.layoutDefaults.canvas.width
+    const start = route.points[0]
+    const publicationStart = publicationF5Path?.match(/^M (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/)
 
     expect(publicationDocument.svg).toContain('<title>AEA Architecture Publication Export</title>')
     expect(publicationDocument.svg).toContain('data-export-theme="analysis"')
@@ -591,6 +612,10 @@ describe('exports', () => {
     expect(publicationDocument.svg).toContain('stroke-dasharray="11 7"')
     expect(publicationDocument.svg).toContain('id="sequence-edge-PB_ACK"')
     expect(publicationDocument.svg).toContain('VoR Domain-Transition Sequence')
+    expect(publicationF5Path).toContain('Q')
+    expect(publicationF5Path).not.toBe(route.path)
+    expect(Number(publicationStart?.[1])).toBeCloseTo(start.x * scale, 2)
+    expect(Number(publicationStart?.[2])).toBeCloseTo(start.y * scale + 34, 2)
   })
 
   it('exports shared marker definitions and semantic-specific dash rhythms', async () => {
