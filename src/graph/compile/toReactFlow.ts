@@ -58,6 +58,7 @@ export interface CompiledEdgeData extends Record<string, unknown> {
   selected: boolean
   highlighted: boolean
   dimmed: boolean
+  sharedTagFocused: boolean
   callbacks: CompileCallbacks
 }
 
@@ -543,6 +544,11 @@ export function compileArchitectureEdges(
   derivedState: DerivedDiagramState,
   manifest: GraphManifest = graphManifest,
 ): DiagramFlowEdge[] {
+  const sharedT0FocusActive = [...derivedState.highlightedEdgeIds].some((edgeId) => {
+    const highlightedEdge = resolveGraphEdge(edgeId)
+    return highlightedEdge?.panel.includes('architecture') && highlightedEdge.tags.includes('t0')
+  })
+
   return manifest.edges
     .filter((edge) => edge.panel.includes('architecture'))
     .map((edge) => {
@@ -580,6 +586,7 @@ export function compileArchitectureEdges(
           selected: state.ui.selectedEdgeId === edge.id,
           highlighted,
           dimmed: hasHighlights && !highlighted,
+          sharedTagFocused: sharedT0FocusActive && edge.tags.includes('t0'),
           callbacks,
         },
       }

@@ -309,8 +309,8 @@ export function buildBoardEdgeRoute(
     case 'F3g':
       points = [
         source,
-        point(source.x, channels.validationY),
-        point(target.x, channels.validationY),
+        point(source.x, channels.validationY - 8),
+        point(target.x, channels.validationY - 8),
         target,
       ]
       break

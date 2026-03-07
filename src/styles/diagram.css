@@ -321,6 +321,7 @@
 .filter-group button,
 .inspector-actions button,
 .badge,
+.node-card__menu-trigger,
 .node-card__menu-panel button,
 .edge-label {
   border: 1px solid var(--border-strong);
@@ -343,6 +344,7 @@
 .filter-group button:hover,
 .inspector-actions button:hover,
 .badge:hover,
+.node-card__menu-trigger:hover,
 .node-card__menu-panel button:hover,
 .edge-label:hover {
   transform: translateY(-1px);
@@ -495,6 +497,7 @@
 
 .architecture-canvas .react-flow__node.rf-node--structural {
   pointer-events: none;
+  z-index: -1 !important;
 }
 
 .architecture-canvas .react-flow__controls {
@@ -1452,8 +1455,8 @@
 .node-card__structural-tagline {
   color: color-mix(in srgb, var(--node-accent) 84%, #475569);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -1528,14 +1531,28 @@
   position: relative;
 }
 
-.node-card__menu summary {
-  list-style: none;
-  cursor: pointer;
+.node-card__menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0;
   color: var(--node-accent);
+  font-size: 1.12rem;
+  line-height: 1;
 }
 
-.node-card__menu summary::-webkit-details-marker {
-  display: none;
+.node-card__menu-trigger[aria-expanded='true'] {
+  border-color: color-mix(in srgb, var(--node-accent) 32%, var(--focus-ring));
+  background: color-mix(in srgb, var(--node-fill) 88%, white);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+.node-card__menu-trigger:focus-visible {
+  outline: none;
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.12), 0 10px 22px rgba(15, 23, 42, 0.08);
 }
 
 .node-card__menu-panel {
@@ -1551,6 +1568,13 @@
   border: 1px solid color-mix(in srgb, var(--node-border) 32%, white);
   background: #ffffff;
   box-shadow: var(--shadow-panel);
+}
+
+.node-card__menu-panel button {
+  display: inline-flex;
+  justify-content: flex-start;
+  width: 100%;
+  border-radius: 14px;
 }
 
 .badge {
@@ -1579,6 +1603,10 @@
   position: absolute;
   z-index: 8;
   pointer-events: all;
+  max-width: 12ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: var(--font-mono);
   font-size: 0.68rem;
   letter-spacing: 0.04em;
@@ -1586,21 +1614,35 @@
   border: 1px solid var(--semantic-stroke, rgba(69, 90, 117, 0.22));
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
   color: var(--semantic-stroke, #334155);
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease,
+    max-width 180ms ease;
+}
+
+.edge-label[data-edge-label-mode='display'] {
+  max-width: 20ch;
 }
 
 .edge-label[data-edge-label-mode='expanded'] {
   max-width: 28ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .edge-label.is-highlighted {
   border-color: var(--semantic-stroke, rgba(69, 90, 117, 0.22));
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--semantic-stroke, rgba(69, 90, 117, 0.22)) 18%, transparent);
+}
+
+.edge-label.is-shared-tag-focused:not(.is-highlighted):not(.is-selected) {
+  border-color: color-mix(in srgb, var(--semantic-stroke, rgba(69, 90, 117, 0.22)) 42%, white);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--semantic-stroke, rgba(69, 90, 117, 0.22)) 10%, transparent),
+    0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
 .edge-label:focus-visible,
@@ -1618,7 +1660,13 @@
 }
 
 .node-card--compact .node-card__subtitle {
-  display: none;
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  color: var(--text-faint);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
 }
 
 .node-card--compact .node-card__description {
@@ -1835,9 +1883,23 @@
   opacity: 0.34;
 }
 
+.semantic-edge--rejection.is-dimmed,
+.semantic-edge--policy-soft.is-dimmed,
+.semantic-edge--policy-hard.is-dimmed,
+.semantic-edge--status-ack.is-dimmed,
+.semantic-edge--tool-call.is-dimmed,
+.semantic-edge--subscription.is-dimmed,
+.semantic-edge--audit.is-dimmed {
+  opacity: 0.46;
+}
+
 .semantic-edge.is-optional,
 .edge-label.is-optional {
   opacity: 0.6;
+}
+
+.semantic-edge.is-shared-tag-focused:not(.is-highlighted):not(.is-selected) .react-flow__edge-path {
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--semantic-stroke, rgba(69, 90, 117, 0.22)) 16%, transparent));
 }
 
 .semantic-edge--writeback .react-flow__edge-path,

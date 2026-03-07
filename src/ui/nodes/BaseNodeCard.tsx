@@ -1,4 +1,13 @@
-import { useState, type CSSProperties, type FocusEvent, type MouseEvent as ReactMouseEvent } from 'react'
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FocusEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+} from 'react'
 import { Handle, useViewport, type NodeProps } from '@xyflow/react'
 import clsx from 'clsx'
 
@@ -75,6 +84,10 @@ export function BaseNodeCard({
   const isStructural = visual.isStructural
   const { zoom } = useViewport()
   const [compactMetaVisible, setCompactMetaVisible] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement | null>(null)
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null)
+  const menuId = useId()
   const structuralZoomMode =
     !isStructural ? undefined : zoom >= 0.96 ? 'full' : zoom >= 0.72 ? 'balanced' : 'overview'
   const density =
@@ -99,12 +112,56 @@ export function BaseNodeCard({
   const showLeadingBadge = visual.badgeStyle === 'pill' && !isStructural
   const showInlineBadge = (visual.badgeStyle === 'inline' || isStructural) && showStructuralBadge
 
+  useEffect(() => {
+    if (!menuOpen) {
+      return
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (menuRef.current?.contains(event.target as Node)) {
+        return
+      }
+      setMenuOpen(false)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [menuOpen])
+
   function handleBlur(event: FocusEvent<HTMLDivElement>) {
     const nextTarget = event.relatedTarget
     if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
       return
     }
     setCompactMetaVisible(false)
+    setMenuOpen(false)
+  }
+
+  function handleMenuKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'Escape') {
+      return
+    }
+
+    event.stopPropagation()
+    setMenuOpen(false)
+    menuButtonRef.current?.focus()
+  }
+
+  function handleMenuToggle(event: ReactMouseEvent<HTMLButtonElement>) {
+    event.stopPropagation()
+    data.callbacks.onSelectNode(spec.id)
+    setMenuOpen((current) => !current)
+  }
+
+  function runMenuAction(event: ReactMouseEvent<HTMLButtonElement>, action: () => void) {
+    event.stopPropagation()
+    setMenuOpen(false)
+    action()
+  }
+
+  function handleNodeClick() {
+    setMenuOpen(false)
+    data.callbacks.onSelectNode(spec.id)
   }
 
   const badge = (
@@ -139,7 +196,6 @@ export function BaseNodeCard({
       data-node-badge-style={visual.badgeStyle}
       data-node-structural-zoom={isStructural ? structuralZoomMode : undefined}
       aria-label={data.ariaLabel}
-      title={data.ariaLabel}
       style={
         {
           backgroundColor: visual.fill,
@@ -149,7 +205,7 @@ export function BaseNodeCard({
           '--node-accent': visual.accent,
         } as CSSProperties
       }
-      onClick={() => data.callbacks.onSelectNode(spec.id)}
+      onClick={handleNodeClick}
       onMouseEnter={() => {
         setCompactMetaVisible(true)
         data.callbacks.onHover(nodeEntityKey(spec.id))
@@ -177,25 +233,57 @@ export function BaseNodeCard({
           {!showStructuralOverview && spec.subtitle ? <p className="node-card__subtitle">{spec.subtitle}</p> : null}
         </div>
         {!isStructural ? (
-          <details className="node-card__menu" onClick={(event) => event.stopPropagation()}>
-            <summary aria-label={`Actions for ${spec.title}`}>...</summary>
-            <div className="node-card__menu-panel">
-              <button type="button" onClick={() => data.callbacks.onSelectNode(spec.id)}>
-                Focus
-              </button>
-              <button type="button" onClick={() => data.callbacks.onPathAction(spec.id, 'upstream')}>
-                Show upstream
-              </button>
-              <button type="button" onClick={() => data.callbacks.onPathAction(spec.id, 'downstream')}>
-                Show downstream
-              </button>
-              {spec.inspector.relatedStepIds[0] ? (
-                <button type="button" onClick={() => data.callbacks.onSelectStep(spec.inspector.relatedStepIds[0])}>
-                  Open in sequence
+          <div className="node-card__menu" ref={menuRef} onClick={(event) => event.stopPropagation()} onKeyDown={handleMenuKeyDown}>
+            <button
+              ref={menuButtonRef}
+              type="button"
+              className="node-card__menu-trigger"
+              aria-label={`Open actions for ${spec.title}`}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-controls={menuId}
+              data-node-action-menu-trigger
+              onClick={handleMenuToggle}
+            >
+              ⋯
+            </button>
+            {menuOpen ? (
+              <div
+                id={menuId}
+                className="node-card__menu-panel"
+                role="menu"
+                aria-label={`Actions for ${spec.title}`}
+                data-node-action-menu
+              >
+                <button type="button" role="menuitem" onClick={(event) => runMenuAction(event, () => data.callbacks.onSelectNode(spec.id))}>
+                  Focus
                 </button>
-              ) : null}
-            </div>
-          </details>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={(event) => runMenuAction(event, () => data.callbacks.onPathAction(spec.id, 'upstream'))}
+                >
+                  Show upstream
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={(event) => runMenuAction(event, () => data.callbacks.onPathAction(spec.id, 'downstream'))}
+                >
+                  Show downstream
+                </button>
+                {spec.inspector.relatedStepIds[0] ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={(event) => runMenuAction(event, () => data.callbacks.onSelectStep(spec.inspector.relatedStepIds[0]))}
+                  >
+                    Open in sequence
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </div>
       {showRole ? <p className="node-card__description">{spec.inspector.role}</p> : null}

@@ -43,10 +43,14 @@ export function BaseSemanticEdge({
   const strokeColor = presentation.stroke
   const strokeWidth = edgeStrokeWidth(data.spec.style)
   const strokeDasharray = getSemanticStrokeDash(data.spec.semantic, data.spec.style)
-  const showExpandedLabel = data.selected || data.highlighted || zoom >= 0.9
+  const showExpandedLabel = data.selected || data.highlighted || zoom >= 0.78
+  const showDisplayLabel = !showExpandedLabel && zoom >= 0.62
   const displayLabel = data.spec.displayLabel ?? data.spec.label
   const expandedLabel = `${data.spec.id} · ${displayLabel}${data.optional ? ' (optional)' : ''}`
   const compactLabel = `${data.spec.id}${data.spec.markers.includes('diode') ? ' ⊘' : ''}`
+  const isT0Edge = data.spec.tags.includes('t0')
+  const labelMode = showExpandedLabel ? 'expanded' : showDisplayLabel ? 'display' : 'compact'
+  const labelText = showExpandedLabel ? expandedLabel : showDisplayLabel ? displayLabel : compactLabel
 
   return (
     <g
@@ -58,15 +62,18 @@ export function BaseSemanticEdge({
         data.selected && 'is-selected',
         data.highlighted && 'is-highlighted',
         data.dimmed && 'is-dimmed',
+        data.sharedTagFocused && 'is-shared-tag-focused',
       )}
       data-edge-id={id}
       data-edge-optional={data.optional ? 'true' : 'false'}
       data-edge-semantic={data.spec.semantic}
       data-edge-family={presentation.family}
       data-edge-style={data.spec.style}
+      data-edge-tag-t0={isT0Edge ? 'true' : 'false'}
+      data-edge-shared-tag-focus={data.sharedTagFocused ? 'true' : 'false'}
       data-edge-points={edgePoints}
       data-label-position={`${labelPosition.x},${labelPosition.y}`}
-      style={data.optional ? ({ opacity: 0.6 } as CSSProperties) : undefined}
+      style={{ '--semantic-stroke': presentation.stroke } as CSSProperties}
       onMouseEnter={() => data.callbacks.onHover(edgeEntityKey(id))}
       onMouseLeave={() => data.callbacks.onHover(undefined)}
       onClick={() => data.callbacks.onSelectEdge(id)}
@@ -96,14 +103,16 @@ export function BaseSemanticEdge({
             data.optional && 'is-optional',
             data.selected && 'is-selected',
             data.highlighted && 'is-highlighted',
+            data.sharedTagFocused && 'is-shared-tag-focused',
           )}
           aria-label={data.ariaLabel}
           data-edge-id={id}
           data-edge-optional={data.optional ? 'true' : 'false'}
-          data-edge-label-mode={showExpandedLabel ? 'expanded' : 'compact'}
+          data-edge-tag-t0={isT0Edge ? 'true' : 'false'}
+          data-edge-shared-tag-focus={data.sharedTagFocused ? 'true' : 'false'}
+          data-edge-label-mode={labelMode}
           style={{
             '--semantic-stroke': presentation.stroke,
-            opacity: data.optional ? 0.6 : 1,
             transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
           } as CSSProperties}
           onFocus={() => data.callbacks.onHover(edgeEntityKey(id))}
@@ -117,7 +126,7 @@ export function BaseSemanticEdge({
             data.callbacks.onSelectEdge(id)
           }}
         >
-          {showExpandedLabel ? expandedLabel : compactLabel}
+          {labelText}
         </button>
       </EdgeLabelRenderer>
     </g>

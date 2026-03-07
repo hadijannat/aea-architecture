@@ -44,12 +44,16 @@ async function ensureCompactDensity(page: Page, nodeId: string) {
 async function ensureEdgeLabelMode(
   page: Page,
   edgeId: string,
-  mode: 'compact' | 'expanded',
+  mode: 'compact' | 'display' | 'expanded',
   action: 'zoom-in' | 'zoom-out',
   maxClicks = 8,
 ) {
   const edgeLabel = page.locator(`.edge-label[data-edge-id="${edgeId}"]`)
-  const control = page.locator('.react-flow__controls-button').nth(action === 'zoom-in' ? 0 : 1)
+  const control = page.locator(
+    action === 'zoom-in'
+      ? '.architecture-canvas .react-flow__controls-zoomin:not([disabled])'
+      : '.architecture-canvas .react-flow__controls-zoomout:not([disabled])',
+  )
 
   for (let index = 0; index < maxClicks; index += 1) {
     if ((await edgeLabel.getAttribute('data-edge-label-mode')) === mode) {
@@ -60,6 +64,10 @@ async function ensureEdgeLabelMode(
   }
 
   throw new Error(`Edge ${edgeId} did not enter ${mode} label mode`)
+}
+
+async function viewportTransform(page: Page) {
+  return page.locator('.react-flow__viewport').evaluate((element) => getComputedStyle(element).transform)
 }
 
 async function architectureEdgeIsAnimated(page: Page, edgeId: string) {
@@ -117,23 +125,6 @@ async function svgBox(locator: Locator) {
       height: box.height,
     }
   })
-}
-
-async function viewportTransform(page: Page) {
-  return page.locator('.react-flow__viewport').evaluate((element) => getComputedStyle(element).transform)
-}
-
-async function dispatchCtrlWheel(page: Page, selector: string, deltaY: number) {
-  await page.locator(selector).evaluate((element, wheelDelta) => {
-    element.dispatchEvent(
-      new WheelEvent('wheel', {
-        deltaY: wheelDelta,
-        ctrlKey: true,
-        bubbles: true,
-        cancelable: true,
-      }),
-    )
-  }, deltaY)
 }
 
 function parseEdgePoints(value: string) {
@@ -243,6 +234,7 @@ test('desktop canvas keeps topology visible while the legend stays collapsed by 
   await page.getByRole('button', { name: 'Show legend' }).click()
   await expect(page.locator('[data-overview-legend-panel]')).toBeVisible()
   await expect(page.locator('[data-legend-item="status-ack"]')).toBeVisible()
+  await expect(page.locator('#legend-marker-status-ack')).toHaveAttribute('markerUnits', 'strokeWidth')
   await page.locator('[data-focus-preset="lane-c"]').click({ force: true })
   await page.locator('[data-hotspot-id="gateway"]').click({ force: true })
   await expect(page.locator('[data-overview-map]')).toBeVisible()
@@ -286,12 +278,18 @@ test('selected sequence edges expand from ids into human-readable action labels'
 test('architecture edge labels expand with zoom and truncate to human-readable labels', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
+  await page.waitForTimeout(700)
 
   const edgeLabel = await ensureEdgeLabelMode(page, 'F4', 'compact', 'zoom-out')
   await expect(edgeLabel).toHaveText('F4')
 
+  await ensureEdgeLabelMode(page, 'F4', 'display', 'zoom-in')
+  await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'display')
+  await expect(edgeLabel).toHaveText('validated candidate plan')
+
   await ensureEdgeLabelMode(page, 'F4', 'expanded', 'zoom-in')
   await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'expanded')
+  await expect(edgeLabel).toContainText('F4 ·')
   await expect(edgeLabel).toContainText('validated candidate plan')
 })
 
@@ -385,6 +383,11 @@ test('architecture marker defs stay stroke-relative and the write ribbon follows
   await page.goto('/')
 
   await expect(page.locator('#architecture-marker-writeback')).toHaveAttribute('markerUnits', 'strokeWidth')
+  await page.getByRole('button', { name: 'Show legend' }).click()
+  await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute(
+    'markerUnits',
+    'strokeWidth',
+  )
 
   const writePreset = page.locator('[data-focus-preset="write"]')
   await writePreset.click({ force: true })
@@ -420,9 +423,14 @@ test('page scroll can reach the sequence while pinch-style zoom still works over
   await page.locator('[data-focus-preset="write"]').click({ force: true })
   const ribbon = page.locator('[data-write-ribbon]')
   await expect(ribbon).toHaveAttribute('data-write-ribbon-visible', 'true')
+  const ribbonBox = await ribbon.boundingBox()
+  expect(ribbonBox).not.toBeNull()
 
   const before = await viewportTransform(page)
-  await dispatchCtrlWheel(page, '[data-write-ribbon]', -600)
+  await page.keyboard.down('Control')
+  await page.mouse.move(ribbonBox!.x + ribbonBox!.width / 2, ribbonBox!.y + ribbonBox!.height / 2)
+  await page.mouse.wheel(0, -600)
+  await page.keyboard.up('Control')
   await page.waitForTimeout(220)
   const after = await viewportTransform(page)
 
@@ -488,8 +496,10 @@ test('compact nodes summarize metadata and reveal the full chips on hover', asyn
 
   const node = page.locator('.node-card[data-node-id="S2"]')
   await expect(node).toHaveAttribute('data-node-density', 'compact')
+  await expect(node.locator('.node-card__subtitle')).toBeVisible()
   await expect(node.locator('[data-node-meta-summary="standards"]')).toContainText('2 standards')
   await expect(node.locator('[data-node-meta-summary="claims"]')).toContainText('3 claims')
+  expect(await node.getAttribute('title')).toBeNull()
 
   await node.hover()
   await expect(node.locator('[data-node-meta-popover]')).toBeVisible()
@@ -653,6 +663,101 @@ test('hover cards stay clear of the overview panel', async ({ page }) => {
   expect(hoverCardBox).not.toBeNull()
   expect(overviewBox).not.toBeNull()
   expect(boxesOverlap(hoverCardBox!, overviewBox!, 12)).toBe(false)
+})
+
+test('shared t0 edges expose a linked focus cue during inspection', async ({ page }) => {
+  await page.goto('/?edge=F3d')
+
+  for (const edgeId of ['F3d', 'F3h']) {
+    const edge = page.locator(`.semantic-edge[data-edge-id="${edgeId}"]`)
+    const label = page.locator(`.edge-label[data-edge-id="${edgeId}"]`)
+
+    await expect(edge).toHaveAttribute('data-edge-tag-t0', 'true')
+    await expect(edge).toHaveAttribute('data-edge-shared-tag-focus', 'true')
+    await expect(label).toHaveAttribute('data-edge-shared-tag-focus', 'true')
+  }
+
+  await expect(page.locator('.semantic-edge[data-edge-id="F3g"]')).toHaveAttribute('data-edge-shared-tag-focus', 'false')
+})
+
+test('selecting an already visible node does not refit the architecture viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+  await page.waitForTimeout(450)
+
+  const targetNodeId = await page.evaluate(() => {
+    const canvas = document.querySelector('.architecture-canvas')
+    if (!(canvas instanceof HTMLElement)) {
+      return null
+    }
+
+    const canvasBox = canvas.getBoundingClientRect()
+    const paddingX = canvasBox.width * 0.12
+    const paddingY = canvasBox.height * 0.12
+    const comfortableBounds = {
+      left: canvasBox.left + paddingX,
+      top: canvasBox.top + paddingY,
+      right: canvasBox.right - paddingX,
+      bottom: canvasBox.bottom - paddingY,
+    }
+
+    for (const nodeId of ['VOI', 'ACT1', 'S2', 'A3', 'G3', 'DEC_R2', 'DEC_G1', 'DEC_G2']) {
+      const node = document.querySelector(`.node-card[data-node-id="${nodeId}"]`)
+      if (!(node instanceof HTMLElement)) {
+        continue
+      }
+
+      const box = node.getBoundingClientRect()
+      if (
+        box.left >= comfortableBounds.left &&
+        box.top >= comfortableBounds.top &&
+        box.right <= comfortableBounds.right &&
+        box.bottom <= comfortableBounds.bottom
+      ) {
+        return nodeId
+      }
+    }
+
+    return null
+  })
+
+  expect(targetNodeId).not.toBeNull()
+
+  const before = await viewportTransform(page)
+
+  await page.locator(`.node-card[data-node-id="${targetNodeId}"]`).click()
+  await page.waitForTimeout(420)
+
+  await expect(page.locator(`.node-card[data-node-id="${targetNodeId}"]`)).toHaveClass(/is-selected/)
+  expect(await viewportTransform(page)).toBe(before)
+})
+
+test('node action menu is keyboard reachable and behaves like a menu button', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+
+  const node = page.locator('.node-card[data-node-id="ACT1"]')
+  const menuButton = node.locator('.node-card__menu-trigger')
+
+  await expect(node).toBeVisible()
+  await expect(menuButton).toBeVisible()
+  await menuButton.focus()
+  await expect(menuButton).toBeFocused()
+  await assertFocusVisible(menuButton)
+
+  await page.keyboard.press('Enter')
+  await expect(node).toHaveClass(/is-selected/)
+  await expect(menuButton).toHaveAttribute('aria-expanded', 'true')
+  await expect(node.getByRole('menu')).toBeVisible()
+
+  await page.keyboard.press('Escape')
+  await expect(node.getByRole('menu')).toHaveCount(0)
+  await expect(menuButton).toBeFocused()
+
+  await menuButton.click()
+  await expect(node.getByRole('menu')).toBeVisible()
+  await node.getByRole('menuitem', { name: 'Show upstream' }).click()
+  await expect(node.getByRole('menu')).toHaveCount(0)
 })
 
 test('write-corridor routes stay orthogonal and labels avoid nearby nodes', async ({ page }) => {

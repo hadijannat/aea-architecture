@@ -75,7 +75,7 @@ export function SemanticLegend() {
                         refX={getSemanticMarkerRefX(presentation.marker)}
                         refY={semanticMarkerDimensions.refY}
                         orient="auto"
-                        markerUnits="userSpaceOnUse"
+                        markerUnits="strokeWidth"
                       >
                         {renderMarkerShape(presentation, presentation.stroke)}
                       </marker>

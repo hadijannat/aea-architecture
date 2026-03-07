@@ -188,13 +188,15 @@ function OverviewWriteRibbon({
 }
 
 function AutoFocusSelection({
+  containerRef,
   nodes,
   selectedNodeId,
 }: {
+  containerRef?: RefObject<HTMLDivElement | null>
   nodes: DiagramFlowNode[]
   selectedNodeId?: string
 }) {
-  const { fitView } = useReactFlow()
+  const { fitView, getNodesBounds, getViewport } = useReactFlow()
 
   useEffect(() => {
     if (!selectedNodeId) {
@@ -206,13 +208,53 @@ function AutoFocusSelection({
       return
     }
 
+    const container = containerRef?.current
+    const nodeBounds = getNodesBounds([targetNode.id])
+    const targetBounds =
+      nodeBounds.width > 0 && nodeBounds.height > 0
+        ? nodeBounds
+        : {
+            x: targetNode.position.x,
+            y: targetNode.position.y,
+            width: targetNode.width ?? targetNode.data.spec.width,
+            height: targetNode.height ?? targetNode.data.spec.height,
+          }
+
+    if (container && container.clientWidth > 0 && container.clientHeight > 0) {
+      const viewport = getViewport()
+      const visibleBounds = {
+        left: -viewport.x / viewport.zoom,
+        top: -viewport.y / viewport.zoom,
+        right: (container.clientWidth - viewport.x) / viewport.zoom,
+        bottom: (container.clientHeight - viewport.y) / viewport.zoom,
+      }
+      const paddingX = (visibleBounds.right - visibleBounds.left) * 0.12
+      const paddingY = (visibleBounds.bottom - visibleBounds.top) * 0.12
+      const comfortableBounds = {
+        left: visibleBounds.left + paddingX,
+        top: visibleBounds.top + paddingY,
+        right: visibleBounds.right - paddingX,
+        bottom: visibleBounds.bottom - paddingY,
+      }
+
+      const isAlreadyVisible =
+        targetBounds.x >= comfortableBounds.left &&
+        targetBounds.y >= comfortableBounds.top &&
+        targetBounds.x + targetBounds.width <= comfortableBounds.right &&
+        targetBounds.y + targetBounds.height <= comfortableBounds.bottom
+
+      if (isAlreadyVisible) {
+        return
+      }
+    }
+
     void fitView({
       nodes: [{ id: targetNode.id }],
       duration: 320,
       padding: 0.16,
       maxZoom: 1.48,
     })
-  }, [fitView, nodes, selectedNodeId])
+  }, [containerRef, fitView, getNodesBounds, getViewport, nodes, selectedNodeId])
 
   return null
 }
@@ -312,6 +354,7 @@ export function ArchitectureCanvas({
         maxZoom={1.55}
         nodesConnectable={false}
         elementsSelectable
+        elevateEdgesOnSelect
         preventScrolling={false}
         panOnDrag={!ui.viewportLocked}
         zoomOnScroll={!ui.viewportLocked}
@@ -327,7 +370,7 @@ export function ArchitectureCanvas({
           selectedNodeId={ui.selectedNodeId}
           viewport={ui.viewport}
         />
-        <AutoFocusSelection nodes={nodes} selectedNodeId={ui.selectedNodeId} />
+        <AutoFocusSelection containerRef={containerRef} nodes={nodes} selectedNodeId={ui.selectedNodeId} />
         <Background color="#dde3eb" gap={24} size={1.2} />
         <Controls showInteractive={false}>
           <ControlButton onClick={onResetLayout} title="Reset layout">

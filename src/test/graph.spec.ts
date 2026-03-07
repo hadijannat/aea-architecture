@@ -297,6 +297,30 @@ describe('derived projections', () => {
     })
   })
 
+  it('links shared t0 edges during active inspection', async () => {
+    const state = await createState({
+      selectedEdgeId: 'F3d',
+    })
+    const derived = deriveDiagramState(state)
+    const edges = compileArchitectureEdges(state, callbacks, derived)
+
+    expect(edges.find((edge) => edge.id === 'F3d')).toMatchObject({
+      data: {
+        sharedTagFocused: true,
+      },
+    })
+    expect(edges.find((edge) => edge.id === 'F3h')).toMatchObject({
+      data: {
+        sharedTagFocused: true,
+      },
+    })
+    expect(edges.find((edge) => edge.id === 'F3g')).toMatchObject({
+      data: {
+        sharedTagFocused: false,
+      },
+    })
+  })
+
   it('filters claim C4 to the VoR path and sequence', async () => {
     const state = await createState({
       filters: {
@@ -430,8 +454,8 @@ describe('exports', () => {
         labelPoint: { x: 1122, y: 810 },
       },
       F3g: {
-        path: 'M 774 586 L 774 734 Q 774 748 788 748 L 1312 748 Q 1326 748 1326 734 L 1326 612',
-        labelPoint: { x: 1050, y: 766 },
+        path: 'M 774 586 L 774 726 Q 774 740 788 740 L 1312 740 Q 1326 740 1326 726 L 1326 612',
+        labelPoint: { x: 1050, y: 758 },
       },
       F3h: {
         path: 'M 1198 310 L 1198 586 Q 1198 600 1212 600 L 1284 600 Q 1290 600 1290 606 L 1290 606 Q 1290 612 1296 612 L 1326 612',
