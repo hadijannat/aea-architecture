@@ -1,39 +1,38 @@
+import {
+  getSemanticFamilyLabel,
+  semanticFamilyOrder,
+} from '@/graph/compile/semanticPresentation'
+import type { ProjectionTheme } from '@/graph/spec/schema'
 import type { DiagramStore } from '@/state/diagramStore'
 
 interface FilterPanelProps {
   filters: DiagramStore['ui']['filters']
   mode: DiagramStore['ui']['mode']
+  theme: ProjectionTheme
   panelBVisible: boolean
   viewportLocked: boolean
   onPathPreset(value: DiagramStore['ui']['filters']['pathPreset']): void
   onLaneToggle(value: 'A' | 'B' | 'C'): void
-  onSemanticToggle(value: DiagramStore['ui']['filters']['semantics'][number]): void
+  onSemanticFamilyToggle(value: DiagramStore['ui']['filters']['semanticFamilies'][number]): void
   onModeToggle(): void
+  onThemeToggle(): void
   onTogglePanelB(): void
   onToggleViewportLock(): void
   onResetLayout(): void
   onExpandNotes(): void
 }
 
-const semanticOptions: DiagramStore['ui']['filters']['semantics'] = [
-  'writeback',
-  'validation',
-  'kpi',
-  'tool-call',
-  'subscription',
-  'status-ack',
-  'rejection',
-]
-
 export function FilterPanel({
   filters,
   mode,
+  theme,
   panelBVisible,
   viewportLocked,
   onPathPreset,
   onLaneToggle,
-  onSemanticToggle,
+  onSemanticFamilyToggle,
   onModeToggle,
+  onThemeToggle,
   onTogglePanelB,
   onToggleViewportLock,
   onResetLayout,
@@ -68,15 +67,15 @@ export function FilterPanel({
         ))}
       </div>
       <div className="filter-group">
-        <span className="filter-group__label">Semantics</span>
-        {semanticOptions.map((semantic) => (
+        <span className="filter-group__label">Semantic families</span>
+        {semanticFamilyOrder.map((family) => (
           <button
-            key={semantic}
+            key={family}
             type="button"
-            className={filters.semantics.includes(semantic) ? 'chip is-active' : 'chip'}
-            onClick={() => onSemanticToggle(semantic)}
+            className={filters.semanticFamilies.includes(family) ? 'chip is-active' : 'chip'}
+            onClick={() => onSemanticFamilyToggle(family)}
           >
-            {semantic}
+            {getSemanticFamilyLabel(family)}
           </button>
         ))}
       </div>
@@ -87,6 +86,9 @@ export function FilterPanel({
         </button>
         <button type="button" className={panelBVisible ? 'chip is-active' : 'chip'} onClick={onTogglePanelB}>
           {panelBVisible ? 'Hide Panel B' : 'Show Panel B'}
+        </button>
+        <button type="button" className={theme === 'analysis' ? 'chip is-active' : 'chip'} onClick={onThemeToggle}>
+          Analysis theme
         </button>
         <button
           type="button"

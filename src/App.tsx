@@ -11,8 +11,8 @@ import { compileArchitectureEdges, compileArchitectureNodes, deriveDiagramState,
 import { toMermaid } from '@/graph/compile/toMermaid'
 import { getGraphManifestJson, graphManifest, resolveGraphEdge, resolveGraphNode, resolveSequenceStep } from '@/graph/spec/manifest'
 import { useDiagramStore } from '@/state/diagramStore'
-import type { DiagramStore } from '@/state/diagramStore'
 import type { ClaimId } from '@/graph/spec/schema'
+import { buildUiSearchParams, parseUiSearchParams } from '@/state/urlState'
 import { ArchitectureCanvas } from '@/ui/canvas/ArchitectureCanvas'
 import { SequencePanel } from '@/ui/canvas/SequencePanel'
 import { Breadcrumbs } from '@/ui/controls/Breadcrumbs'
@@ -38,10 +38,6 @@ function downloadText(filename: string, content: string, mimeType: string) {
   link.download = filename
   link.click()
   URL.revokeObjectURL(url)
-}
-
-function parseSearchParamList(value: string | null) {
-  return value ? value.split(',').filter(Boolean) : []
 }
 
 function mermaidDownloadName(panel: 'architecture' | 'vor-sequence') {
@@ -97,61 +93,27 @@ export default function App() {
   }, [actions])
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const selectedNode = params.get('node')
-    const selectedEdge = params.get('edge')
-    const selectedStep = params.get('step')
-    const claims = parseSearchParamList(params.get('claims')) as DiagramStore['ui']['filters']['claims']
-    const standards = parseSearchParamList(params.get('standards'))
-    const semantics = parseSearchParamList(params.get('semantics')) as DiagramStore['ui']['filters']['semantics']
-    const lanes = parseSearchParamList(params.get('lanes')) as DiagramStore['ui']['filters']['lanes']
-    const search = params.get('search') ?? ''
-    const path = (params.get('path') as DiagramStore['ui']['filters']['pathPreset'] | null) ?? 'all'
+    const { selectedNodeId, selectedEdgeId, selectedStepId, filters } = parseUiSearchParams(
+      new URLSearchParams(window.location.search),
+    )
 
-    actions.setFilter('claims', claims)
-    actions.setFilter('standards', standards)
-    actions.setFilter('semantics', semantics)
-    actions.setFilter('lanes', lanes)
-    actions.setSearch(search)
-    actions.setFilter('pathPreset', path)
-    if (selectedNode) {
-      actions.selectNode(selectedNode)
-    } else if (selectedEdge) {
-      actions.selectEdge(selectedEdge)
-    } else if (selectedStep) {
-      actions.selectStep(selectedStep)
+    actions.setFilter('claims', filters.claims)
+    actions.setFilter('standards', filters.standards)
+    actions.setFilter('semanticFamilies', filters.semanticFamilies)
+    actions.setFilter('lanes', filters.lanes)
+    actions.setSearch(filters.search)
+    actions.setFilter('pathPreset', filters.pathPreset)
+    if (selectedNodeId) {
+      actions.selectNode(selectedNodeId)
+    } else if (selectedEdgeId) {
+      actions.selectEdge(selectedEdgeId)
+    } else if (selectedStepId) {
+      actions.selectStep(selectedStepId)
     }
   }, [actions])
 
   useEffect(() => {
-    const params = new URLSearchParams()
-    if (store.ui.selectedNodeId) {
-      params.set('node', store.ui.selectedNodeId)
-    }
-    if (store.ui.selectedEdgeId) {
-      params.set('edge', store.ui.selectedEdgeId)
-    }
-    if (store.ui.selectedStepId) {
-      params.set('step', store.ui.selectedStepId)
-    }
-    if (store.ui.filters.claims.length > 0) {
-      params.set('claims', store.ui.filters.claims.join(','))
-    }
-    if (store.ui.filters.standards.length > 0) {
-      params.set('standards', store.ui.filters.standards.join(','))
-    }
-    if (store.ui.filters.semantics.length > 0) {
-      params.set('semantics', store.ui.filters.semantics.join(','))
-    }
-    if (store.ui.filters.lanes.length > 0) {
-      params.set('lanes', store.ui.filters.lanes.join(','))
-    }
-    if (store.ui.filters.search) {
-      params.set('search', store.ui.filters.search)
-    }
-    if (store.ui.filters.pathPreset !== 'all') {
-      params.set('path', store.ui.filters.pathPreset)
-    }
+    const params = buildUiSearchParams(store.ui)
     window.history.replaceState(null, '', `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`)
   }, [store.ui])
 
@@ -295,7 +257,7 @@ export default function App() {
   }
 
   return (
-    <div className={`app-shell app-shell--${store.ui.mode}`}>
+    <div className={`app-shell app-shell--${store.ui.mode} app-shell--theme-${store.projection.theme}`}>
       <header className="app-header">
         <div className="app-header__intro">
           <p className="eyebrow">AEA Architecture Figure</p>
@@ -345,14 +307,16 @@ export default function App() {
         <FilterPanel
           filters={store.ui.filters}
           mode={store.ui.mode}
+          theme={store.projection.theme}
           panelBVisible={store.ui.panelBVisible}
           viewportLocked={store.ui.viewportLocked}
           onPathPreset={(value) => actions.setFilter('pathPreset', value)}
           onLaneToggle={(value) => actions.setFilter('lanes', toggleInList(store.ui.filters.lanes, value))}
-          onSemanticToggle={(value) =>
-            actions.setFilter('semantics', toggleInList(store.ui.filters.semantics, value))
+          onSemanticFamilyToggle={(value) =>
+            actions.setFilter('semanticFamilies', toggleInList(store.ui.filters.semanticFamilies, value))
           }
           onModeToggle={() => actions.setMode(store.ui.mode === 'author' ? 'explore' : 'author')}
+          onThemeToggle={() => actions.setTheme(store.projection.theme === 'analysis' ? 'default' : 'analysis')}
           onTogglePanelB={actions.togglePanelB}
           onToggleViewportLock={actions.toggleViewportLock}
           onResetLayout={() => void actions.resetLayout()}
@@ -397,13 +361,14 @@ export default function App() {
           >
             <Panel id="architecture" defaultSize={100 - store.ui.panelBSize} minSize={48}>
               <ArchitectureCanvas
-                containerRef={architectureCanvasRef}
-                nodes={architectureNodes}
-                edges={architectureEdges}
-                ui={store.ui}
-                layoutReady={store.layout.ready}
-                onViewport={actions.setViewport}
-                onClearSelection={actions.clearSelection}
+              containerRef={architectureCanvasRef}
+              nodes={architectureNodes}
+              edges={architectureEdges}
+              ui={store.ui}
+              theme={store.projection.theme}
+              layoutReady={store.layout.ready}
+              onViewport={actions.setViewport}
+              onClearSelection={actions.clearSelection}
                 onNodeDragStop={onNodeDragStop}
                 onResetLayout={() => void actions.resetLayout()}
               />
@@ -415,6 +380,7 @@ export default function App() {
                   <SequencePanel
                     containerRef={sequencePanelRef}
                     model={sequenceModel}
+                    theme={store.projection.theme}
                     onSelectNode={actions.selectNode}
                     onSelectStep={actions.selectStep}
                     onSelectEdge={actions.selectEdge}

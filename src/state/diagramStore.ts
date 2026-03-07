@@ -4,24 +4,25 @@ import { persist, subscribeWithSelector } from 'zustand/middleware'
 import { defaultProjectionOverrides, graphManifest } from '@/graph/spec/manifest'
 import type {
   ClaimId,
-  EdgeSemantic,
+  EdgeSemanticFamily,
   EntityKey,
   GraphManifest,
   LaneId,
   ProjectionOverrides,
+  ProjectionTheme,
 } from '@/graph/spec/schema'
 import { computeBoardNodePositions, type NodePositionMap } from '@/layout/boardLayout'
 
 export interface DiagramFilters {
   claims: ClaimId[]
   standards: string[]
-  semantics: EdgeSemantic[]
+  semanticFamilies: EdgeSemanticFamily[]
   lanes: LaneId[]
   search: string
   pathPreset: 'all' | 'write' | 'policy' | 'telemetry'
 }
 
-interface DiagramUiState {
+export interface DiagramUiState {
   mode: 'explore' | 'author'
   selectedNodeId?: string
   selectedEdgeId?: string
@@ -61,6 +62,7 @@ interface DiagramActions {
   setPanelBSize(size: number): void
   toggleViewportLock(): void
   setMode(mode: DiagramUiState['mode']): void
+  setTheme(theme: ProjectionTheme): void
   updateNodePosition(nodeId: string, position: { x: number; y: number }): void
   updateEdgeHandles(
     edgeId: string,
@@ -86,7 +88,7 @@ export interface DiagramStore {
 const initialFilters: DiagramFilters = {
   claims: [],
   standards: [],
-  semantics: [],
+  semanticFamilies: [],
   lanes: [],
   search: '',
   pathPreset: 'all',
@@ -277,6 +279,15 @@ export const useDiagramStore = create<DiagramStore>()(
               ui: {
                 ...state.ui,
                 mode,
+              },
+            }))
+          },
+          setTheme(theme) {
+            set((state) => ({
+              ...state,
+              projection: {
+                ...state.projection,
+                theme,
               },
             }))
           },

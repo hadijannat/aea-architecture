@@ -49,9 +49,19 @@ export const edgeSemanticSchema = z.enum([
   'audit',
   'sequence',
 ])
+export const edgeSemanticFamilySchema = z.enum([
+  'context',
+  'policy',
+  'runtime',
+  'write',
+  'feedback',
+  'telemetry',
+  'sequence',
+])
 export const edgeStyleSchema = z.enum(['bold', 'medium', 'thin', 'dashed', 'dotted'])
 export const claimIdSchema = z.enum(['C1', 'C2', 'C3', 'C4', 'C5'])
 export const handlePositionSchema = z.enum(['left', 'right', 'top', 'bottom'])
+export const projectionThemeSchema = z.enum(['default', 'analysis'])
 
 export const standardRefSchema = z.object({
   id: z.string(),
@@ -140,6 +150,7 @@ export const edgeSpecSchema = z.object({
   semantic: edgeSemanticSchema,
   style: edgeStyleSchema,
   label: z.string(),
+  displayLabel: z.string().optional(),
   detail: z.string().optional(),
   direction: z.enum(['ltr', 'rtl', 'ttb', 'btt']),
   standardIds: z.array(z.string()).default([]),
@@ -237,7 +248,7 @@ export const projectionSnapshotStateSchema = z.object({
     .default({}),
   panelBSize: z.number().default(24),
   panelBVisible: z.boolean().default(true),
-  theme: z.string().default('default'),
+  theme: projectionThemeSchema.default('default'),
 })
 
 export const projectionSnapshotSchema = z.object({
@@ -262,7 +273,7 @@ export const projectionOverridesSchema = z.object({
   collapsedNodeIds: z.array(z.string()).default([]),
   expandedNoteIds: z.array(z.string()).default([]),
   annotations: z.record(z.string(), z.string()).default({}),
-  theme: z.string().default('default'),
+  theme: projectionThemeSchema.default('default'),
   exportPreset: z.enum(['viewport', 'publication']).default('viewport'),
   panelBSize: z.number().default(24),
   panelBVisible: z.boolean().default(true),
@@ -275,6 +286,7 @@ export type BandId = z.infer<typeof bandIdSchema>
 export type NodeKind = z.infer<typeof nodeKindSchema>
 export type NodeType = z.infer<typeof nodeTypeSchema>
 export type EdgeSemantic = z.infer<typeof edgeSemanticSchema>
+export type EdgeSemanticFamily = z.infer<typeof edgeSemanticFamilySchema>
 export type EdgeStyle = z.infer<typeof edgeStyleSchema>
 export type ClaimId = z.infer<typeof claimIdSchema>
 export type StandardRef = z.infer<typeof standardRefSchema>
@@ -287,6 +299,7 @@ export type LayoutDefaults = z.infer<typeof layoutDefaultsSchema>
 export type GraphManifest = z.infer<typeof graphManifestSchema>
 export type ProjectionSnapshot = z.infer<typeof projectionSnapshotSchema>
 export type ProjectionOverrides = z.infer<typeof projectionOverridesSchema>
+export type ProjectionTheme = z.infer<typeof projectionThemeSchema>
 
 export type EntityKind = 'node' | 'edge' | 'step' | 'claim' | 'standard'
 export type EntityKey = `${EntityKind}:${string}`

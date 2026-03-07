@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -5,29 +6,14 @@ import {
 } from '@xyflow/react'
 import clsx from 'clsx'
 
+import {
+  edgeStrokeDash,
+  edgeStrokeWidth,
+  getSemanticPresentation,
+} from '@/graph/compile/semanticPresentation'
 import type { DiagramFlowEdge } from '@/graph/compile/toReactFlow'
 import { edgeEntityKey } from '@/graph/spec/manifest'
 import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
-
-const strokeColors: Record<string, string> = {
-  writeback: '#d35400',
-  'status-ack': '#7d8597',
-  rejection: '#7d8597',
-  'tool-call': '#148a8a',
-  subscription: '#2d6cdf',
-  kpi: '#2d6cdf',
-  audit: '#8d6e63',
-  'read-only': '#2d6cdf',
-  default: '#455a75',
-}
-
-const strokeWidths: Record<string, number> = {
-  bold: 3.2,
-  medium: 2.2,
-  thin: 1.3,
-  dashed: 1.8,
-  dotted: 1.4,
-}
 
 export function BaseSemanticEdge({
   id,
@@ -51,15 +37,24 @@ export function BaseSemanticEdge({
   const labelPosition = resolveBoardLabelPosition(route.label)
   const edgePoints = route.points.map((point) => `${point.x},${point.y}`).join(' ')
 
-  const strokeColor = strokeColors[data.spec.semantic] ?? strokeColors.default
-  const strokeWidth = strokeWidths[data.spec.style] ?? 1.5
-  const strokeDasharray =
-    data.spec.style === 'dashed' ? '8 4' : data.spec.style === 'dotted' ? '2 5' : undefined
+  const presentation = getSemanticPresentation(data.spec.semantic)
+  const strokeColor = presentation.stroke
+  const strokeWidth = edgeStrokeWidth(data.spec.style)
+  const strokeDasharray = edgeStrokeDash(data.spec.style)
 
   return (
     <g
-      className={clsx('semantic-edge', data.selected && 'is-selected', data.highlighted && 'is-highlighted', data.dimmed && 'is-dimmed')}
+      className={clsx(
+        'semantic-edge',
+        `semantic-edge--${data.spec.semantic}`,
+        `semantic-edge-family--${presentation.family}`,
+        data.selected && 'is-selected',
+        data.highlighted && 'is-highlighted',
+        data.dimmed && 'is-dimmed',
+      )}
       data-edge-id={id}
+      data-edge-semantic={data.spec.semantic}
+      data-edge-family={presentation.family}
       data-edge-points={edgePoints}
       data-label-position={`${labelPosition.x},${labelPosition.y}`}
       onMouseEnter={() => data.callbacks.onHover(edgeEntityKey(id))}
@@ -85,12 +80,19 @@ export function BaseSemanticEdge({
       <EdgeLabelRenderer>
         <button
           type="button"
-          className={clsx('edge-label', data.selected && 'is-selected', data.highlighted && 'is-highlighted')}
+          className={clsx(
+            'edge-label',
+            `edge-label--${data.spec.semantic}`,
+            data.selected && 'is-selected',
+            data.highlighted && 'is-highlighted',
+          )}
           aria-label={data.ariaLabel}
           data-edge-id={id}
+          data-edge-label-mode="compact"
           style={{
+            '--semantic-stroke': presentation.stroke,
             transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
-          }}
+          } as CSSProperties}
           onFocus={() => data.callbacks.onHover(edgeEntityKey(id))}
           onBlur={() => data.callbacks.onHover(undefined)}
           onPointerDown={(event) => {

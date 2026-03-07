@@ -11,6 +11,7 @@ import {
 
 import type { DiagramFlowEdge, DiagramFlowNode } from '@/graph/compile/toReactFlow'
 import { graphManifest } from '@/graph/spec/manifest'
+import type { ProjectionTheme } from '@/graph/spec/schema'
 import type { DiagramStore } from '@/state/diagramStore'
 
 import AckEdge from '@/ui/edges/AckEdge'
@@ -130,6 +131,7 @@ interface ArchitectureCanvasProps {
   nodes: DiagramFlowNode[]
   edges: DiagramFlowEdge[]
   ui: DiagramStore['ui']
+  theme: ProjectionTheme
   layoutReady: boolean
   onViewport(viewport: DiagramStore['ui']['viewport']): void
   onClearSelection(): void
@@ -142,6 +144,7 @@ export function ArchitectureCanvas({
   nodes,
   edges,
   ui,
+  theme,
   layoutReady,
   onViewport,
   onClearSelection,
@@ -149,7 +152,12 @@ export function ArchitectureCanvas({
   onResetLayout,
 }: ArchitectureCanvasProps) {
   return (
-    <div ref={containerRef} className="architecture-canvas" aria-label="Panel A architecture canvas">
+    <div
+      ref={containerRef}
+      className={`architecture-canvas architecture-canvas--${theme}`}
+      data-theme={theme}
+      aria-label="Panel A architecture canvas"
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}

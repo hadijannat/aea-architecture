@@ -1,3 +1,4 @@
+import { useState, type FocusEvent, type MouseEvent as ReactMouseEvent } from 'react'
 import { Handle, useViewport, type NodeProps } from '@xyflow/react'
 import clsx from 'clsx'
 
@@ -35,6 +36,10 @@ function NodeHandles() {
   )
 }
 
+function stopNodeClick(event: ReactMouseEvent | FocusEvent) {
+  event.stopPropagation()
+}
+
 export function BaseNodeCard({
   data,
   selected,
@@ -43,6 +48,7 @@ export function BaseNodeCard({
   const { spec, claims, standards, annotation } = data
   const isStructural = spec.kind === 'lane' || spec.kind === 'container' || spec.kind === 'band'
   const { zoom } = useViewport()
+  const [compactMetaVisible, setCompactMetaVisible] = useState(false)
   const density =
     isStructural || selected || data.selected
       ? 'full'
@@ -54,6 +60,16 @@ export function BaseNodeCard({
   const showExpandedNotes = density === 'full'
   const showRole = !isStructural
   const showMetaLabels = density !== 'compact'
+  const showCompactMetaSummary = density === 'compact' && !isStructural
+  const hasCompactMeta = showCompactMetaSummary && (standards.length > 0 || claims.length > 0)
+
+  function handleBlur(event: FocusEvent<HTMLDivElement>) {
+    const nextTarget = event.relatedTarget
+    if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
+      return
+    }
+    setCompactMetaVisible(false)
+  }
 
   return (
     <div
@@ -68,11 +84,20 @@ export function BaseNodeCard({
         isStructural && 'is-structural',
       )}
       data-node-id={spec.id}
+      data-node-density={density}
       aria-label={data.ariaLabel}
       title={data.ariaLabel}
       onClick={() => data.callbacks.onSelectNode(spec.id)}
-      onMouseEnter={() => data.callbacks.onHover(nodeEntityKey(spec.id))}
-      onMouseLeave={() => data.callbacks.onHover(undefined)}
+      onMouseEnter={() => {
+        setCompactMetaVisible(true)
+        data.callbacks.onHover(nodeEntityKey(spec.id))
+      }}
+      onMouseLeave={() => {
+        setCompactMetaVisible(false)
+        data.callbacks.onHover(undefined)
+      }}
+      onFocusCapture={() => setCompactMetaVisible(true)}
+      onBlurCapture={handleBlur}
     >
       {!isStructural ? <NodeHandles /> : null}
       <div className="node-card__header">
@@ -109,53 +134,130 @@ export function BaseNodeCard({
           {standards.length > 0 ? (
             <div className="node-card__meta-group">
               {showMetaLabels ? <span className="node-card__meta-label">Standards</span> : null}
-              <div className="node-card__meta-rail" aria-label={`Standards for ${spec.title}`}>
-                {standards.map((standard: NonNullable<typeof standards[number]>) => (
-                  <button
-                    key={standard.id}
-                    type="button"
-                    className="badge badge--standard"
-                    title={`${standard.label}${standard.version ? ` ${standard.version}` : ''}`}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      data.callbacks.onBadgeStandard(standard.id)
-                    }}
-                  >
-                    {density === 'compact' ? standard.id : standard.label}
-                    {density !== 'compact' && standard.version ? ` ${standard.version}` : ''}
-                  </button>
-                ))}
-              </div>
+              {showCompactMetaSummary ? (
+                <button
+                  type="button"
+                  className="badge badge--standard badge--summary"
+                  data-node-meta-summary="standards"
+                  onClick={(event) => {
+                    stopNodeClick(event)
+                    setCompactMetaVisible((current) => !current)
+                  }}
+                  onFocus={() => setCompactMetaVisible(true)}
+                >
+                  {standards.length} standard{standards.length === 1 ? '' : 's'}
+                </button>
+              ) : (
+                <div className="node-card__meta-rail" aria-label={`Standards for ${spec.title}`}>
+                  {standards.map((standard: NonNullable<typeof standards[number]>) => (
+                    <button
+                      key={standard.id}
+                      type="button"
+                      className="badge badge--standard"
+                      title={`${standard.label}${standard.version ? ` ${standard.version}` : ''}`}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        data.callbacks.onBadgeStandard(standard.id)
+                      }}
+                    >
+                      {density === 'compact' ? standard.id : standard.label}
+                      {density !== 'compact' && standard.version ? ` ${standard.version}` : ''}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           ) : null}
           {claims.length > 0 ? (
             <div className="node-card__meta-group">
               {showMetaLabels ? <span className="node-card__meta-label">Claims</span> : null}
-              <div className="node-card__meta-rail" aria-label={`Claims for ${spec.title}`}>
-                {claims.map((claim: NonNullable<typeof claims[number]>) => (
-                  <button
-                    key={claim.id}
-                    type="button"
-                    className="badge badge--claim"
-                    title={claim.label}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      data.callbacks.onBadgeClaim(claim.id)
-                    }}
-                  >
-                    {claim.id}
-                    {density === 'full' ? ` · ${claim.label}` : ''}
-                  </button>
-                ))}
-              </div>
+              {showCompactMetaSummary ? (
+                <button
+                  type="button"
+                  className="badge badge--claim badge--summary"
+                  data-node-meta-summary="claims"
+                  onClick={(event) => {
+                    stopNodeClick(event)
+                    setCompactMetaVisible((current) => !current)
+                  }}
+                  onFocus={() => setCompactMetaVisible(true)}
+                >
+                  {claims.length} claim{claims.length === 1 ? '' : 's'}
+                </button>
+              ) : (
+                <div className="node-card__meta-rail" aria-label={`Claims for ${spec.title}`}>
+                  {claims.map((claim: NonNullable<typeof claims[number]>) => (
+                    <button
+                      key={claim.id}
+                      type="button"
+                      className="badge badge--claim"
+                      title={claim.label}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        data.callbacks.onBadgeClaim(claim.id)
+                      }}
+                    >
+                      {claim.id}
+                      {density === 'full' ? ` · ${claim.label}` : ''}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
+          {hasCompactMeta && compactMetaVisible ? (
+            <div className="node-card__meta-popover" data-node-meta-popover>
+              {standards.length > 0 ? (
+                <div className="node-card__meta-group">
+                  <span className="node-card__meta-label">Standards</span>
+                  <div className="node-card__meta-rail" aria-label={`Standards for ${spec.title}`}>
+                    {standards.map((standard: NonNullable<typeof standards[number]>) => (
+                      <button
+                        key={standard.id}
+                        type="button"
+                        className="badge badge--standard"
+                        title={`${standard.label}${standard.version ? ` ${standard.version}` : ''}`}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          data.callbacks.onBadgeStandard(standard.id)
+                        }}
+                      >
+                        {standard.label}
+                        {standard.version ? ` ${standard.version}` : ''}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {claims.length > 0 ? (
+                <div className="node-card__meta-group">
+                  <span className="node-card__meta-label">Claims</span>
+                  <div className="node-card__meta-rail" aria-label={`Claims for ${spec.title}`}>
+                    {claims.map((claim: NonNullable<typeof claims[number]>) => (
+                      <button
+                        key={claim.id}
+                        type="button"
+                        className="badge badge--claim"
+                        title={claim.label}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          data.callbacks.onBadgeClaim(claim.id)
+                        }}
+                      >
+                        {claim.id} · {claim.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>
       ) : null}
-      {(data.notesExpanded && showExpandedNotes && spec.inspector.notes[0]) ? (
+      {data.notesExpanded && showExpandedNotes && spec.inspector.notes[0] ? (
         <div className="node-card__annotation">{spec.inspector.notes[0]}</div>
       ) : null}
-      {(annotation && showExpandedNotes) ? <div className="node-card__annotation">Author note: {annotation}</div> : null}
+      {annotation && showExpandedNotes ? <div className="node-card__annotation">Author note: {annotation}</div> : null}
     </div>
   )
 }

@@ -1,6 +1,10 @@
-import type { Edge as FlowEdge, Node as FlowNode } from '@xyflow/react'
+import { MarkerType, type Edge as FlowEdge, type Node as FlowNode } from '@xyflow/react'
 
 import { buildEdgeAriaLabel, buildNodeAriaLabel } from '@/a11y/aria'
+import {
+  getSemanticPresentation,
+  matchesSemanticFamilies,
+} from '@/graph/compile/semanticPresentation'
 import {
   edgeEntityKey,
   graphManifest,
@@ -149,7 +153,7 @@ function edgeMatchesFilters(edge: EdgeSpec, state: DiagramStore, manifest: Graph
   ) {
     return false
   }
-  if (filters.semantics.length > 0 && !filters.semantics.includes(edge.semantic)) {
+  if (!matchesSemanticFamilies(edge.semantic, filters.semanticFamilies)) {
     return false
   }
   if (!includesPathTag(edge.tags, filters.pathPreset)) {
@@ -392,7 +396,7 @@ export function deriveDiagramState(state: DiagramStore, manifest: GraphManifest 
   const hasActiveFilters =
     state.ui.filters.claims.length > 0 ||
     state.ui.filters.standards.length > 0 ||
-    state.ui.filters.semantics.length > 0 ||
+    state.ui.filters.semanticFamilies.length > 0 ||
     state.ui.filters.lanes.length > 0 ||
     state.ui.filters.search.length > 0 ||
     state.ui.filters.pathPreset !== 'all'
@@ -564,9 +568,13 @@ export function compileArchitectureEdges(
           edge.semantic === 'rejection' ||
           edge.semantic === 'tool-call',
         markerEnd: {
-          type: 'arrowclosed',
+          type:
+            getSemanticPresentation(edge.semantic).marker === 'arrow'
+              ? MarkerType.Arrow
+              : MarkerType.ArrowClosed,
           width: 20,
           height: 20,
+          color: getSemanticPresentation(edge.semantic).stroke,
         },
         data: {
           spec: edge,

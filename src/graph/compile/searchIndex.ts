@@ -1,3 +1,4 @@
+import { describeSemanticForSearch } from '@/graph/compile/semanticPresentation'
 import type { ClaimRef, GraphManifest, StandardRef } from '@/graph/spec/schema'
 
 export type SearchResultKind = 'node' | 'edge' | 'step' | 'claim' | 'standard'
@@ -116,7 +117,7 @@ export function buildSearchResults(
       kind: 'edge',
       id: edge.id,
       title: `${edge.id} · ${edge.label}`,
-      subtitle: edge.semantic,
+      subtitle: describeSemanticForSearch(edge.semantic),
       summary: `${sourceTitle} -> ${targetTitle}`,
       score,
     })

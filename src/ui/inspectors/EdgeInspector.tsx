@@ -30,11 +30,19 @@ export function EdgeInspector({
   const linkedSteps = edge.interactive.relatedStepIds
     .map((stepId) => manifest.steps.find((step) => step.id === stepId))
     .filter((step): step is GraphManifest['steps'][number] => Boolean(step))
+  const primaryTitle = edge.displayLabel ?? edge.label
+  const showRawLabel = Boolean(edge.displayLabel)
 
   return (
     <section className="inspector-section">
       <h2>{edge.id}</h2>
-      <p className="inspector-section__title">{edge.label}</p>
+      <p className="inspector-section__title">{primaryTitle}</p>
+      {showRawLabel ? (
+        <div className="inspector-section__detail">
+          <p>{edge.label}</p>
+          {edge.detail ? <p>{edge.detail}</p> : null}
+        </div>
+      ) : null}
       <div className="inspector-grid">
         <div>
           <strong>Source</strong>
@@ -53,7 +61,7 @@ export function EdgeInspector({
           <p>{edge.direction}</p>
         </div>
       </div>
-      {edge.detail ? <p>{edge.detail}</p> : null}
+      {!showRawLabel && edge.detail ? <p>{edge.detail}</p> : null}
       <div className="inspector-actions">
         <button type="button" onClick={() => onSelectNode(edge.source)}>
           Open source block

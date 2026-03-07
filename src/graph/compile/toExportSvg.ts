@@ -1,10 +1,11 @@
 import { graphManifest, resolveGraphNode } from '@/graph/spec/manifest'
-import type { EdgeSpec, GraphManifest, ProjectionOverrides } from '@/graph/spec/schema'
+import type { EdgeSpec, GraphManifest, ProjectionOverrides, ProjectionTheme } from '@/graph/spec/schema'
 import { resolveEdgeHandles } from '@/layout/ports'
 import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
 import type { DiagramStore } from '@/state/diagramStore'
 
 import { compileSequenceBoard, type SequenceBoardModel } from './sequenceBoard'
+import { getSemanticPresentation } from './semanticPresentation'
 import { deriveDiagramState } from './toReactFlow'
 
 export type ExportMode = 'viewport' | 'publication'
@@ -153,25 +154,7 @@ function buildArchitectureEdgePath(edge: EdgeSpec, state: DiagramStore, projecti
 }
 
 function edgeStroke(edge: EdgeSpec) {
-  switch (edge.semantic) {
-    case 'writeback':
-      return '#d35400'
-    case 'status-ack':
-    case 'rejection':
-      return '#7d8597'
-    case 'tool-call':
-      return '#148a8a'
-    case 'subscription':
-    case 'kpi':
-    case 'read-only':
-      return '#2d6cdf'
-    case 'audit':
-      return '#8d6e63'
-    case 'sequence':
-      return '#455a75'
-    default:
-      return '#455a75'
-  }
+  return getSemanticPresentation(edge.semantic).stroke
 }
 
 function edgeWidth(edge: EdgeSpec, tokens: ExportTokens) {
@@ -189,17 +172,75 @@ function edgeDash(edge: EdgeSpec, tokens: ExportTokens) {
 }
 
 function edgeMarker(edge: EdgeSpec) {
-  if (edge.semantic === 'writeback') {
-    return 'arrowhead-write'
+  return `marker-${edge.semantic}`
+}
+
+function markerRefX(marker: ReturnType<typeof getSemanticPresentation>['marker'], tokens: ExportTokens) {
+  if (marker === 'tee') {
+    return 2
   }
-  if (
-    edge.semantic === 'kpi' ||
-    edge.semantic === 'read-only' ||
-    edge.semantic === 'subscription'
-  ) {
-    return 'arrowhead-blue'
+  if (marker === 'circle') {
+    return tokens.markerRefY + 1.25
   }
-  return 'arrowhead'
+  return tokens.markerRefX
+}
+
+function markerMarkup(
+  marker: ReturnType<typeof getSemanticPresentation>['marker'],
+  tokens: ExportTokens,
+  color: string,
+) {
+  switch (marker) {
+    case 'arrow':
+      return `<path d="M 1 0.8 L ${tokens.markerWidth - 1} ${tokens.markerRefY} L 1 ${tokens.markerHeight - 0.8}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" />`
+    case 'circle':
+      return `<circle cx="${tokens.markerRefY + 1.25}" cy="${tokens.markerRefY}" r="${tokens.markerRefY - 0.4}" fill="${color}" />`
+    case 'tee':
+      return `<path d="M 1 0.8 L 1 ${tokens.markerHeight - 0.8} M 1 ${tokens.markerRefY} L ${tokens.markerWidth - 1} ${tokens.markerRefY}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" />`
+    case 'diamond':
+      return `<path d="M ${tokens.markerWidth / 2} 0.6 L ${tokens.markerWidth - 0.6} ${tokens.markerRefY} L ${tokens.markerWidth / 2} ${tokens.markerHeight - 0.6} L 0.6 ${tokens.markerRefY} z" fill="${color}" />`
+    case 'arrowclosed':
+    default:
+      return `<path d="M 0 0 L ${tokens.markerWidth} ${tokens.markerRefY} L 0 ${tokens.markerHeight} z" fill="${color}" />`
+  }
+}
+
+function renderMarkerDefs(tokens: ExportTokens, manifest: GraphManifest) {
+  const semantics = [...new Set(manifest.edges.map((edge) => edge.semantic))]
+
+  return `
+  <defs>
+    ${semantics
+      .map((semantic) => {
+        const presentation = getSemanticPresentation(semantic)
+        return `<marker id="marker-${semantic}" markerWidth="${tokens.markerWidth}" markerHeight="${tokens.markerHeight}" refX="${markerRefX(presentation.marker, tokens)}" refY="${tokens.markerRefY}" orient="auto" markerUnits="strokeWidth">
+      ${markerMarkup(presentation.marker, tokens, presentation.stroke)}
+    </marker>`
+      })
+      .join('\n')}
+  </defs>`
+}
+
+interface ExportThemePalette {
+  boardBackground: string
+  sequenceBackground: string
+  pageBackground: string
+}
+
+function exportThemePalette(theme: ProjectionTheme): ExportThemePalette {
+  if (theme === 'analysis') {
+    return {
+      boardBackground: '#f8fafc',
+      sequenceBackground: '#ffffff',
+      pageBackground: '#f8fafc',
+    }
+  }
+
+  return {
+    boardBackground: '#eef3fa',
+    sequenceBackground: '#fff6ea',
+    pageBackground: '#eef3fa',
+  }
 }
 
 function buildExportState(
@@ -222,11 +263,15 @@ function buildExportState(
             filters: {
               claims: [],
               standards: [],
-              semantics: [],
+              semanticFamilies: [],
               lanes: [],
               search: '',
               pathPreset: 'all' as const,
             },
+          },
+          projection: {
+            ...state.projection,
+            theme: 'analysis',
           },
         } satisfies DiagramStore)
       : state
@@ -291,21 +336,6 @@ function publicationTokens(): ExportTokens {
   }
 }
 
-function renderMarkerDefs(tokens: ExportTokens) {
-  return `
-  <defs>
-    <marker id="arrowhead" markerWidth="${tokens.markerWidth}" markerHeight="${tokens.markerHeight}" refX="${tokens.markerRefX}" refY="${tokens.markerRefY}" orient="auto" markerUnits="strokeWidth">
-      <path d="M 0 0 L ${tokens.markerWidth} ${tokens.markerRefY} L 0 ${tokens.markerHeight} z" fill="#455a75" />
-    </marker>
-    <marker id="arrowhead-write" markerWidth="${tokens.markerWidth}" markerHeight="${tokens.markerHeight}" refX="${tokens.markerRefX}" refY="${tokens.markerRefY}" orient="auto" markerUnits="strokeWidth">
-      <path d="M 0 0 L ${tokens.markerWidth} ${tokens.markerRefY} L 0 ${tokens.markerHeight} z" fill="#d35400" />
-    </marker>
-    <marker id="arrowhead-blue" markerWidth="${tokens.markerWidth}" markerHeight="${tokens.markerHeight}" refX="${tokens.markerRefX}" refY="${tokens.markerRefY}" orient="auto" markerUnits="strokeWidth">
-      <path d="M 0 0 L ${tokens.markerWidth} ${tokens.markerRefY} L 0 ${tokens.markerHeight} z" fill="#2d6cdf" />
-    </marker>
-  </defs>`
-}
-
 function renderArchitectureNodes(
   state: DiagramStore,
   manifest: GraphManifest,
@@ -366,7 +396,7 @@ function renderArchitectureEdges(
     <title>${esc(edge.id)}: ${esc(edge.label)}</title>
     <desc>${esc(edge.inspector.rationale)}</desc>
     <path d="${translateScaledPath(route.path, transform)}" fill="none" stroke="${edgeStroke(edge)}" stroke-width="${edgeWidth(edge, tokens)}" ${edgeDash(edge, tokens)} marker-end="url(#${edgeMarker(edge)})" />
-    <text id="edge-label-${edge.id}" x="${labelPoint.x}" y="${labelPoint.y}" text-anchor="middle" fill="#334155" font-size="${tokens.edgeLabelSize}" font-family="Arial, sans-serif">${esc(edge.id)}${edge.markers.includes('diode') ? ' ⊘' : ''} · ${esc(edge.label)}</text>
+    <text id="edge-label-${edge.id}" x="${labelPoint.x}" y="${labelPoint.y}" text-anchor="middle" fill="${edgeStroke(edge)}" font-size="${tokens.edgeLabelSize}" font-family="Arial, sans-serif">${esc(edge.id)}${edge.markers.includes('diode') ? ' ⊘' : ''} · ${esc(edge.label)}</text>
   </g>`
     })
     .join('\n')
@@ -460,6 +490,7 @@ function renderSequenceBoard(
 
   const edges = visibleEdges
     .map((edge) => {
+      const semanticStroke = edgeStroke(edge.edge)
       const labelPoint = scaledPoint({ x: edge.labelX, y: edge.labelY }, transform)
       const labelY =
         edge.edge.semantic === 'sequence'
@@ -472,8 +503,8 @@ function renderSequenceBoard(
   <g id="sequence-edge-${edge.edge.id}">
     <title>${esc(edge.edge.id)}: ${esc(edge.edge.label)}</title>
     <desc>${esc(edge.edge.inspector.rationale)}</desc>
-    <path d="${translateScaledPath(edge.path, transform)}" fill="none" stroke="${edgeStroke(edge.edge)}" stroke-width="${edgeWidth(edge.edge, tokens)}" ${edgeDash(edge.edge, tokens)} marker-end="url(#${edgeMarker(edge.edge)})" />
-    <text x="${labelPoint.x}" y="${labelY}" text-anchor="middle" fill="#334155" font-size="${tokens.edgeLabelSize}" font-family="Arial, sans-serif">${esc(edge.edge.id)}</text>
+    <path d="${translateScaledPath(edge.path, transform)}" fill="none" stroke="${semanticStroke}" stroke-width="${edgeWidth(edge.edge, tokens)}" ${edgeDash(edge.edge, tokens)} marker-end="url(#${edgeMarker(edge.edge)})" />
+    <text x="${labelPoint.x}" y="${labelY}" text-anchor="middle" fill="${semanticStroke}" font-size="${tokens.edgeLabelSize}" font-family="Arial, sans-serif">${esc(edge.edge.id)}</text>
   </g>`
     })
     .join('\n')
@@ -500,6 +531,7 @@ function buildViewportSvgDocument(
 ): ExportSvgDocument {
   const tokens = viewportTokens()
   const { effectiveState, derivedState, includeSequencePanel } = buildExportState(state, 'viewport', manifest)
+  const palette = exportThemePalette(effectiveState.projection.theme)
   const boardModel = includeSequencePanel ? compileSequenceBoard(effectiveState, derivedState, manifest) : undefined
   const architectureMetrics = metrics.architecture
   const sequenceMetrics =
@@ -511,16 +543,16 @@ function buildViewportSvgDocument(
 
   return {
     svg: `
-<svg xmlns="http://www.w3.org/2000/svg" width="${architectureMetrics.width}" height="${totalHeight}" viewBox="0 0 ${architectureMetrics.width} ${totalHeight}" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="${architectureMetrics.width}" height="${totalHeight}" viewBox="0 0 ${architectureMetrics.width} ${totalHeight}" role="img" data-export-theme="${effectiveState.projection.theme}">
   <title>AEA Architecture Viewport Export</title>
   <desc>${esc(
     includeSequencePanel
       ? 'Viewport export of the live AEA architecture canvas with the synchronized VoR sequence panel.'
       : 'Viewport export of the live AEA architecture canvas.',
   )}</desc>
-  ${renderMarkerDefs(tokens)}
+  ${renderMarkerDefs(tokens, manifest)}
   <svg x="0" y="0" width="${architectureMetrics.width}" height="${architectureMetrics.height}" viewBox="${cropRect.x} ${cropRect.y} ${cropRect.width} ${cropRect.height}">
-    <rect x="${cropRect.x - 1000}" y="${cropRect.y - 1000}" width="${cropRect.width + 2000}" height="${cropRect.height + 2000}" fill="#f4f6f9" />
+    <rect x="${cropRect.x - 1000}" y="${cropRect.y - 1000}" width="${cropRect.width + 2000}" height="${cropRect.height + 2000}" fill="${palette.boardBackground}" />
     ${renderArchitectureNodes(
       effectiveState,
       manifest,
@@ -539,7 +571,7 @@ function buildViewportSvgDocument(
   ${
     includeSequencePanel && boardModel && sequenceMetrics
       ? `<svg x="0" y="${architectureMetrics.height}" width="${sequenceMetrics.width}" height="${sequenceMetrics.height}" viewBox="0 0 ${boardModel.width} ${boardModel.height}" preserveAspectRatio="xMidYMid meet">
-    <rect x="0" y="0" width="${boardModel.width}" height="${boardModel.height}" fill="#fff9f1" />
+    <rect x="0" y="0" width="${boardModel.width}" height="${boardModel.height}" fill="${palette.sequenceBackground}" />
     ${renderSequenceBoard(boardModel, { offsetX: 0, offsetY: 0, scale: 1 }, tokens)}
   </svg>`
       : ''
@@ -559,6 +591,7 @@ function buildPublicationSvgDocument(
 ): ExportSvgDocument {
   const tokens = publicationTokens()
   const { effectiveState, derivedState } = buildExportState(state, 'publication', manifest)
+  const palette = exportThemePalette(effectiveState.projection.theme)
   const boardModel = compileSequenceBoard(effectiveState, derivedState, manifest)
   const figureWidthPt = mmToPt(183)
   const architectureScale = figureWidthPt / manifest.layoutDefaults.canvas.width
@@ -571,13 +604,13 @@ function buildPublicationSvgDocument(
 
   return {
     svg: `
-<svg xmlns="http://www.w3.org/2000/svg" width="183mm" height="${ptToMm(totalHeightPt)}mm" viewBox="0 0 ${figureWidthPt} ${totalHeightPt}" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" width="183mm" height="${ptToMm(totalHeightPt)}mm" viewBox="0 0 ${figureWidthPt} ${totalHeightPt}" role="img" data-export-theme="${effectiveState.projection.theme}">
   <title>AEA Architecture Publication Export</title>
   <desc>${esc(
     'Publication export of the AEA architecture figure including the full architecture board and the VoR domain-transition sequence.',
   )}</desc>
-  ${renderMarkerDefs(tokens)}
-  <rect x="0" y="0" width="${figureWidthPt}" height="${totalHeightPt}" fill="#f4f6f9" />
+  ${renderMarkerDefs(tokens, manifest)}
+  <rect x="0" y="0" width="${figureWidthPt}" height="${totalHeightPt}" fill="${palette.pageBackground}" />
   <text x="9" y="18" fill="#1f2937" font-size="${tokens.titleSize}" font-family="Arial, sans-serif" font-weight="700">(a) Architecture Across NOA Zones</text>
   ${renderArchitectureNodes(
     effectiveState,
@@ -594,7 +627,7 @@ function buildPublicationSvgDocument(
     tokens,
   )}
   <text x="9" y="${sequenceTitleY}" fill="#1f2937" font-size="${tokens.titleSize}" font-family="Arial, sans-serif" font-weight="700">(b) VoR Domain-Transition Sequence (NE 178, 2025)</text>
-  <rect x="0" y="${sequenceFrameY - 8}" width="${figureWidthPt}" height="${sequenceHeightPt + 12}" fill="#fff9f1" />
+  <rect x="0" y="${sequenceFrameY - 8}" width="${figureWidthPt}" height="${sequenceHeightPt + 12}" fill="${palette.sequenceBackground}" />
   ${renderSequenceBoard(
     boardModel,
     { offsetX: 0, offsetY: sequenceFrameY, scale: architectureScale },

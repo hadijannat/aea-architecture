@@ -12,6 +12,7 @@ import {
   focusPresetOptions,
   overviewRegions,
 } from './focusPresets'
+import { SemanticLegend } from './SemanticLegend'
 
 interface SemanticOverviewMapProps {
   containerRef?: RefObject<HTMLDivElement | null>
@@ -326,6 +327,7 @@ export function SemanticOverviewMap({
               </button>
             ))}
           </div>
+          <SemanticLegend />
         </div>
       ) : null}
     </div>

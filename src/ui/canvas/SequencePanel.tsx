@@ -1,50 +1,55 @@
 import { type CSSProperties, type RefObject } from 'react'
 import clsx from 'clsx'
 
+import {
+  edgeStrokeDash,
+  edgeStrokeWidth,
+  getSemanticPresentation,
+} from '@/graph/compile/semanticPresentation'
 import { type SequenceBoardModel } from '@/graph/compile/sequenceBoard'
 import { edgeEntityKey, nodeEntityKey, stepEntityKey } from '@/graph/spec/manifest'
-import type { EntityKey } from '@/graph/spec/schema'
+import type { EntityKey, ProjectionTheme } from '@/graph/spec/schema'
 
 interface SequencePanelProps {
   containerRef?: RefObject<HTMLElement | null>
   model: SequenceBoardModel
+  theme: ProjectionTheme
   onSelectNode(nodeId: string): void
   onSelectStep(stepId: string): void
   onSelectEdge(edgeId: string): void
   onHover(key?: EntityKey): void
 }
 
-function edgeStroke(semantic: string) {
-  switch (semantic) {
-    case 'status-ack':
-    case 'rejection':
-      return '#7d8597'
+function markerPath(marker: ReturnType<typeof getSemanticPresentation>['marker']) {
+  switch (marker) {
+    case 'arrow':
+      return <path d="M 1 1 L 9 4 L 1 7" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    case 'circle':
+      return <circle cx="5" cy="4" r="3" fill="currentColor" />
+    case 'tee':
+      return <path d="M 1 1 L 1 7 M 1 4 L 9 4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    case 'diamond':
+      return <path d="M 5 0.8 L 9.2 4 L 5 7.2 L 0.8 4 z" fill="currentColor" />
+    case 'arrowclosed':
     default:
-      return '#455a75'
+      return <path d="M 0 0 L 10 4 L 0 8 z" fill="currentColor" />
   }
 }
 
-function edgeStrokeWidth(style: string) {
-  switch (style) {
-    case 'medium':
-      return 2.4
-    case 'dashed':
-      return 1.9
-    default:
-      return 1.6
+function markerRefX(marker: ReturnType<typeof getSemanticPresentation>['marker']) {
+  if (marker === 'tee') {
+    return 2
   }
-}
-
-function edgeDash(style: string) {
-  if (style === 'dashed') {
-    return '8 4'
+  if (marker === 'circle') {
+    return 5
   }
-  return undefined
+  return 9
 }
 
 export function SequencePanel({
   containerRef,
   model,
+  theme,
   onSelectNode,
   onSelectStep,
   onSelectEdge,
@@ -55,7 +60,12 @@ export function SequencePanel({
   const visibleEdges = model.edges.filter((edge) => !edge.hidden)
 
   return (
-    <section ref={containerRef} className="sequence-panel" aria-label="VoR domain transition sequence">
+    <section
+      ref={containerRef}
+      className={`sequence-panel sequence-panel--${theme}`}
+      data-theme={theme}
+      aria-label="VoR domain transition sequence"
+    >
       <header className="sequence-panel__header">
         <div>
           <p className="eyebrow">(b)</p>
@@ -80,12 +90,23 @@ export function SequencePanel({
             aria-hidden="true"
           >
             <defs>
-              <marker id="sequence-arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth">
-                <path d="M 0 0 L 10 4 L 0 8 z" fill="#455a75" />
-              </marker>
-              <marker id="sequence-arrow-status" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth">
-                <path d="M 0 0 L 10 4 L 0 8 z" fill="#7d8597" />
-              </marker>
+              {visibleEdges.map((edge) => {
+                const presentation = getSemanticPresentation(edge.edge.semantic)
+                return (
+                  <marker
+                    key={edge.edge.id}
+                    id={`sequence-marker-${edge.edge.id}`}
+                    markerWidth="10"
+                    markerHeight="8"
+                    refX={markerRefX(presentation.marker)}
+                    refY="4"
+                    orient="auto"
+                    markerUnits="strokeWidth"
+                  >
+                    <g style={{ color: presentation.stroke }}>{markerPath(presentation.marker)}</g>
+                  </marker>
+                )
+              })}
             </defs>
             <rect x="0" y="0" width={model.width} height={model.height} rx="26" fill="#fff9f1" />
             <path
@@ -94,26 +115,33 @@ export function SequencePanel({
               stroke="rgba(211, 161, 109, 0.3)"
               strokeWidth="1"
             />
-            {visibleEdges.map((edge) => (
-              <g
-                key={edge.edge.id}
-                className={clsx(
-                  'sequence-board__edge',
-                  edge.selected && 'is-selected',
-                  edge.highlighted && 'is-highlighted',
-                  edge.dimmed && 'is-dimmed',
-                )}
-              >
-                <path
-                  d={edge.path}
-                  fill="none"
-                  stroke={edgeStroke(edge.edge.semantic)}
-                  strokeWidth={edgeStrokeWidth(edge.edge.style)}
-                  strokeDasharray={edgeDash(edge.edge.style)}
-                  markerEnd={`url(#${edge.edge.semantic === 'status-ack' || edge.edge.semantic === 'rejection' ? 'sequence-arrow-status' : 'sequence-arrow'})`}
-                />
-              </g>
-            ))}
+            {visibleEdges.map((edge) => {
+              const presentation = getSemanticPresentation(edge.edge.semantic)
+
+              return (
+                <g
+                  key={edge.edge.id}
+                  className={clsx(
+                    'sequence-board__edge',
+                    `sequence-board__edge--${edge.edge.semantic}`,
+                    edge.selected && 'is-selected',
+                    edge.highlighted && 'is-highlighted',
+                    edge.dimmed && 'is-dimmed',
+                  )}
+                  data-edge-id={edge.edge.id}
+                  data-edge-semantic={edge.edge.semantic}
+                >
+                  <path
+                    d={edge.path}
+                    fill="none"
+                    stroke={presentation.stroke}
+                    strokeWidth={edgeStrokeWidth(edge.edge.style)}
+                    strokeDasharray={edgeStrokeDash(edge.edge.style)}
+                    markerEnd={`url(#sequence-marker-${edge.edge.id})`}
+                  />
+                </g>
+              )
+            })}
           </svg>
 
           {visibleTerminals.map((terminal) => (
@@ -176,12 +204,15 @@ export function SequencePanel({
           ))}
 
           {visibleEdges.map((edge) => {
+            const presentation = getSemanticPresentation(edge.edge.semantic)
             const labelY =
               edge.edge.semantic === 'sequence'
                 ? edge.labelY - 18
                 : edge.edge.semantic === 'rejection'
                   ? edge.labelY + 18
                   : edge.labelY - 10
+            const expanded = edge.selected || edge.highlighted
+            const displayLabel = edge.edge.displayLabel ?? edge.edge.label
 
             return (
               <button
@@ -190,24 +221,28 @@ export function SequencePanel({
                 className={clsx(
                   'sequence-edge-label',
                   `sequence-edge-label--${edge.edge.semantic}`,
+                  `sequence-edge-label-family--${presentation.family}`,
                   edge.selected && 'is-selected',
                   edge.highlighted && 'is-highlighted',
                   edge.dimmed && 'is-dimmed',
                 )}
+                data-edge-id={edge.edge.id}
+                data-edge-label-mode={expanded ? 'expanded' : 'compact'}
                 style={
                   {
+                    '--semantic-stroke': presentation.stroke,
                     left: edge.labelX,
                     top: labelY,
                   } as CSSProperties
                 }
-                aria-label={`${edge.edge.id}: ${edge.edge.label}`}
+                aria-label={`${edge.edge.id}: ${displayLabel}. ${edge.edge.label}`}
                 onClick={() => onSelectEdge(edge.edge.id)}
                 onFocus={() => onHover(edgeEntityKey(edge.edge.id))}
                 onBlur={() => onHover(undefined)}
                 onMouseEnter={() => onHover(edgeEntityKey(edge.edge.id))}
                 onMouseLeave={() => onHover(undefined)}
               >
-                {edge.edge.id}
+                {expanded ? `${edge.edge.id} · ${displayLabel}` : edge.edge.id}
               </button>
             )
           })}

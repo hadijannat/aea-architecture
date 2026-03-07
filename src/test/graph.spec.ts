@@ -1,4 +1,8 @@
 import { buildSearchResults } from '@/graph/compile/searchIndex'
+import {
+  getSemanticPresentation,
+  resolveSemanticFamilies,
+} from '@/graph/compile/semanticPresentation'
 import { compileSequenceBoard } from '@/graph/compile/sequenceBoard'
 import { buildExportSvgDocument } from '@/graph/compile/toExportSvg'
 import mermaid from 'mermaid'
@@ -7,11 +11,13 @@ import { describe, expect, it } from 'vitest'
 import { deriveDiagramState } from '@/graph/compile/toReactFlow'
 import { toMermaid } from '@/graph/compile/toMermaid'
 import { defaultProjectionOverrides, graphManifest, resolveGraphEdge, resolveGraphNode } from '@/graph/spec/manifest'
+import { projectionOverridesSchema } from '@/graph/spec/schema'
 import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
 import { validateGraphManifest } from '@/graph/spec/validators'
 import { computeBoardNodePositions } from '@/layout/boardLayout'
 import { resolveEdgeHandles, type HandleId } from '@/layout/ports'
 import { useDiagramStore, type DiagramStore } from '@/state/diagramStore'
+import { buildUiSearchParams, parseUiSearchParams } from '@/state/urlState'
 
 async function createState(overrides?: Partial<DiagramStore['ui']>): Promise<DiagramStore> {
   const positions = await computeBoardNodePositions(graphManifest, defaultProjectionOverrides)
@@ -28,7 +34,7 @@ async function createState(overrides?: Partial<DiagramStore['ui']>): Promise<Dia
       filters: {
         claims: [],
         standards: [],
-        semantics: [],
+        semanticFamilies: [],
         lanes: [],
         search: '',
         pathPreset: 'all',
@@ -174,12 +180,12 @@ describe('graph manifest', () => {
       F7a: { source: 'ACT2', target: 'C1', semantic: 'kpi', style: 'medium', direction: 'ltr' },
       F7b: { source: 'C1', target: 'C2', semantic: 'kpi', style: 'medium', direction: 'ltr' },
       F7_sub: { source: 'C2', target: 'C1', semantic: 'subscription', style: 'dotted', direction: 'rtl' },
-      PB_F1: { source: 'PB1', target: 'PB2', semantic: 'sequence', style: 'medium', direction: 'ltr' },
-      PB_F2: { source: 'PB2', target: 'PB3', semantic: 'sequence', style: 'medium', direction: 'ltr' },
-      PB_F3: { source: 'PB3', target: 'PB4', semantic: 'sequence', style: 'medium', direction: 'ltr' },
-      PB_F4: { source: 'PB4', target: 'PB5', semantic: 'sequence', style: 'medium', direction: 'ltr' },
-      PB_ACK: { source: 'PB5', target: 'PB_AEA', semantic: 'status-ack', style: 'dashed', direction: 'rtl' },
-      PB_REJECT: { source: 'PB4', target: 'PB_REJECT_OUT', semantic: 'rejection', style: 'dashed', direction: 'ttb' },
+      PB_F1: { source: 'PB1', target: 'PB2', semantic: 'sequence', style: 'medium', direction: 'ltr', displayLabel: 'Authorise' },
+      PB_F2: { source: 'PB2', target: 'PB3', semantic: 'sequence', style: 'medium', direction: 'ltr', displayLabel: 'Map request' },
+      PB_F3: { source: 'PB3', target: 'PB4', semantic: 'sequence', style: 'medium', direction: 'ltr', displayLabel: 'Accept request' },
+      PB_F4: { source: 'PB4', target: 'PB5', semantic: 'sequence', style: 'medium', direction: 'ltr', displayLabel: 'Execute request' },
+      PB_ACK: { source: 'PB5', target: 'PB_AEA', semantic: 'status-ack', style: 'dashed', direction: 'rtl', displayLabel: 'Return status' },
+      PB_REJECT: { source: 'PB4', target: 'PB_REJECT_OUT', semantic: 'rejection', style: 'dashed', direction: 'ttb', displayLabel: 'Return rejection' },
     } as const
 
     for (const [id, expected] of Object.entries(expectedEdges)) {
@@ -217,12 +223,21 @@ describe('graph manifest', () => {
 })
 
 describe('derived projections', () => {
+  it('maps raw semantics into the grouped semantic families', () => {
+    expect(resolveSemanticFamilies(['validation', 'writeback', 'status-ack'])).toEqual(['policy', 'write', 'feedback'])
+    expect(getSemanticPresentation('status-ack')).toMatchObject({
+      family: 'feedback',
+      label: 'Status acknowledgement',
+    })
+    expect(getSemanticPresentation('rejection').stroke).not.toBe(getSemanticPresentation('status-ack').stroke)
+  })
+
   it('filters claim C4 to the VoR path and sequence', async () => {
     const state = await createState({
       filters: {
         claims: ['C4'],
         standards: [],
-        semantics: [],
+        semanticFamilies: [],
         lanes: [],
         search: '',
         pathPreset: 'all',
@@ -234,6 +249,46 @@ describe('derived projections', () => {
     expect(derived.visibleNodeIds.has('VOI')).toBe(true)
     expect(derived.visibleStepIds.has('PB1')).toBe(true)
     expect(derived.visibleStepIds.has('PB5')).toBe(true)
+  })
+
+  it('filters edges through semantic families instead of raw semantic chips', async () => {
+    const state = await createState({
+      filters: {
+        claims: [],
+        standards: [],
+        semanticFamilies: ['feedback'],
+        lanes: [],
+        search: '',
+        pathPreset: 'all',
+      },
+    })
+
+    const derived = deriveDiagramState(state)
+    expect(derived.visibleEdgeIds.has('F_VoR_ACK')).toBe(true)
+    expect(derived.visibleEdgeIds.has('F3f_reject')).toBe(true)
+    expect(derived.visibleEdgeIds.has('PB_ACK')).toBe(true)
+    expect(derived.visibleEdgeIds.has('PB_REJECT')).toBe(true)
+    expect(derived.visibleEdgeIds.has('F5')).toBe(false)
+  })
+
+  it('translates legacy semantics query params into grouped families and writes families back out', () => {
+    const parsed = parseUiSearchParams(new URLSearchParams('semantics=validation,status-ack&node=VOI'))
+    expect(parsed.selectedNodeId).toBe('VOI')
+    expect(parsed.filters.semanticFamilies).toEqual(['policy', 'feedback'])
+
+    const serialized = buildUiSearchParams({
+      selectedNodeId: 'VOI',
+      selectedEdgeId: undefined,
+      selectedStepId: undefined,
+      filters: parsed.filters,
+    })
+    expect(serialized.get('families')).toBe('policy,feedback')
+    expect(serialized.has('semantics')).toBe(false)
+  })
+
+  it('uses a typed default theme and rejects invalid projection themes', () => {
+    expect(projectionOverridesSchema.parse({ version: '1' }).theme).toBe('default')
+    expect(projectionOverridesSchema.safeParse({ version: '1', theme: 'flat-print' }).success).toBe(false)
   })
 
   it('sorts Panel B steps by sequence order and keeps terminal nodes visible', async () => {
@@ -395,6 +450,7 @@ describe('exports', () => {
     })
 
     expect(viewportDocument.svg).toContain('<title>AEA Architecture Viewport Export</title>')
+    expect(viewportDocument.svg).toContain('data-export-theme="default"')
     expect(viewportDocument.svg).toContain('viewBox="60 40 320 180"')
     for (const edgeId of ['F4', 'F5', 'F6', 'F_VoR_ACK', 'F7a', 'F7_sub']) {
       const route = buildArchitectureRoute(state, edgeId)
@@ -413,6 +469,7 @@ describe('exports', () => {
     const publicationDocument = buildExportSvgDocument(state, { mode: 'publication' })
 
     expect(publicationDocument.svg).toContain('<title>AEA Architecture Publication Export</title>')
+    expect(publicationDocument.svg).toContain('data-export-theme="analysis"')
     expect(publicationDocument.svg).toContain('width="183mm"')
     expect(publicationDocument.svg).toContain('font-size="9pt"')
     expect(publicationDocument.svg).toContain('font-size="6.5pt"')
@@ -420,6 +477,31 @@ describe('exports', () => {
     expect(publicationDocument.svg).toContain('stroke-dasharray="4 2"')
     expect(publicationDocument.svg).toContain('id="sequence-edge-PB_ACK"')
     expect(publicationDocument.svg).toContain('VoR Domain-Transition Sequence')
+  })
+
+  it('respects the active viewport theme while forcing publication exports to analysis mode', async () => {
+    const state = await createState()
+    state.projection = {
+      ...state.projection,
+      theme: 'analysis',
+    }
+
+    const analysisViewport = buildExportSvgDocument(state, { mode: 'viewport' })
+    const publicationDocument = buildExportSvgDocument(
+      {
+        ...state,
+        projection: {
+          ...state.projection,
+          theme: 'default',
+        },
+      },
+      { mode: 'publication' },
+    )
+
+    expect(analysisViewport.svg).toContain('data-export-theme="analysis"')
+    expect(analysisViewport.svg).toContain('fill="#f8fafc"')
+    expect(publicationDocument.svg).toContain('data-export-theme="analysis"')
+    expect(publicationDocument.svg).not.toContain('data-export-theme="default"')
   })
 
   it('resetLayout clears manual edge handles together with node positions', async () => {
