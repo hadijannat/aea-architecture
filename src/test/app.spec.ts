@@ -103,6 +103,22 @@ async function expandedNoteIds(page: Page) {
   })
 }
 
+async function svgBox(locator: Locator) {
+  return locator.evaluate((element) => {
+    if (!(element instanceof SVGGraphicsElement)) {
+      return null
+    }
+
+    const box = element.getBBox()
+    return {
+      x: box.x,
+      y: box.y,
+      width: box.width,
+      height: box.height,
+    }
+  })
+}
+
 function parseEdgePoints(value: string) {
   return value
     .split(' ')
@@ -134,7 +150,7 @@ test('selecting F5 highlights the VoR sequence and inspector', async ({ page }) 
 
 test('filtering by C4 keeps the write path visible', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'C4' }).first().click()
+  await page.getByRole('button', { name: 'C4: Actuation is exclusive to the VoR path' }).click()
   await expect(page.getByRole('button', { name: /^F5:/ })).toBeVisible()
   await expect(page.getByRole('button', { name: /PB5: Mapping Verification \+ Execution/ })).toBeVisible()
 })
@@ -277,10 +293,29 @@ test('toggle chips expose pressed state and the updated lane copy', async ({ pag
   await expect(page.getByRole('button', { name: 'Hide VoR sequence' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Write corridor focus' })).toBeVisible()
 
-  const claimC4 = page.getByRole('button', { name: 'C4' }).first()
+  const claimC4 = page.getByRole('button', { name: 'C4: Actuation is exclusive to the VoR path' })
   await expect(claimC4).toHaveAttribute('aria-pressed', 'false')
+  await expect(claimC4).toContainText('Actuation is exclusive to the VoR path')
+  await expect(claimC4).toHaveAttribute(
+    'title',
+    'The only write-back initiation path is F5 through NE 178 and the VoR Interface.',
+  )
   await claimC4.click()
   await expect(claimC4).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('write corridor preset stays single-line in the 2x2 focus grid', async ({ page }) => {
+  await page.goto('/?node=ACT1')
+
+  const writePreset = page.locator('[data-focus-preset="write"]')
+  const overviewPreset = page.locator('[data-focus-preset="overview"]')
+
+  await expect(writePreset).toContainText('Write corridor')
+  const writeHeight = (await writePreset.boundingBox())?.height ?? 0
+  const overviewHeight = (await overviewPreset.boundingBox())?.height ?? 0
+
+  expect(writeHeight).toBeGreaterThan(0)
+  expect(Math.abs(writeHeight - overviewHeight)).toBeLessThanOrEqual(2)
 })
 
 test('reduce motion toggle disables animated writeback edges while secondary paths stay static', async ({ page }) => {
@@ -334,7 +369,7 @@ test('sequence background and ribbon label follow the active theme', async ({ pa
   await page.goto('/')
 
   const sequenceBackground = page.locator('[data-sequence-background]')
-  await expect(page.getByText('VoR boundary')).toBeVisible()
+  await expect(page.getByTestId('sequence').getByText('VoR boundary')).toBeVisible()
   await expect
     .poll(() => sequenceBackground.evaluate((element) => getComputedStyle(element).fill))
     .toBe('rgb(255, 249, 241)')
@@ -396,9 +431,73 @@ test('runtime node surfaces consume the manifest visual tokens', async ({ page }
     borderColor: hexToRgbString('#c9d0d8'),
   })
   expect(await nodeSurfaceStyles(page, 'BAND_SENSE')).toEqual({
-    backgroundColor: hexToRgbString('#f8fbff'),
-    borderColor: hexToRgbString('#c9d4e3'),
+    backgroundColor: hexToRgbString('#edf5ff'),
+    borderColor: hexToRgbString('#bfd4ef'),
   })
+  expect(await nodeSurfaceStyles(page, 'BAND_DECIDE')).toEqual({
+    backgroundColor: hexToRgbString('#f6f8fc'),
+    borderColor: hexToRgbString('#ccd4e0'),
+  })
+  expect(await nodeSurfaceStyles(page, 'BAND_ACT')).toEqual({
+    backgroundColor: hexToRgbString('#fdf1e7'),
+    borderColor: hexToRgbString('#ddc8b6'),
+  })
+})
+
+test('overview navigator keeps corridor routes behind nodes and retains visible accents', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/?node=ACT1')
+
+  const actAccent = page.locator('[data-overview-node-accent-id="ACT1"]')
+  const corridorArrow = page.locator('[data-overview-write-arrow="corridor"]')
+
+  await expect(actAccent).toBeVisible()
+  await expect(corridorArrow).toBeVisible()
+
+  const accentBox = await svgBox(actAccent)
+  const arrowBox = await svgBox(corridorArrow)
+
+  expect(accentBox?.height ?? 0).toBeGreaterThan(20)
+  expect(arrowBox?.width ?? 0).toBeGreaterThan(60)
+
+  const routePrecedesNode = await page.evaluate(() => {
+    const route = document.querySelector('[data-write-route-id="F5"]')
+    const node = document.querySelector('[data-overview-node-id="ACT1"]')
+    if (!route || !node) {
+      return false
+    }
+
+    return Boolean(route.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  expect(routePrecedesNode).toBe(true)
+})
+
+test('overview navigator regions follow persisted structural overrides', async ({ page }) => {
+  await page.goto('/')
+
+  const persisted = await page.evaluate(() => {
+    const raw = window.localStorage.getItem('aea-architecture-ui')
+    if (!raw) {
+      throw new Error('Persisted state was not created')
+    }
+
+    const parsed = JSON.parse(raw)
+    parsed.state.projection.nodePositions = {
+      ...parsed.state.projection.nodePositions,
+      LANE_A: { x: 96, y: 72 },
+    }
+    return JSON.stringify(parsed)
+  })
+
+  await page.addInitScript((value) => {
+    window.localStorage.setItem('aea-architecture-ui', value)
+  }, persisted)
+
+  await page.reload()
+
+  await expect.poll(() => page.locator('[data-overview-region-id="lane-a"]').getAttribute('x')).toBe('96')
+  await expect.poll(() => page.locator('[data-overview-region-id="lane-a"]').getAttribute('y')).toBe('72')
 })
 
 test('hover cards stay clear of the overview panel', async ({ page }) => {

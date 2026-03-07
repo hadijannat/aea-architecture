@@ -5,6 +5,7 @@ import clsx from 'clsx'
 import { resolveNodeVisual } from '@/graph/compile/nodeVisuals'
 import type { DiagramFlowNode } from '@/graph/compile/toReactFlow'
 import { nodeEntityKey } from '@/graph/spec/manifest'
+import type { NodeSpec } from '@/graph/spec/schema'
 import { focusRingClassName } from '@/a11y/focus'
 import { getHandlePosition, type HandleId } from '@/layout/ports'
 
@@ -41,6 +42,29 @@ function stopNodeClick(event: ReactMouseEvent | FocusEvent) {
   event.stopPropagation()
 }
 
+function resolveStructuralNarrative(spec: NodeSpec) {
+  switch (spec.id) {
+    case 'LANE_A':
+      return 'Read-only CPC boundary'
+    case 'LANE_B':
+      return 'Agent runtime and gateway corridor'
+    case 'LANE_C':
+      return 'Publish-only central consumption'
+    case 'GW':
+      return 'Gateway diode and VoR boundary'
+    case 'AEA':
+      return 'Sense -> Decide -> Act pipeline'
+    case 'BAND_SENSE':
+      return 'Read-only telemetry ingress'
+    case 'BAND_DECIDE':
+      return 'Grounding, planning, and policy gates'
+    case 'BAND_ACT':
+      return 'Validated write and publish split'
+    default:
+      return undefined
+  }
+}
+
 export function BaseNodeCard({
   data,
   selected,
@@ -51,19 +75,29 @@ export function BaseNodeCard({
   const isStructural = visual.isStructural
   const { zoom } = useViewport()
   const [compactMetaVisible, setCompactMetaVisible] = useState(false)
+  const structuralZoomMode =
+    !isStructural ? undefined : zoom >= 0.96 ? 'full' : zoom >= 0.72 ? 'balanced' : 'overview'
   const density =
-    isStructural || selected || data.selected
-      ? 'full'
-      : zoom >= 1.08
+    isStructural
+      ? structuralZoomMode
+      : selected || data.selected
         ? 'full'
-        : zoom >= 0.88
-          ? 'balanced'
-          : 'compact'
+        : zoom >= 1.08
+          ? 'full'
+          : zoom >= 0.88
+            ? 'balanced'
+            : 'compact'
   const showExpandedNotes = density === 'full'
   const showRole = !isStructural
   const showMetaLabels = density !== 'compact'
   const showCompactMetaSummary = density === 'compact' && !isStructural
   const hasCompactMeta = showCompactMetaSummary && (standards.length > 0 || claims.length > 0)
+  const structuralNarrative = isStructural ? resolveStructuralNarrative(spec) : undefined
+  const showStructuralOverview = structuralZoomMode === 'overview'
+  const showStructuralBadge = !isStructural || structuralZoomMode !== 'overview'
+  const showEyebrowId = !isStructural || structuralZoomMode !== 'overview'
+  const showLeadingBadge = visual.badgeStyle === 'pill' && !isStructural
+  const showInlineBadge = (visual.badgeStyle === 'inline' || isStructural) && showStructuralBadge
 
   function handleBlur(event: FocusEvent<HTMLDivElement>) {
     const nextTarget = event.relatedTarget
@@ -103,6 +137,7 @@ export function BaseNodeCard({
       data-node-density={density}
       data-node-kind={spec.kind}
       data-node-badge-style={visual.badgeStyle}
+      data-node-structural-zoom={isStructural ? structuralZoomMode : undefined}
       aria-label={data.ariaLabel}
       title={data.ariaLabel}
       style={
@@ -129,15 +164,17 @@ export function BaseNodeCard({
       {!isStructural ? <NodeHandles /> : null}
       <div className="node-card__header">
         <div className="node-card__header-main">
-          {visual.badgeStyle === 'pill' && !isStructural ? badge : null}
+          {showLeadingBadge ? badge : null}
           <div className="node-card__heading">
             <div className="node-card__eyebrow-row">
-              <div className="node-card__eyebrow">{spec.id}</div>
-              {visual.badgeStyle === 'inline' || isStructural ? badge : null}
+              {showEyebrowId ? <div className="node-card__eyebrow">{spec.id}</div> : null}
+              {showInlineBadge ? badge : null}
+              {structuralNarrative ? <span className="node-card__structural-tagline">{structuralNarrative}</span> : null}
             </div>
             <h3 className="node-card__title">{spec.title}</h3>
+            {showStructuralOverview && spec.subtitle ? <p className="node-card__subtitle">{spec.subtitle}</p> : null}
           </div>
-          {spec.subtitle ? <p className="node-card__subtitle">{spec.subtitle}</p> : null}
+          {!showStructuralOverview && spec.subtitle ? <p className="node-card__subtitle">{spec.subtitle}</p> : null}
         </div>
         {!isStructural ? (
           <details className="node-card__menu" onClick={(event) => event.stopPropagation()}>

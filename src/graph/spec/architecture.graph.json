@@ -287,8 +287,8 @@
       "height": 190,
       "fixed": true,
       "visual": {
-        "fill": "#f8fbff",
-        "border": "#c9d4e3",
+        "fill": "#edf5ff",
+        "border": "#bfd4ef",
         "accent": "#2d6cdf",
         "badgeStyle": "inline"
       },
@@ -321,9 +321,9 @@
       "height": 340,
       "fixed": true,
       "visual": {
-        "fill": "#fbfbff",
-        "border": "#d3d7e3",
-        "accent": "#455a75",
+        "fill": "#f6f8fc",
+        "border": "#ccd4e0",
+        "accent": "#4b607c",
         "badgeStyle": "inline"
       },
       "inspector": {
@@ -355,9 +355,9 @@
       "height": 190,
       "fixed": true,
       "visual": {
-        "fill": "#fffaf5",
-        "border": "#e2d6c9",
-        "accent": "#d35400",
+        "fill": "#fdf1e7",
+        "border": "#ddc8b6",
+        "accent": "#bf7a44",
         "badgeStyle": "inline"
       },
       "inspector": {

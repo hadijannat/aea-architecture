@@ -1,25 +1,25 @@
 import type { NodeSpec } from '@/graph/spec/schema'
 
 const kindBadgeMap: Record<NodeSpec['kind'], string> = {
-  lane: 'LANE',
-  band: 'BAND',
-  container: 'ZONE',
-  'gateway-module': 'GW',
-  'gateway-interface': 'IF',
-  'cpc-block': 'SYS',
-  'aea-block': 'MOD',
-  repository: 'REP',
-  policy: 'POL',
-  agent: 'AG',
-  publisher: 'PUB',
-  broker: 'MQ',
-  audit: 'LOG',
+  lane: 'Lane',
+  band: 'Band',
+  container: 'Zone',
+  'gateway-module': 'Gateway',
+  'gateway-interface': 'Interface',
+  'cpc-block': 'System',
+  'aea-block': 'Process',
+  repository: 'Store',
+  policy: 'Policy',
+  agent: 'Agent',
+  publisher: 'Publish',
+  broker: 'Queue',
+  audit: 'Audit',
 }
 
 const bandBadgeMap: Record<NonNullable<NodeSpec['band']>, string> = {
-  Sense: 'SNS',
-  Decide: 'DEC',
-  Act: 'ACT',
+  Sense: 'Sense',
+  Decide: 'Decide',
+  Act: 'Act',
 }
 
 export interface ResolvedNodeVisual {
@@ -42,11 +42,13 @@ export function resolveNodeVisual(node: NodeSpec): ResolvedNodeVisual {
   let badgeText = node.visual.icon?.trim()
   if (!badgeText) {
     if (node.kind === 'lane' && node.lane) {
-      badgeText = `L${node.lane}`
+      badgeText = `Lane ${node.lane}`
     } else if (node.kind === 'band' && node.band) {
       badgeText = bandBadgeMap[node.band]
-    } else if (node.kind === 'container' && (node.id === 'GW' || node.id === 'AEA')) {
-      badgeText = node.id
+    } else if (node.kind === 'container' && node.id === 'GW') {
+      badgeText = 'Gateway'
+    } else if (node.kind === 'container' && node.id === 'AEA') {
+      badgeText = 'AEA'
     } else {
       badgeText = kindBadgeMap[node.kind]
     }

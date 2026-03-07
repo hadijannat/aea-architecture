@@ -354,7 +354,7 @@ export default function App() {
           }
         />
         <div className="toolbar__chips">
-          <div>
+          <div className="toolbar__claims">
             <span className="toolbar__label">Claims</span>
             <ClaimChips
               manifest={graphManifest}
@@ -362,7 +362,7 @@ export default function App() {
               onToggle={(claimId) => actions.setFilter('claims', toggleInList(store.ui.filters.claims, claimId))}
             />
           </div>
-          <div>
+          <div className="toolbar__standards">
             <span className="toolbar__label">Standards</span>
             <StandardChips
               manifest={graphManifest}

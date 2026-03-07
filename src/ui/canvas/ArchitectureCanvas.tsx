@@ -118,6 +118,71 @@ function hasCustomViewport(viewport: DiagramStore['ui']['viewport']) {
   )
 }
 
+function getNodeRect(node?: DiagramFlowNode) {
+  if (!node) {
+    return undefined
+  }
+
+  const width = node.width ?? node.data.spec.width
+  const height = node.height ?? node.data.spec.height
+
+  return {
+    x: node.position.x,
+    y: node.position.y,
+    width,
+    height,
+  }
+}
+
+function OverviewWriteRibbon({
+  nodes,
+  viewport,
+}: {
+  nodes: DiagramFlowNode[]
+  viewport: DiagramStore['ui']['viewport']
+}) {
+  const ribbon = useMemo(() => {
+    const visibleNodes = new Map(nodes.filter((node) => !node.hidden).map((node) => [node.id, node]))
+    const act = getNodeRect(visibleNodes.get('ACT1'))
+    const gateway = getNodeRect(visibleNodes.get('VOI'))
+    const cpc = getNodeRect(visibleNodes.get('A3'))
+    const band = getNodeRect(visibleNodes.get('BAND_ACT'))
+
+    if (!act || !gateway || !cpc || !band) {
+      return undefined
+    }
+
+    const x1 = Math.min(act.x + act.width / 2, gateway.x + gateway.width / 2, cpc.x + cpc.width / 2) - 24
+    const x2 = Math.max(act.x + act.width / 2, gateway.x + gateway.width / 2, cpc.x + cpc.width / 2) + 24
+    const y = Math.max(band.y + band.height + 18, cpc.y + cpc.height + 18)
+
+    return {
+      left: x1 * viewport.zoom + viewport.x,
+      top: y * viewport.zoom + viewport.y,
+      width: (x2 - x1) * viewport.zoom,
+    }
+  }, [nodes, viewport.x, viewport.y, viewport.zoom])
+
+  if (!ribbon || viewport.zoom > 0.76 || ribbon.width < 180) {
+    return null
+  }
+
+  return (
+    <div
+      className="architecture-canvas__write-ribbon"
+      data-write-ribbon
+      style={{
+        left: `${ribbon.left}px`,
+        top: `${ribbon.top}px`,
+        width: `${ribbon.width}px`,
+      }}
+    >
+      <span className="architecture-canvas__write-ribbon-title">VoR -&gt; Gateway -&gt; CPC</span>
+      <span className="architecture-canvas__write-ribbon-detail">Exclusive actuation corridor</span>
+    </div>
+  )
+}
+
 function AutoFocusSelection({
   nodes,
   selectedNodeId,
@@ -273,6 +338,7 @@ export function ArchitectureCanvas({
           />
         </FlowPanel>
       </ReactFlow>
+      <OverviewWriteRibbon nodes={nodes} viewport={ui.viewport} />
     </div>
   )
 }

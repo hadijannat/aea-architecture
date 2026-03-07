@@ -9,9 +9,10 @@ import { buildBoardEdgeRoute, type Point } from '@/layout/board'
 import type { HandleId } from '@/layout/ports'
 
 import {
+  deriveOverviewRegions,
   fitNodesToPreset,
   focusPresetOptions,
-  overviewRegions,
+  getFocusPresetAccessibleLabel,
 } from './focusPresets'
 import { SemanticLegend } from './SemanticLegend'
 
@@ -40,7 +41,7 @@ interface OverviewNodeRect {
   selected: boolean
 }
 
-const { canvas, gateway } = graphManifest.layoutDefaults
+const { canvas } = graphManifest.layoutDefaults
 
 function isHandleId(value?: string | null): value is HandleId {
   return value === 'left' || value === 'right' || value === 'top' || value === 'bottom'
@@ -62,47 +63,40 @@ function nodeAnchor(node: DiagramFlowNode, handleId: HandleId): Point {
   }
 }
 
-function hotspotBounds(region: (typeof overviewRegions)[number]) {
-  if (region.id === 'gateway') {
-    return {
-      x: gateway.x,
-      y: region.y,
-      width: gateway.width,
-      height: region.height,
+function buildCorridorArrow(
+  region?: { x: number; y: number; width: number; height: number },
+  routes: OverviewWriteRoute[] = [],
+) {
+  if (!region) {
+    return ''
+  }
+
+  const averageDeltaX = routes.reduce((total, route) => {
+    const start = route.points[0]
+    const end = route.points[route.points.length - 1]
+    if (!start || !end) {
+      return total
     }
-  }
+    return total + (end.x - start.x)
+  }, 0)
 
-  return region
-}
-
-function buildArrowPolygon(points: Point[]) {
-  const end = points[points.length - 1]
-  const previous = points[points.length - 2]
-
-  if (!end || !previous) {
-    return ''
-  }
-
-  const dx = end.x - previous.x
-  const dy = end.y - previous.y
-  const length = Math.hypot(dx, dy)
-  if (length === 0) {
-    return ''
-  }
-
-  const unitX = dx / length
-  const unitY = dy / length
-  const size = 34
-  const wing = 14
-  const baseX = end.x - unitX * size
-  const baseY = end.y - unitY * size
-  const perpX = -unitY
-  const perpY = unitX
+  const direction = averageDeltaX <= 0 ? -1 : 1
+  const length = Math.max(64, Math.min(128, region.width * 0.18))
+  const thickness = Math.max(14, Math.min(24, region.height * 0.14))
+  const wing = Math.max(20, Math.min(34, length * 0.28))
+  const tipX = direction < 0 ? region.x + region.width * 0.32 : region.x + region.width * 0.68
+  const tipY = region.y + region.height - 28
+  const baseX = tipX - direction * length
+  const shaftX = tipX - direction * (length - wing)
 
   return [
-    `${end.x},${end.y}`,
-    `${baseX + perpX * wing},${baseY + perpY * wing}`,
-    `${baseX - perpX * wing},${baseY - perpY * wing}`,
+    `${tipX},${tipY}`,
+    `${shaftX},${tipY - wing}`,
+    `${shaftX},${tipY - thickness / 2}`,
+    `${baseX},${tipY - thickness / 2}`,
+    `${baseX},${tipY + thickness / 2}`,
+    `${shaftX},${tipY + thickness / 2}`,
+    `${shaftX},${tipY + wing}`,
   ].join(' ')
 }
 
@@ -211,6 +205,10 @@ export function SemanticOverviewMap({
       .filter((route): route is OverviewWriteRoute => Boolean(route))
   }, [edges, nodes])
 
+  const overviewRegions = useMemo(() => deriveOverviewRegions(nodes, writeRoutes), [nodes, writeRoutes])
+  const writeRegion = overviewRegions.find((region) => region.id === 'write')
+  const corridorArrow = useMemo(() => buildCorridorArrow(writeRegion, writeRoutes), [writeRegion, writeRoutes])
+
   const overviewNodes = useMemo<OverviewNodeRect[]>(() => {
     return nodes
       .filter((node) => !node.hidden && !isStructuralNodeSpec(node.data.spec))
@@ -278,14 +276,17 @@ export function SemanticOverviewMap({
             data-overview-map
           >
             <svg className="semantic-overview__map" viewBox={`0 0 ${canvas.width} ${canvas.height}`} aria-hidden="true">
-              <rect
-                x={overviewRegions.find((region) => region.id === 'write')?.x ?? 0}
-                y={overviewRegions.find((region) => region.id === 'write')?.y ?? 0}
-                width={overviewRegions.find((region) => region.id === 'write')?.width ?? 0}
-                height={overviewRegions.find((region) => region.id === 'write')?.height ?? 0}
-                rx="36"
-                className="semantic-overview__write-band"
-              />
+              {writeRegion ? (
+                <rect
+                  x={writeRegion.x}
+                  y={writeRegion.y}
+                  width={writeRegion.width}
+                  height={writeRegion.height}
+                  rx="36"
+                  className="semantic-overview__write-band"
+                  data-overview-region-id="write"
+                />
+              ) : null}
               {overviewRegions
                 .filter((region) => region.accent !== 'write')
                 .map((region) => (
@@ -297,8 +298,17 @@ export function SemanticOverviewMap({
                     height={region.height}
                     rx={region.accent === 'gateway' ? 28 : 22}
                     className={`semantic-overview__region semantic-overview__region--${region.accent}`}
+                    data-overview-region-id={region.id}
                   />
                 ))}
+              {writeRoutes.map((route) => (
+                <path
+                  key={route.id}
+                  d={route.path}
+                  className="semantic-overview__write-path"
+                  data-write-route-id={route.id}
+                />
+              ))}
               {overviewNodes.map((node) => (
                 <g key={node.id}>
                   <rect
@@ -316,23 +326,21 @@ export function SemanticOverviewMap({
                     x={node.x}
                     y={node.y}
                     width={node.width}
-                    height="8"
-                    rx="8"
+                    height={Math.max(20, Math.min(32, node.height * 0.18))}
+                    rx="5"
                     className="semantic-overview__node-accent"
                     fill={node.accent}
+                    data-overview-node-accent-id={node.id}
                   />
                 </g>
               ))}
-              {writeRoutes.map((route) => (
-                <g key={route.id}>
-                  <path d={route.path} className="semantic-overview__write-path" data-write-route-id={route.id} />
-                  <polygon
-                    points={buildArrowPolygon(route.points)}
-                    className="semantic-overview__write-arrow"
-                    data-write-arrow-id={route.id}
-                  />
-                </g>
-              ))}
+              {corridorArrow ? (
+                <polygon
+                  points={corridorArrow}
+                  className="semantic-overview__write-arrow"
+                  data-overview-write-arrow="corridor"
+                />
+              ) : null}
               <rect
                 x={viewportRect.x}
                 y={viewportRect.y}
@@ -344,18 +352,16 @@ export function SemanticOverviewMap({
             </svg>
 
             {overviewRegions.map((region) => {
-              const hotspot = hotspotBounds(region)
-
               return (
                 <button
                   key={region.id}
                   type="button"
                   className={clsx('semantic-overview__hotspot', `semantic-overview__hotspot--${region.accent}`)}
                   style={{
-                    left: `${(hotspot.x / canvas.width) * 100}%`,
-                    top: `${(hotspot.y / canvas.height) * 100}%`,
-                    width: `${(hotspot.width / canvas.width) * 100}%`,
-                    height: `${(hotspot.height / canvas.height) * 100}%`,
+                    left: `${(region.x / canvas.width) * 100}%`,
+                    top: `${(region.y / canvas.height) * 100}%`,
+                    width: `${(region.width / canvas.width) * 100}%`,
+                    height: `${(region.height / canvas.height) * 100}%`,
                   }}
                   data-hotspot-id={region.id}
                   aria-label={region.preset ? `Focus ${region.label}` : `Center ${region.label}`}
@@ -383,6 +389,8 @@ export function SemanticOverviewMap({
                 type="button"
                 className="chip"
                 data-focus-preset={option.id}
+                aria-label={getFocusPresetAccessibleLabel(option.id)}
+                title={getFocusPresetAccessibleLabel(option.id)}
                 onClick={() => fitNodesToPreset(nodes, fitView, option.id)}
               >
                 {option.label}

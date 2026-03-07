@@ -358,16 +358,51 @@
 }
 
 .toolbar__chips {
+  display: grid;
   gap: 16px;
 }
 
 .toolbar__chips > div {
   display: grid;
   gap: 8px;
+  width: 100%;
 }
 
 .chip-row--standards {
   align-items: flex-start;
+}
+
+.claim-chip-row {
+  align-items: stretch;
+}
+
+.claim-chip {
+  display: inline-grid;
+  gap: 4px;
+  align-items: start;
+  justify-items: start;
+  max-width: min(440px, 100%);
+  padding: 0.62rem 0.86rem;
+  border-radius: 18px;
+  text-align: left;
+  white-space: normal;
+}
+
+.claim-chip__id {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.claim-chip__label {
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.claim-chip.is-active .claim-chip__id,
+.claim-chip.is-active .claim-chip__label {
+  color: inherit;
 }
 
 .export-bar {
@@ -484,6 +519,63 @@
 
 .architecture-canvas .react-flow__panel.bottom.right > * {
   pointer-events: auto;
+}
+
+.architecture-canvas__write-ribbon {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  display: grid;
+  gap: 4px;
+  min-width: 220px;
+  padding: 10px 14px 10px 18px;
+  border: 1px solid rgba(211, 84, 0, 0.2);
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, rgba(211, 84, 0, 0.14), rgba(255, 255, 255, 0.94) 20%, rgba(255, 255, 255, 0.92) 100%);
+  box-shadow: 0 14px 34px rgba(211, 84, 0, 0.12);
+}
+
+.architecture-canvas__write-ribbon::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, rgba(211, 84, 0, 0.18), rgba(211, 84, 0, 0.62), rgba(211, 84, 0, 0.18));
+  z-index: 0;
+}
+
+.architecture-canvas__write-ribbon-title,
+.architecture-canvas__write-ribbon-detail {
+  position: relative;
+  z-index: 1;
+}
+
+.architecture-canvas__write-ribbon-title {
+  justify-self: center;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #8f4208;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.architecture-canvas__write-ribbon-detail {
+  justify-self: center;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-subtle);
+  font-size: 0.76rem;
+}
+
+.app-shell--theme-analysis .architecture-canvas__write-ribbon {
+  background:
+    linear-gradient(90deg, rgba(211, 84, 0, 0.12), rgba(255, 255, 255, 0.98) 24%, rgba(255, 255, 255, 0.96) 100%);
 }
 
 .semantic-overview {
@@ -616,7 +708,7 @@
 }
 
 .semantic-overview__node-accent {
-  opacity: 0.94;
+  opacity: 0.98;
 }
 
 .semantic-overview__write-path {
@@ -625,13 +717,14 @@
   stroke-width: 9px;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.82;
+  opacity: 0.72;
 }
 
 .semantic-overview__write-arrow {
   fill: var(--write-edge);
   stroke: rgba(140, 56, 0, 0.18);
   stroke-width: 3px;
+  filter: drop-shadow(0 2px 8px rgba(211, 84, 0, 0.18));
 }
 
 .semantic-overview__viewport {
@@ -668,8 +761,9 @@
 }
 
 .semantic-overview__preset-grid .chip {
-  justify-content: flex-start;
-  min-height: 40px;
+  justify-content: center;
+  min-height: 42px;
+  white-space: nowrap;
 }
 
 .semantic-overview__toggle {
@@ -1323,10 +1417,9 @@
   border: 1px solid color-mix(in srgb, var(--node-accent) 28%, white);
   background: color-mix(in srgb, var(--node-accent) 12%, white);
   color: var(--node-accent);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   line-height: 1;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84);
 }
@@ -1334,8 +1427,8 @@
 .node-card__badge--inline {
   min-width: auto;
   min-height: auto;
-  padding: 0.22rem 0.52rem;
-  font-size: 0.62rem;
+  padding: 0.24rem 0.58rem;
+  font-size: 0.66rem;
 }
 
 .node-card__badge--structural {
@@ -1344,6 +1437,14 @@
 
 .node-card__eyebrow {
   color: color-mix(in srgb, var(--node-accent) 72%, #475569);
+}
+
+.node-card__structural-tagline {
+  color: color-mix(in srgb, var(--node-accent) 84%, #475569);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .node-card__title {
@@ -1642,6 +1743,82 @@
 
 .node-card--kind-band .node-card__eyebrow {
   letter-spacing: 0.18em;
+}
+
+.node-card.is-structural.node-card--balanced .node-card__header-main {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.node-card.is-structural.node-card--balanced .node-card__title {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  line-height: 0.94;
+}
+
+.node-card.is-structural.node-card--balanced .node-card__subtitle {
+  font-size: 0.88rem;
+  max-width: 30ch;
+}
+
+.node-card.is-structural.node-card--overview {
+  padding: 20px 22px;
+}
+
+.node-card.is-structural.node-card--overview .node-card__header-main {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.node-card.is-structural.node-card--overview .node-card__header {
+  align-items: stretch;
+}
+
+.node-card.is-structural.node-card--overview .node-card__heading {
+  gap: 8px;
+}
+
+.node-card.is-structural.node-card--overview .node-card__eyebrow-row {
+  gap: 10px;
+}
+
+.node-card.is-structural.node-card--overview .node-card__title {
+  max-width: 14ch;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+
+.node-card.is-structural.node-card--overview .node-card__subtitle {
+  max-width: 32ch;
+  font-size: 0.98rem;
+  line-height: 1.34;
+  color: color-mix(in srgb, var(--node-accent) 42%, var(--text-main));
+}
+
+.node-card.is-structural.node-card--overview.node-card--kind-lane {
+  padding-top: 24px;
+}
+
+.node-card.is-structural.node-card--overview.node-card--kind-lane .node-card__title {
+  font-size: 2.35rem;
+}
+
+.node-card.is-structural.node-card--overview.node-card--kind-lane .node-card__subtitle {
+  font-size: 1.08rem;
+}
+
+.node-card.is-structural.node-card--overview.node-card--kind-container .node-card__title {
+  font-size: 2.1rem;
+}
+
+.node-card.is-structural.node-card--overview.node-card--kind-band .node-card__title {
+  font-size: 2.15rem;
+}
+
+.node-card.is-structural.node-card--overview.node-card--kind-band .node-card__subtitle {
+  font-size: 0.96rem;
 }
 
 .semantic-edge.is-dimmed {
