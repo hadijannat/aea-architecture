@@ -35,6 +35,11 @@ export async function computeBoardNodePositions(
     y: positions.BAND_DECIDE.y + aea.bandHeights.Decide + bandSpacing,
   }
 
+  const decideBandX = positions.BAND_DECIDE.x
+  const decideBandY = positions.BAND_DECIDE.y
+  const decideColumnOffsets = [24, 292, 560, 828] as const
+  const decideRowOffsets = [34, 224, 424] as const
+
   Object.assign(positions, {
     A1: { x: lanes.A.x + 56, y: lanes.A.y + 186 },
     A2: { x: lanes.A.x + 56, y: lanes.A.y + 412 },
@@ -54,18 +59,18 @@ export async function computeBoardNodePositions(
   })
 
   Object.assign(positions, {
-    DEC_K1: { x: positions.BAND_DECIDE.x + 24, y: positions.BAND_DECIDE.y + 34 },
-    DEC_R0: { x: positions.BAND_DECIDE.x + 292, y: positions.BAND_DECIDE.y + 34 },
-    DEC_R1: { x: positions.BAND_DECIDE.x + 560, y: positions.BAND_DECIDE.y + 34 },
-    DEC_T0: { x: positions.BAND_DECIDE.x + 828, y: positions.BAND_DECIDE.y + 34 },
-    DEC_K2: { x: positions.BAND_DECIDE.x + 24, y: positions.BAND_DECIDE.y + 224 },
-    DEC_G0: { x: positions.BAND_DECIDE.x + 292, y: positions.BAND_DECIDE.y + 224 },
-    DEC_R2: { x: positions.BAND_DECIDE.x + 560, y: positions.BAND_DECIDE.y + 224 },
-    DEC_G1A: { x: positions.BAND_DECIDE.x + 828, y: positions.BAND_DECIDE.y + 224 },
-    DEC_H1: { x: positions.BAND_DECIDE.x + 24, y: positions.BAND_DECIDE.y + 424 },
-    DEC_M1: { x: positions.BAND_DECIDE.x + 292, y: positions.BAND_DECIDE.y + 424 },
-    DEC_G1: { x: positions.BAND_DECIDE.x + 560, y: positions.BAND_DECIDE.y + 424 },
-    DEC_G2: { x: positions.BAND_DECIDE.x + 828, y: positions.BAND_DECIDE.y + 424 },
+    DEC_K1: { x: decideBandX + decideColumnOffsets[0], y: decideBandY + decideRowOffsets[0] },
+    DEC_R0: { x: decideBandX + decideColumnOffsets[1], y: decideBandY + decideRowOffsets[0] },
+    DEC_R1: { x: decideBandX + decideColumnOffsets[2], y: decideBandY + decideRowOffsets[0] },
+    DEC_T0: { x: decideBandX + decideColumnOffsets[3], y: decideBandY + decideRowOffsets[0] },
+    DEC_K2: { x: decideBandX + decideColumnOffsets[0], y: decideBandY + decideRowOffsets[1] },
+    DEC_G0: { x: decideBandX + decideColumnOffsets[1], y: decideBandY + decideRowOffsets[1] },
+    DEC_R2: { x: decideBandX + decideColumnOffsets[2], y: decideBandY + decideRowOffsets[1] },
+    DEC_G1A: { x: decideBandX + decideColumnOffsets[3], y: decideBandY + decideRowOffsets[1] },
+    DEC_H1: { x: decideBandX + decideColumnOffsets[0], y: decideBandY + decideRowOffsets[2] },
+    DEC_M1: { x: decideBandX + decideColumnOffsets[1], y: decideBandY + decideRowOffsets[2] },
+    DEC_G1: { x: decideBandX + decideColumnOffsets[2], y: decideBandY + decideRowOffsets[2] },
+    DEC_G2: { x: decideBandX + decideColumnOffsets[3], y: decideBandY + decideRowOffsets[2] },
   })
 
   Object.assign(positions, {

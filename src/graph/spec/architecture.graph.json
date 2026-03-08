@@ -21,77 +21,135 @@
     "NE175": {
       "id": "NE175",
       "label": "NAMUR NE 175",
-      "version": "2020"
+      "version": "2020",
+      "sourceUrl": "https://www.namur.net/en/recommendations/ne-recommendations/detail/ne-175.html",
+      "releaseDate": "2020",
+      "lastReviewed": "2026-03-08"
+    },
+    "NE176": {
+      "id": "NE176",
+      "label": "NAMUR NE 176",
+      "version": "2022",
+      "sourceUrl": "https://www.namur.net/en/recommendations/ne-recommendations/detail/ne-176.html",
+      "releaseDate": "2022",
+      "lastReviewed": "2026-03-08"
     },
     "NE177": {
       "id": "NE177",
       "label": "NAMUR NE 177",
-      "version": "2022"
+      "version": "2022",
+      "sourceUrl": "https://www.namur.net/en/recommendations/ne-recommendations/detail/ne-177.html",
+      "releaseDate": "2022",
+      "lastReviewed": "2026-03-08"
     },
     "NE178": {
       "id": "NE178",
       "label": "NAMUR NE 178",
-      "version": "2025-03-10"
+      "version": "2025-03-10",
+      "sourceUrl": "https://www.namur.net/en/recommendations/ne-recommendations/detail/ne-178.html",
+      "releaseDate": "2025-03-10",
+      "lastReviewed": "2026-03-08"
+    },
+    "NE179": {
+      "id": "NE179",
+      "label": "NAMUR NE 179",
+      "version": "2023",
+      "sourceUrl": "https://www.namur.net/en/recommendations/ne-recommendations/detail/ne-179.html",
+      "releaseDate": "2023",
+      "lastReviewed": "2026-03-08"
     },
     "OPC62541": {
       "id": "OPC62541",
-      "label": "OPC UA IEC 62541"
+      "label": "OPC UA IEC 62541",
+      "sourceUrl": "https://opcfoundation.org/developer-tools/documents/view/160",
+      "lastReviewed": "2026-03-08"
     },
     "PADIM102": {
       "id": "PADIM102",
       "label": "OPC 30081 PA-DIM",
-      "version": "v1.02"
+      "version": "v1.02",
+      "sourceUrl": "https://opcfoundation.org/developer-tools/documents/view/254",
+      "releaseDate": "2026",
+      "lastReviewed": "2026-03-08"
     },
     "IEC63278": {
       "id": "IEC63278",
       "label": "IEC 63278-1",
-      "version": "2023"
+      "version": "2023",
+      "sourceUrl": "https://www.iec.ch/dyn/www/f?p=103:38:0::::FSP_ORG_ID,FSP_APEX_PAGE,FSP_PROJECT_ID:1250,23,103615",
+      "releaseDate": "2023",
+      "lastReviewed": "2026-03-08"
     },
     "IDTA01001V3": {
       "id": "IDTA01001V3",
       "label": "IDTA-01001-3-0",
-      "version": "V3.0"
+      "version": "V3.0",
+      "sourceUrl": "https://industrialdigitaltwin.org/en/content-hub/aasspecifications/idta-01001-3-0-specification-of-the-asset-administration-shell-part-1-metamodel",
+      "releaseDate": "2023",
+      "lastReviewed": "2026-03-08"
     },
     "IDTAPART2311": {
       "id": "IDTAPART2311",
       "label": "IDTA Part 2 API",
-      "version": "v3.1.1"
+      "version": "v3.1.1",
+      "sourceUrl": "https://industrialdigitaltwin.org/en/content-hub/aasspecifications/idta-01002-3-1-specification-of-the-asset-administration-shell-part-2-application-programming-interfaces",
+      "lastReviewed": "2026-03-08"
     },
     "NISTAIRMF10": {
       "id": "NISTAIRMF10",
       "label": "NIST AI RMF",
-      "version": "1.0"
+      "version": "1.0",
+      "sourceUrl": "https://airc.nist.gov/RMF/Docs",
+      "releaseDate": "2023-01",
+      "lastReviewed": "2026-03-08"
     },
     "NISTAI6001": {
       "id": "NISTAI6001",
       "label": "NIST AI 600-1 Generative AI Profile",
       "version": "2024",
-      "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf"
+      "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf",
+      "sourceUrl": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf",
+      "releaseDate": "2024-07",
+      "lastReviewed": "2026-03-08"
     },
     "OWASPLMM25": {
       "id": "OWASPLMM25",
       "label": "OWASP Top 10 for LLM Applications",
       "version": "2025",
-      "url": "https://genai.owasp.org/llm-top-10/"
+      "url": "https://genai.owasp.org/llm-top-10/",
+      "sourceUrl": "https://genai.owasp.org/llm-top-10/",
+      "releaseDate": "2025",
+      "lastReviewed": "2026-03-08"
     },
     "OPC1000018": {
       "id": "OPC1000018",
       "label": "OPC 10000-18",
-      "version": "v1.05.06"
+      "version": "v1.05.06",
+      "sourceUrl": "https://opcfoundation.org/developer-tools/documents/view/242",
+      "releaseDate": "2025-10",
+      "lastReviewed": "2026-03-08"
     },
     "OPC1000014": {
       "id": "OPC1000014",
       "label": "OPC 10000-14",
-      "version": "v1.05.06"
+      "version": "v1.05.06",
+      "sourceUrl": "https://opcfoundation.org/developer-tools/documents/view/239",
+      "releaseDate": "2025-10",
+      "lastReviewed": "2026-03-08"
     },
     "MQTT5": {
       "id": "MQTT5",
       "label": "MQTT",
-      "version": "v5.0"
+      "version": "v5.0",
+      "sourceUrl": "https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html",
+      "releaseDate": "2019-03",
+      "lastReviewed": "2026-03-08"
     },
     "IEC61987": {
       "id": "IEC61987",
-      "label": "IEC 61987 IRDI"
+      "label": "IEC 61987 IRDI",
+      "sourceUrl": "https://www.iec.ch/dyn/www/f?p=103:38:0::::FSP_ORG_ID,FSP_APEX_PAGE,FSP_PROJECT_ID:1250,23,100438",
+      "lastReviewed": "2026-03-08"
     }
   },
   "claims": {
@@ -669,7 +727,7 @@
       "claimIds": ["C3"],
       "tags": ["decide", "policy-path", "repository"],
       "parentId": "BAND_DECIDE",
-      "width": 220,
+      "width": 230,
       "height": 120,
       "visual": {
         "fill": "#ffffff",
@@ -698,7 +756,7 @@
       "claimIds": ["C3", "C4", "C6"],
       "tags": ["decide", "policy-path", "policy-store"],
       "parentId": "BAND_DECIDE",
-      "width": 220,
+      "width": 230,
       "height": 120,
       "visual": {
         "fill": "#ffffff",
@@ -826,7 +884,7 @@
       "claimIds": ["C3", "C4"],
       "tags": ["decide", "policy-path", "write-path", "agent"],
       "parentId": "BAND_DECIDE",
-      "width": 250,
+      "width": 230,
       "height": 130,
       "visual": {
         "fill": "#ffffff",
@@ -926,7 +984,7 @@
       "claimIds": ["C3", "C4"],
       "tags": ["decide", "policy-path", "guard"],
       "parentId": "BAND_DECIDE",
-      "width": 220,
+      "width": 230,
       "height": 120,
       "visual": {
         "fill": "#ffffff",
@@ -1023,7 +1081,7 @@
       "claimIds": ["C6"],
       "tags": ["decide", "guardrail", "audit"],
       "parentId": "BAND_DECIDE",
-      "width": 220,
+      "width": 230,
       "height": 120,
       "visual": {
         "fill": "#fffdf9",

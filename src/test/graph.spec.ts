@@ -394,6 +394,113 @@ describe('graph manifest', () => {
     expect(rule?.relatedEdgeIds.every((id) => id.startsWith('edge:'))).toBe(true)
     expect(rule?.focusPath).toBe('policy')
   })
+
+  it('C1: no agent-kind node exists in Lane A (CPC/OT)', () => {
+    const agentsInLaneA = graphManifest.nodes.filter((node) => node.kind === 'agent' && node.lane === 'A')
+    expect(agentsInLaneA, 'Agent node found inside CPC lane').toHaveLength(0)
+    const agentNode = graphManifest.nodes.find((node) => node.kind === 'agent')
+    expect(agentNode?.lane).toBe('B')
+  })
+
+  it('C2: sensing path is read-only with diode enforcement and zero write-back bypass into sensing chain', () => {
+    // The NE177 gateway chain enforces unidirectionality via diode markers on the gateway-internal edges
+    const diodeEdges = graphManifest.edges.filter((edge) => edge.markers.includes('diode'))
+    expect(diodeEdges.length, 'Expected at least two diode-marked edges in the NE177 chain').toBeGreaterThanOrEqual(2)
+    expect(diodeEdges.every((edge) => edge.id.startsWith('F_GW'))).toBe(true)
+
+    // The read-only entry from gateway to Lane B must carry the read-only semantic
+    const readOnlyEdges = graphManifest.edges.filter((edge) => edge.semantic === 'read-only')
+    expect(readOnlyEdges.length, 'Expected at least one read-only edge from the gateway').toBeGreaterThan(0)
+
+    // No writeback-semantic edge from Lane B may target Lane A directly (bypass check)
+    // Legitimate path: ACT1 (Lane B) → VOI (gateway) → A3 (Lane A) — VOI is the only allowed bridge
+    const nodes = Object.fromEntries(graphManifest.nodes.map((node) => [node.id, node]))
+    const illegalBypasses = graphManifest.edges.filter((edge) => {
+      if (edge.semantic !== 'writeback') return false
+      const source = nodes[edge.source]
+      const target = nodes[edge.target]
+      return source?.lane === 'B' && target?.lane === 'A'
+    })
+    expect(illegalBypasses, 'Writeback edge crosses directly from Lane B to Lane A, bypassing VOI').toHaveLength(0)
+  })
+
+  it('C4: the only write-back initiation path from Lane B is F5 from ACT1 through VOI', () => {
+    // F5 must source from ACT1 and terminate at VOI
+    const f5 = graphManifest.edges.find((edge) => edge.id === 'F5')
+    expect(f5?.source).toBe('ACT1')
+    expect(f5?.target).toBe('VOI')
+    expect(f5?.semantic).toBe('writeback')
+
+    // The full write-back chain: F5 (ACT1→VOI) → F6 (VOI→A3) → F_CPC_INT (A3→A1)
+    // Only F5 may cross from Lane B into the VoR interface — no other Lane-B writeback exists
+    const nodes = Object.fromEntries(graphManifest.nodes.map((node) => [node.id, node]))
+    const laneBWritebacks = graphManifest.edges.filter((edge) => {
+      if (edge.semantic !== 'writeback') return false
+      const source = nodes[edge.source]
+      return source?.lane === 'B'
+    })
+    expect(laneBWritebacks, 'Multiple writeback edges originate from Lane B').toHaveLength(1)
+    expect(laneBWritebacks[0]?.id).toBe('F5')
+
+    // Only one edge may carry writeback semantics inbound to VOI
+    const edgesTargetingVoi = graphManifest.edges.filter((edge) => edge.target === 'VOI')
+    expect(edgesTargetingVoi, 'Multiple edges target VOI directly').toHaveLength(1)
+    expect(edgesTargetingVoi[0]?.id).toBe('F5')
+
+    // VOI outbound must include the write-back delivery edge (F6) and the ACK edge (F_VoR_ACK)
+    const edgesFromVoi = graphManifest.edges.filter((edge) => edge.source === 'VOI')
+    const writeFromVoi = edgesFromVoi.filter((edge) => edge.id === 'F6')
+    const ackFromVoi = edgesFromVoi.filter((edge) => edge.id === 'F_VoR_ACK')
+    expect(writeFromVoi, 'Missing VoR write-back delivery edge F6 from VOI').toHaveLength(1)
+    expect(ackFromVoi, 'Missing acknowledgement edge F_VoR_ACK from VOI').toHaveLength(1)
+  })
+
+  it('C5: KPI publication flows northbound only and never writes back into actuation', () => {
+    const kpiEdges = graphManifest.edges.filter((edge) => edge.semantic === 'kpi')
+    expect(kpiEdges.length).toBeGreaterThan(0)
+
+    for (const edge of kpiEdges) {
+      const target = graphManifest.nodes.find((node) => node.id === edge.target)
+      // KPI must not target nodes in Lane A or the actuation chain
+      expect(target?.lane, `${edge.id} KPI edge targets Lane A`).not.toBe('A')
+      expect(target?.id, `${edge.id} KPI edge targets actuation node`).not.toBe('ACT1')
+      expect(target?.id, `${edge.id} KPI edge targets VoR interface`).not.toBe('VOI')
+    }
+
+    // KPI edges must carry C5 claim
+    for (const edge of kpiEdges) {
+      expect(edge.claimIds, `${edge.id} missing C5 claim`).toContain('C5')
+    }
+  })
+
+  it('keeps standards provenance populated and exposes the new NAMUR references to search', () => {
+    for (const standard of Object.values(graphManifest.standards)) {
+      expect(standard.sourceUrl, `${standard.id} is missing a provenance source URL`).toBeDefined()
+      expect(standard.lastReviewed, `${standard.id} is missing a last-reviewed date`).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    }
+
+    expect(graphManifest.standards.NE176).toMatchObject({
+      id: 'NE176',
+      label: 'NAMUR NE 176',
+      releaseDate: '2022',
+    })
+    expect(graphManifest.standards.NE179).toMatchObject({
+      id: 'NE179',
+      label: 'NAMUR NE 179',
+      releaseDate: '2023',
+    })
+
+    expect(
+      buildSearchResults('NAMUR NE 176', graphManifest).some(
+        (result) => result.kind === 'standard' && result.id === 'NE176',
+      ),
+    ).toBe(true)
+    expect(
+      buildSearchResults('NAMUR NE 179', graphManifest).some(
+        (result) => result.kind === 'standard' && result.id === 'NE179',
+      ),
+    ).toBe(true)
+  })
 })
 
 describe('derived projections', () => {
@@ -658,28 +765,77 @@ describe('exports', () => {
     expect(sequenceMermaid).toContain('PB_REJECT_OUT')
   })
 
+  it('keeps the shifted Decide columns aligned and preserves 38 px gaps across the full grid', async () => {
+    const positions = await computeBoardNodePositions(graphManifest, defaultProjectionOverrides)
+    const columns = [
+      ['DEC_K1', 'DEC_K2', 'DEC_H1'],
+      ['DEC_R0', 'DEC_G0', 'DEC_M1'],
+      ['DEC_R1', 'DEC_R2', 'DEC_G1'],
+      ['DEC_T0', 'DEC_G1A', 'DEC_G2'],
+    ] as const
+    const routedRows = [
+      ['DEC_K1', 'DEC_R0', 'DEC_R1', 'DEC_T0'],
+      ['DEC_K2', 'DEC_G0', 'DEC_R2', 'DEC_G1A'],
+      ['DEC_H1', 'DEC_M1', 'DEC_G1', 'DEC_G2'],
+    ] as const
+
+    expect(resolveGraphNode('DEC_K1')?.width).toBe(230)
+    expect(resolveGraphNode('DEC_K2')?.width).toBe(230)
+    expect(resolveGraphNode('DEC_R2')?.width).toBe(230)
+    expect(resolveGraphNode('DEC_G1')?.width).toBe(230)
+    expect(resolveGraphNode('DEC_M1')?.width).toBe(230)
+
+    for (const column of columns) {
+      const [anchorId, ...rest] = column
+      const anchorX = positions[anchorId]?.x
+
+      for (const nodeId of rest) {
+        expect(positions[nodeId]?.x, `${nodeId} drifted off the shared Decide column`).toBe(anchorX)
+      }
+    }
+
+    for (const row of routedRows) {
+      for (let index = 0; index < row.length - 1; index += 1) {
+        const leftId = row[index]
+        const rightId = row[index + 1]
+        const leftNode = resolveGraphNode(leftId)
+        const leftPosition = positions[leftId]
+        const rightPosition = positions[rightId]
+
+        if (!leftNode || !leftPosition || !rightPosition) {
+          throw new Error(`Missing routed Decide-band layout state for ${leftId} or ${rightId}`)
+        }
+
+        expect(
+          rightPosition.x - (leftPosition.x + leftNode.width),
+          `${leftId} and ${rightId} should keep a 38 px gap`,
+        ).toBe(38)
+      }
+    }
+  })
+
   it('keeps critical architecture routes on their reserved board channels', async () => {
     const state = await createState()
     const expectedRoutes = {
       F3e: {
-        path: 'M 1325 786 L 1383 786 Q 1397 786 1397 772 L 1397 734 Q 1397 720 1411 720 L 1468 720',
-        labelPoint: { x: 1361, y: 766 },
+        path: 'M 1315 786 L 1378 786 Q 1392 786 1392 772 L 1392 734 Q 1392 720 1406 720 L 1468 720',
+        labelPoint: { x: 1353.5, y: 766 },
       },
       F_G1A_pass: {
-        path: 'M 1583 784 L 1583 841 Q 1583 855 1569 855 L 1310.5 855 Q 1310 855 1310 855.5 L 1310 856',
-        labelPoint: { x: 1464.5, y: 855 },
+        path: 'M 1583 784 L 1583 841 Q 1583 855 1569 855 L 1315.5 855 Q 1315 855 1315 855.5 L 1315 856',
+        labelPoint: { x: 1467, y: 855 },
       },
       F_G1A_reject: {
-        path: 'M 1468 720 L 1468 790 Q 1468 799 1459 799 L 1459 799 Q 1450 799 1450 790 L 1450 721',
-        labelPoint: { x: 1459, y: 817 },
+        path: 'M 1468 720 L 1468 785 Q 1468 799 1454 799 L 1444 799 Q 1430 799 1430 785 L 1430 721',
+        labelPoint: { x: 1449, y: 817 },
       },
       F3f_reject: {
-        path: 'M 1310 976 L 1310 835 Q 1310 821 1296 821 L 1244 821 Q 1230 821 1230 807 L 1230 735 Q 1230 721 1216 721 L 1200 721',
-        labelPoint: { x: 1270, y: 839 },
+        path: 'M 1315 976 L 1315 835 Q 1315 821 1301 821 L 1244 821 Q 1230 821 1230 807 L 1230 735 Q 1230 721 1216 721 L 1200 721',
+        labelPoint: { x: 1272.5, y: 839 },
       },
       F3g: {
-        path: 'M 774 586 L 774 970 Q 774 984 788 984 L 1574 984 Q 1588 984 1588 970 L 1588 856',
-        labelPoint: { x: 1181, y: 956 },
+        path: 'M 779 586 L 779 970 Q 779 984 793 984 L 1574 984 Q 1588 984 1588 970 L 1588 856',
+        labelPoint: { x: 1183.5, y: 956 },
       },
       F3h: {
         path: 'M 1230 310 L 1230 830 Q 1230 844 1244 844 L 1546 844 Q 1552 844 1552 850 L 1552 850 Q 1552 856 1558 856 L 1588 856',
@@ -690,16 +846,16 @@ describe('exports', () => {
         labelPoint: { x: 1001, y: 990 },
       },
       F_T0_req: {
-        path: 'M 1325 656 L 1325 635 Q 1325 621 1339 621 L 1569 621 Q 1583 621 1583 607 L 1583 586',
-        labelPoint: { x: 1325, y: 624.5 },
+        path: 'M 1315 656 L 1315 635 Q 1315 621 1329 621 L 1569 621 Q 1583 621 1583 607 L 1583 586',
+        labelPoint: { x: 1315, y: 624.5 },
       },
       F_T1: {
         path: 'M 1468 526 L 1468 459 Q 1468 445 1454 445 L 654 445 Q 640 445 640 431 L 640 242 Q 640 228 654 228 L 744 228 Q 758 228 758 242 L 758 256',
         labelPoint: { x: 640, y: 354.5 },
       },
       F_T2: {
-        path: 'M 1468 526 L 884 526',
-        labelPoint: { x: 1176, y: 512 },
+        path: 'M 1468 526 L 894 526',
+        labelPoint: { x: 1181, y: 512 },
       },
       F_T0_obs: {
         path: 'M 1583 466 L 1583 616 Q 1583 630 1569 630 L 1061 630 Q 1047 630 1047 644 L 1047 784',
@@ -714,8 +870,8 @@ describe('exports', () => {
         labelPoint: { x: 1037.5, y: 902 },
       },
       F_H1_reject: {
-        path: 'M 779 856 L 779 849.5 Q 779 843 785.5 843 L 1311 843 Q 1325 843 1325 829 L 1325 786',
-        labelPoint: { x: 1052, y: 825 },
+        path: 'M 779 856 L 779 849.5 Q 779 843 785.5 843 L 1301 843 Q 1315 843 1315 829 L 1315 786',
+        labelPoint: { x: 1047, y: 825 },
       },
       F_H1_pass: {
         path: 'M 779 976 L 779 1015.5 Q 779 1018 781.5 1018 L 781.5 1018 Q 784 1018 784 1020.5 L 784 1140',
