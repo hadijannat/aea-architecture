@@ -91,7 +91,7 @@ function buildLabel(edge: EdgeSpec, points: Point[]): RoutedBoardLabel {
     case 'F3i':
       return segmentLabel(points, 1, 'top', 16)
     case 'F3g':
-      return segmentLabel(points, 1, 'bottom', 18)
+      return segmentLabel(points, 1, 'top', 16)
     case 'F3h':
       return segmentLabel(points, 2, 'left', 18)
     case 'F3f_reject':
@@ -228,8 +228,8 @@ export function buildBoardEdgeRoute(
     case 'F3g':
       points = [
         source,
-        point(source.x, channels.validationY - 8),
-        point(target.x, channels.validationY - 8),
+        point(source.x, channels.validationY - 20),
+        point(target.x, channels.validationY - 20),
         target,
       ]
       break

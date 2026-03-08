@@ -128,6 +128,14 @@ export function BaseNodeCard({
     return () => document.removeEventListener('pointerdown', handlePointerDown)
   }, [menuOpen])
 
+  useEffect(() => {
+    if (!menuOpen) {
+      return
+    }
+
+    menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
+  }, [menuOpen])
+
   function handleBlur(event: FocusEvent<HTMLDivElement>) {
     const nextTarget = event.relatedTarget
     if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
@@ -145,6 +153,32 @@ export function BaseNodeCard({
     event.stopPropagation()
     setMenuOpen(false)
     menuButtonRef.current?.focus()
+  }
+
+  function handleMenuItemKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
+      return
+    }
+
+    const items = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])
+    if (items.length === 0) {
+      return
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement)
+    const nextIndex =
+      currentIndex === -1
+        ? event.key === 'ArrowDown'
+          ? 0
+          : items.length - 1
+        : event.key === 'ArrowDown'
+          ? (currentIndex + 1) % items.length
+          : (currentIndex - 1 + items.length) % items.length
+
+    items[nextIndex]?.focus()
   }
 
   function handleMenuToggle(event: ReactMouseEvent<HTMLButtonElement>) {
@@ -254,6 +288,7 @@ export function BaseNodeCard({
                 role="menu"
                 aria-label={`Actions for ${spec.title}`}
                 data-node-action-menu
+                onKeyDown={handleMenuItemKeyDown}
               >
                 <button type="button" role="menuitem" onClick={(event) => runMenuAction(event, () => data.callbacks.onSelectNode(spec.id))}>
                   Focus

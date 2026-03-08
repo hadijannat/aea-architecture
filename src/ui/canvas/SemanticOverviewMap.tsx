@@ -377,7 +377,13 @@ export function SemanticOverviewMap({
                       duration: 260,
                     })
                   }}
-                />
+                >
+                  {region.id === 'write' ? (
+                    <span className="semantic-overview__hotspot-label" aria-hidden="true">
+                      Write
+                    </span>
+                  ) : null}
+                </button>
               )
             })}
           </div>

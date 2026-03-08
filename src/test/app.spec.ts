@@ -275,7 +275,7 @@ test('selected sequence edges expand from ids into human-readable action labels'
   await expect(sequenceLabel).toHaveText('PB_F1')
 })
 
-test('architecture edge labels expand with zoom and truncate to human-readable labels', async ({ page }) => {
+test('architecture edge labels retain ids in display and expanded modes', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
   await page.waitForTimeout(700)
@@ -285,12 +285,11 @@ test('architecture edge labels expand with zoom and truncate to human-readable l
 
   await ensureEdgeLabelMode(page, 'F4', 'display', 'zoom-in')
   await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'display')
-  await expect(edgeLabel).toHaveText('validated candidate plan')
+  await expect(edgeLabel).toHaveText('F4 · validated candidate plan')
 
   await ensureEdgeLabelMode(page, 'F4', 'expanded', 'zoom-in')
   await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'expanded')
-  await expect(edgeLabel).toContainText('F4 ·')
-  await expect(edgeLabel).toContainText('validated candidate plan')
+  await expect(edgeLabel).toHaveText('F4 · validated candidate plan')
 })
 
 test('toggle chips expose pressed state and the updated lane copy', async ({ page }) => {
@@ -307,6 +306,7 @@ test('toggle chips expose pressed state and the updated lane copy', async ({ pag
   )
   await expect(page.getByRole('button', { name: 'Hide VoR sequence' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Write corridor focus' })).toBeVisible()
+  await expect(page.locator('[data-hotspot-id="write"] .semantic-overview__hotspot-label')).toHaveText('Write')
 
   const claimC4 = page.getByRole('button', { name: 'C4: Actuation is exclusive to the VoR path' })
   await expect(claimC4).toHaveAttribute('aria-pressed', 'false')
@@ -739,6 +739,9 @@ test('node action menu is keyboard reachable and behaves like a menu button', as
 
   const node = page.locator('.node-card[data-node-id="ACT1"]')
   const menuButton = node.locator('.node-card__menu-trigger')
+  const menu = node.getByRole('menu')
+  const focusItem = node.getByRole('menuitem', { name: 'Focus' })
+  const upstreamItem = node.getByRole('menuitem', { name: 'Show upstream' })
 
   await expect(node).toBeVisible()
   await expect(menuButton).toBeVisible()
@@ -749,16 +752,26 @@ test('node action menu is keyboard reachable and behaves like a menu button', as
   await page.keyboard.press('Enter')
   await expect(node).toHaveClass(/is-selected/)
   await expect(menuButton).toHaveAttribute('aria-expanded', 'true')
-  await expect(node.getByRole('menu')).toBeVisible()
+  await expect(menu).toBeVisible()
+  await expect(focusItem).toBeFocused()
+
+  await page.keyboard.press('ArrowDown')
+  await expect(upstreamItem).toBeFocused()
+
+  await page.keyboard.press('ArrowUp')
+  await expect(focusItem).toBeFocused()
+
+  await page.keyboard.press('ArrowUp')
+  await expect(menu.getByRole('menuitem').last()).toBeFocused()
 
   await page.keyboard.press('Escape')
-  await expect(node.getByRole('menu')).toHaveCount(0)
+  await expect(menu).toHaveCount(0)
   await expect(menuButton).toBeFocused()
 
   await menuButton.click()
-  await expect(node.getByRole('menu')).toBeVisible()
+  await expect(menu).toBeVisible()
   await node.getByRole('menuitem', { name: 'Show upstream' }).click()
-  await expect(node.getByRole('menu')).toHaveCount(0)
+  await expect(menu).toHaveCount(0)
 })
 
 test('write-corridor routes stay orthogonal and labels avoid nearby nodes', async ({ page }) => {

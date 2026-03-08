@@ -750,11 +750,28 @@
 
 .semantic-overview__hotspot {
   position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: transparent;
   border-radius: 24px;
   cursor: pointer;
   transition: box-shadow 140ms ease, background 140ms ease;
+}
+
+.semantic-overview__hotspot-label {
+  pointer-events: none;
+  padding: 0.18rem 0.56rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #8c3800;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
 .semantic-overview__hotspot:hover,

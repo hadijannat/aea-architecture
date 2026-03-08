@@ -197,16 +197,26 @@ function AutoFocusSelection({
   selectedNodeId?: string
 }) {
   const { fitView, getNodesBounds, getViewport } = useReactFlow()
+  const previousSelectedNodeIdRef = useRef<string | undefined>(undefined)
 
   useEffect(() => {
     if (!selectedNodeId) {
+      previousSelectedNodeIdRef.current = undefined
       return
     }
+
+    if (selectedNodeId === previousSelectedNodeIdRef.current) {
+      return
+    }
+
+    previousSelectedNodeIdRef.current = selectedNodeId
 
     const targetNode = nodes.find((node) => node.id === selectedNodeId)
     if (!targetNode) {
       return
     }
+
+    previousSelectedNodeIdRef.current = selectedNodeId
 
     const container = containerRef?.current
     const nodeBounds = getNodesBounds([targetNode.id])
