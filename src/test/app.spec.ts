@@ -675,6 +675,7 @@ test('shared t0 edges expose a linked focus cue during inspection', async ({ pag
     await expect(edge).toHaveAttribute('data-edge-tag-t0', 'true')
     await expect(edge).toHaveAttribute('data-edge-shared-tag-focus', 'true')
     await expect(label).toHaveAttribute('data-edge-shared-tag-focus', 'true')
+    await expect(label.locator('[data-edge-tag="t0"]')).toHaveText('T0')
   }
 
   await expect(page.locator('.semantic-edge[data-edge-id="F3g"]')).toHaveAttribute('data-edge-shared-tag-focus', 'false')

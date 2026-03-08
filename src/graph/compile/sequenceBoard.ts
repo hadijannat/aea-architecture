@@ -6,6 +6,7 @@ import type {
   NodeSpec,
   SequenceStep,
 } from '@/graph/spec/schema'
+import { smoothOrthogonalPath } from '@/layout/pathGeometry'
 import type { DiagramStore } from '@/state/diagramStore'
 
 import type { DerivedDiagramState } from './toReactFlow'
@@ -66,10 +67,6 @@ interface Point {
 
 function point(x: number, y: number): Point {
   return { x, y }
-}
-
-function polyline(points: Point[]): string {
-  return points.map((entry, index) => `${index === 0 ? 'M' : 'L'} ${entry.x} ${entry.y}`).join(' ')
 }
 
 function segmentMidpoint(points: Point[]): Point {
@@ -167,7 +164,7 @@ function edgeRoute(
 
   const label = segmentMidpoint(points)
   return {
-    path: polyline(points),
+    path: smoothOrthogonalPath(points, 12),
     labelX: label.x,
     labelY: label.y,
   }

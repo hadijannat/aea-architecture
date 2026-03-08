@@ -43,14 +43,15 @@ export function BaseSemanticEdge({
   const strokeColor = presentation.stroke
   const strokeWidth = edgeStrokeWidth(data.spec.style)
   const strokeDasharray = getSemanticStrokeDash(data.spec.semantic, data.spec.style)
-  const showExpandedLabel = data.selected || data.highlighted || zoom >= 0.78
-  const showDisplayLabel = !showExpandedLabel && zoom >= 0.62
+  const isT0Edge = data.spec.tags.includes('t0')
+  const showExpandedLabel = data.selected || data.highlighted || zoom >= 0.76
+  const showDisplayLabel = !showExpandedLabel && (zoom >= 0.62 || (isT0Edge && data.sharedTagFocused))
   const displayLabel = data.spec.displayLabel ?? data.spec.label
   const expandedLabel = `${data.spec.id} · ${displayLabel}${data.optional ? ' (optional)' : ''}`
   const compactLabel = `${data.spec.id}${data.spec.markers.includes('diode') ? ' ⊘' : ''}`
-  const isT0Edge = data.spec.tags.includes('t0')
   const labelMode = showExpandedLabel ? 'expanded' : showDisplayLabel ? 'display' : 'compact'
   const labelText = showExpandedLabel ? expandedLabel : showDisplayLabel ? displayLabel : compactLabel
+  const showT0Badge = isT0Edge && labelMode !== 'compact'
 
   return (
     <g
@@ -126,7 +127,12 @@ export function BaseSemanticEdge({
             data.callbacks.onSelectEdge(id)
           }}
         >
-          {labelText}
+          <span className="edge-label__text">{labelText}</span>
+          {showT0Badge ? (
+            <span className="edge-label__tag edge-label__tag--t0" data-edge-tag="t0" aria-hidden="true">
+              T0
+            </span>
+          ) : null}
         </button>
       </EdgeLabelRenderer>
     </g>

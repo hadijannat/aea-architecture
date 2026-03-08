@@ -371,7 +371,7 @@ export function ArchitectureCanvas({
           viewport={ui.viewport}
         />
         <AutoFocusSelection containerRef={containerRef} nodes={nodes} selectedNodeId={ui.selectedNodeId} />
-        <Background color="#dde3eb" gap={24} size={1.2} />
+        <Background color="var(--canvas-grid-color)" gap={24} size={1.2} />
         <Controls showInteractive={false}>
           <ControlButton onClick={onResetLayout} title="Reset layout">
             R

@@ -570,13 +570,13 @@ describe('exports', () => {
     const rejectEdge = board.edges.find((edge) => edge.edge.id === 'PB_REJECT')
 
     expect(board.ackRouteY).toBe(206)
+    expect(ackEdge?.path).toContain('Q')
     expect(ackEdge).toMatchObject({
-      path: 'M 1221 152 L 1221 206 L 202 206 L 202 104 L 188 104',
       labelX: 711.5,
       labelY: 206,
     })
+    expect(rejectEdge?.path).toContain('Q')
     expect(rejectEdge).toMatchObject({
-      path: 'M 997 152 L 997 208 L 1030 208 L 1030 226',
       labelX: 997,
       labelY: 180,
     })

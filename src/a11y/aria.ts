@@ -14,10 +14,10 @@ export function buildNodeAriaLabel(node: NodeSpec, manifest: GraphManifest): str
 export function buildEdgeAriaLabel(edge: EdgeSpec, manifest: GraphManifest): string {
   const source = manifest.nodes.find((node) => node.id === edge.source)?.title ?? edge.source
   const target = manifest.nodes.find((node) => node.id === edge.target)?.title ?? edge.target
-  return `${edge.id}: ${edge.semantic} edge from ${source} to ${target}, direction ${edge.direction}. ${edge.label}`
+  const t0Suffix = edge.tags.includes('t0') ? ' Shared t0 snapshot.' : ''
+  return `${edge.id}: ${edge.semantic} edge from ${source} to ${target}, direction ${edge.direction}. ${edge.label}${t0Suffix}`
 }
 
 export function buildStepAriaLabel(step: SequenceStep): string {
   return `${step.id}: ${step.title}. ${step.summary}`
 }
-
