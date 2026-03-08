@@ -4,7 +4,7 @@ import type { DiagramFlowNode } from '@/graph/compile/toReactFlow'
 import { graphManifest } from '@/graph/spec/manifest'
 import type { Point } from '@/layout/board'
 
-export type FocusPreset = 'overview' | 'gateway' | 'write' | 'lane-c'
+export type FocusPreset = 'overview' | 'gateway' | 'guardrail' | 'write' | 'lane-c'
 
 export interface FocusPresetOption {
   id: FocusPreset
@@ -29,13 +29,50 @@ export interface OverviewRouteGeometry {
 
 export const focusPresetNodeIds: Record<FocusPreset, string[]> = {
   overview: [],
-  gateway: ['G1', 'G2', 'G3', 'VOI', 'S1', 'S2', 'DEC_K1', 'DEC_K2', 'DEC_R1', 'DEC_R2', 'DEC_G1', 'DEC_G2', 'ACT1'],
-  write: ['DEC_G1', 'DEC_G2', 'ACT1', 'VOI', 'A3'],
+  gateway: [
+    'G1',
+    'G2',
+    'G3',
+    'VOI',
+    'S1',
+    'S2',
+    'DEC_K1',
+    'DEC_K2',
+    'DEC_R0',
+    'DEC_R1',
+    'DEC_G0',
+    'DEC_R2',
+    'DEC_T0',
+    'DEC_G1A',
+    'DEC_G1',
+    'DEC_G2',
+    'DEC_H1',
+    'DEC_M1',
+    'ACT1',
+    'ACT3',
+  ],
+  guardrail: [
+    'S2',
+    'DEC_K1',
+    'DEC_K2',
+    'DEC_R0',
+    'DEC_G0',
+    'DEC_R2',
+    'DEC_T0',
+    'DEC_G1A',
+    'DEC_G1',
+    'DEC_G2',
+    'DEC_H1',
+    'DEC_M1',
+    'ACT3',
+  ],
+  write: ['DEC_G1', 'DEC_G2', 'DEC_H1', 'ACT1', 'VOI', 'A3', 'ACT3'],
   'lane-c': ['ACT2', 'ACT3', 'C1', 'C2'],
 }
 
 export const focusPresetOptions: FocusPresetOption[] = [
   { id: 'gateway', label: 'Gateway + AEA' },
+  { id: 'guardrail', label: 'Guardrails' },
   { id: 'overview', label: 'Full map' },
   { id: 'write', label: 'Write corridor' },
   { id: 'lane-c', label: 'Central M+O' },
@@ -44,6 +81,7 @@ export const focusPresetOptions: FocusPresetOption[] = [
 const presetViewOptions: Record<FocusPreset, { padding: number; maxZoom: number }> = {
   overview: { padding: 0.12, maxZoom: 0.92 },
   gateway: { padding: 0.04, maxZoom: 1.32 },
+  guardrail: { padding: 0.08, maxZoom: 1.2 },
   write: { padding: 0.12, maxZoom: 1.1 },
   'lane-c': { padding: 0.1, maxZoom: 1.22 },
 }
@@ -100,9 +138,9 @@ const fallbackOverviewRegions: OverviewRegion[] = [
     id: 'write',
     label: 'Write corridor',
     x: gateway.x - 92,
-    y: aea.y + 574,
+    y: aea.y + 760,
     width: canvas.width - (gateway.x - 92) - 356,
-    height: 322,
+    height: 358,
     accent: 'write',
     preset: 'write',
   },
@@ -180,7 +218,15 @@ export function getFocusPresetButtonLabel(preset: FocusPreset) {
 }
 
 export function getFocusPresetAccessibleLabel(preset: FocusPreset) {
-  return preset === 'write' ? 'Write corridor focus' : getFocusPresetButtonLabel(preset)
+  if (preset === 'write') {
+    return 'Write corridor focus'
+  }
+
+  if (preset === 'guardrail') {
+    return 'Guardrail control focus'
+  }
+
+  return getFocusPresetButtonLabel(preset)
 }
 
 export function deriveOverviewRegions(

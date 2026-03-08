@@ -16,9 +16,10 @@ Before any layout decision is made, the figure must let a reviewer verify five i
 |---|---|---|
 | **C1** | The agent lives entirely in the NOA M+O domain, never inside CPC | NAMUR NE 175 — three information domains |
 | **C2** | Sensing is read-only; the data path is unidirectional through a hardware/logical diode | NAMUR NE 177 — three gateway modules, no feedback path |
-| **C3** | Decision-making is semantically grounded by PA-DIM and AAS, and is gated twice: once by a policy guard, once by deterministic validators | OPC 30081 PA-DIM v1.02; IEC 63278-1:2023; NIST AI RMF 1.0 |
+| **C3** | Decision-making is semantically grounded by PA-DIM and AAS, and is constrained by external policy, retrieval, schema, and approval gates before VoR emission | OPC 30081 PA-DIM v1.02; IEC 63278-1:2023; NIST AI RMF 1.0 |
 | **C4** | Actuation is never direct; the exclusive write-back channel is VoR, which enforces a five-step domain-transition protocol | NAMUR NE 178 (2025-03-10) |
 | **C5** | Northbound telemetry (KPI publication) is publish-only and decoupled from the actuation path | OPC UA Part 14 v1.05.06; MQTT v5.0 |
+| **C6** | AI safety controls are deterministic and external to the model | OWASP Top 10 for LLM Applications 2025; NIST AI 600-1 Generative AI Profile |
 
 ---
 
@@ -31,7 +32,7 @@ The figure consists of exactly **two panels**:
 - **Panel A** — Static system architecture across NOA zones (full width)  
 - **Panel B** — Dynamic VoR domain-transition sequence (inset or row beneath Panel A)
 
-**Rationale:** Panel A contains three swimlanes, a security gateway block, twelve named components, and approximately twenty-two arrows. Adding the five-step VoR ribbon into Panel A would make text illegible at journal print size. Panel B elaborates a single sub-process that Panel A represents as a single arrow (F5), which is the canonical compositional approach in systems architecture figures.
+**Rationale:** Panel A contains three swimlanes, a security gateway block, the full Decide-band guardrail layer, and a dense actuation corridor. Adding the five-step VoR ribbon into Panel A would make text illegible at journal print size. Panel B elaborates the NE 178 domain-transition protocol while Panel A shows the pre-VoR AEA guardrails that feed it.
 
 Do **not** label them "Figure 1a" and "Figure 1b" — label them **(a)** and **(b)** per IEEE/Elsevier convention.
 
@@ -245,8 +246,8 @@ The decide band is the most complex part of the figure. Organise it as a **left-
 | Column | Contents |
 |---|---|
 | Left (Knowledge Sources) | AAS Repository; Policy Store |
-| Centre (Retrieval + Planning) | RAG/Knowledge Retrieval; LLM Agent/Planner with Tool/Skill Interface |
-| Right (Gating) | Policy-Guard; Deterministic Validators |
+| Centre (Retrieval + Planning) | Retrieval Guard; RAG / Knowledge Retrieval; Input / Context Guard; LLM Agent / Planner; Tool Guard / Broker |
+| Right (Gating) | Output Guard / Schema Checker; Policy-Guard; Deterministic Validators; Human Approval Gate; Guardrail Monitor / Evals |
 
 ### Column 1 — Knowledge Sources
 
@@ -264,11 +265,23 @@ Note: The Policy Store serves **two distinct roles** that require **two separate
 
 ### Column 2 — Retrieval and Planning
 
+**Block DEC_R0 — Retrieval Guard**  
+Label: Retrieval Guard  
+Subtitle: *ACL-aware; provenance-tagged; source-scoped retrieval filter*  
+Badge: **OWASP Top 10 for LLM Applications (2025)**  
+Note: This deterministic gate sits between semantic stores and the RAG stage. It verifies ACL scope, provenance, and trust classification before any repository material can join the planner context.
+
 **Block DEC_R1 — RAG / Knowledge Retrieval**  
 Label: RAG / Knowledge Retrieval  
 Subtitle: *AAS-structured retrieval; semantic chunking; IDTA Part 2 API*  
 Badge: **IDTA Part 2 API v3.1.1** *(July 2025)*  
 Note: Update from v3.0 (used in prior drafts). This block retrieves relevant AAS submodel excerpts and policy summaries that form the LLM's reasoning context.
+
+**Block DEC_G0 — Input / Context Guard**  
+Label: Input / Context Guard  
+Subtitle: *sole planner ingress; classifies, redacts, and refuses before model access*  
+Badge: **OWASP Top 10 for LLM Applications (2025)**  
+Note: DEC_G0 is the only path through which context reaches the planner. Retrieved text, plant snapshots, and tool observations all pass here for trust classification, redaction, refusal, and deterministic sanitisation.
 
 **Block DEC_R2 — LLM Agent / Planner**  
 Label: LLM Agent / Planner  
@@ -278,9 +291,21 @@ Badge: none (implementation-specific)
 Below the LLM block, place a **strip subcomponent**:  
 Label: Tool / Skill Interface  
 List of tools (small text, comma-separated or pills): `opcua.read` · `aas.query` · `anomaly.detect` · `kpi.compute` · `sim.check`  
-**Note on local vs. external tools:** `anomaly.detect`, `kpi.compute`, and `sim.check` are local compute tools requiring no external arrows. Mark them *(local)* in the strip. Only `opcua.read` and `aas.query` require outbound arrows (F_T1 and F_T2).
+**Note on local vs. external tools:** `anomaly.detect`, `kpi.compute`, and `sim.check` are local compute tools requiring no external arrows. Mark them *(local)* in the strip. Only `opcua.read` and `aas.query` require outbound arrows, and both are mediated by the Tool Guard / Broker.
+
+**Block DEC_T0 — Tool Guard / Broker**  
+Label: Tool Guard / Broker  
+Subtitle: *read-only tool mediation; schema-checked requests; guarded observations*  
+Badge: **OWASP Top 10 for LLM Applications (2025)**  
+Note: DEC_T0 is the only component allowed to dispatch external tool calls. It enforces allowlists, parameter schemas, read-only guarantees, rate limits, provenance tags, and returns observations through the same deterministic context-guard path used by retrieved content.
 
 ### Column 3 — Gating
+
+**Block DEC_G1A — Output Guard / Schema Checker**  
+Label: Output Guard / Schema Checker  
+Subtitle: *strict machine-readable plan schema; rejects free text*  
+Badge: **OWASP Top 10 for LLM Applications (2025)**  
+Note: The model may emit only a structured plan object. Deterministic fields such as risk tier, approval requirement, and approval token are computed later and must not be authored by the LLM.
 
 **Block DEC_G1 — Policy-Guard**  
 Label: Policy-Guard  
@@ -294,18 +319,35 @@ Subtitle (two sub-items inside block):
 - *OPC UA RBAC validator (session role constraints)*  
 Badge: **OPC 10000-18 v1.05.06** *(released 2025-10-31)*
 
+**Block DEC_H1 — Human Approval Gate**  
+Label: Human Approval Gate  
+Subtitle: *all VoR-bound plans require explicit operator approval*  
+Badge: **NIST AI 600-1**  
+Note: The approval object binds `plan_hash + snapshot_id + expires_at`. If the approval expires or the current t0 snapshot changes before VoR composition, the plan must return to deterministic validation and cannot proceed on stale state.
+
+**Block DEC_M1 — Guardrail Monitor / Evals**  
+Label: Guardrail Monitor / Evals  
+Subtitle: *write-once event stream for guardrails, denials, and approvals*  
+Badge: **NIST AI 600-1**  
+Note: Monitoring is a sidecar, not an actuator. It aggregates pass/reject/approve events from the guardrail layer and forwards them to the audit sink for review and red-team evaluation.
+
 ### Decide band arrows
 
 **F3a:**  
-Source → Target: AAS Repository → RAG  
-Label: *AAS submodel retrieval*  
+Source → Target: AAS Repository → Retrieval Guard  
+Label: *AAS submodel retrieval (ACL-gated)*  
 Style: solid, thin  
 
 **F3b** (soft grounding):  
-Source → Target: Policy Store → RAG  
-Label: *policy context (soft grounding)*  
+Source → Target: Policy Store → Retrieval Guard  
+Label: *policy context (soft grounding, ACL-gated)*  
 Style: solid, thin  
-**Caption note required:** "F3b provides policy summaries as retrieved context for LLM reasoning; this is soft grounding, not enforcement. Hard enforcement is F3b'."
+**Caption note required:** "F3b provides policy summaries as retrieved context for LLM reasoning, but only after deterministic retrieval gating. Hard enforcement is F3b'."
+
+**F_R0_out:**  
+Source → Target: Retrieval Guard → RAG  
+Label: *approved, provenance-tagged retrieval context*  
+Style: solid, medium  
 
 **F3b'** ← *This was missing in the prior draft — critical addition*  
 Source → Target: Policy Store → Policy-Guard  
@@ -314,20 +356,38 @@ Style: **solid, medium weight** — visually heavier than F3b to encode the dist
 **Rationale:** Without F3b', the Policy-Guard has no authoritative source to enforce against. Policies reaching the LLM via retrieval (F3b → F3c path) are soft context that the LLM can potentially reason around. The Policy-Guard must hold a direct, non-retrieval-mediated read path to the Policy Store for deterministic enforcement. This is the most important missing arrow in the prior specification.
 
 **F3c:**  
-Source → Target: RAG → LLM Agent  
-Label: *retrieved context (AAS + policy summaries)*  
+Source → Target: RAG → Input / Context Guard  
+Label: *retrieved context (AAS + policy summaries; untrusted until classified)*  
 Style: solid, medium  
 
 **F3d:**  
-Source → Target: PA-DIM Harmonizer (Sense band) → LLM Agent  
-Label: *harmonised plant state (snapshot t₀)*  
+Source → Target: PA-DIM Harmonizer (Sense band) → Input / Context Guard  
+Label: *harmonised plant state (snapshot t0)*  
 Style: solid, crosses Sense → Decide band boundary (dashed band separator)  
-**The t₀ annotation is mandatory** — it makes explicit that the same frozen snapshot used for LLM reasoning (F3d) and validation (F3h) is temporally consistent.
+**The t0 annotation is mandatory** — it makes explicit that the same frozen snapshot used for guarded reasoning input (F3d) and deterministic validation (F3h) is temporally consistent.
+
+**F_G0_out:**  
+Source → Target: Input / Context Guard → LLM Agent  
+Label: *sanitised, classified planner context*  
+Style: solid, medium  
+**Architectural rule:** This is the sole planner-context ingress. No retrieved content, plant snapshot, or tool observation may bypass DEC_G0 and reach the planner directly.
 
 **F3e:**  
-Source → Target: LLM Agent → Policy-Guard  
-Label: *proposed action / tool call*  
+Source → Target: LLM Agent → Output Guard / Schema Checker  
+Label: *raw candidate plan object*  
 Style: solid, medium  
+
+**F_G1A_pass:**  
+Source → Target: Output Guard / Schema Checker → Policy-Guard  
+Label: *schema-valid plan object*  
+Style: solid, medium  
+
+**F_G1A_reject:**  
+Source → Target: Output Guard / Schema Checker → LLM Agent  
+Label: *schema rejection + field/error feedback*  
+Style: dashed  
+Direction: right-to-left (reverse of F3e)  
+Note: Reject payloads must be machine-readable. Risk tier, approval requirement, and approval token are deterministic downstream products, not LLM-authored output fields.
 
 **F3f:**  
 Source → Target: Policy-Guard → Deterministic Validators  
@@ -339,7 +399,7 @@ Source → Target: Policy-Guard → LLM Agent
 Label: *rejection + constraint feedback*  
 Style: **dashed, thin**, with arrowhead pointing back to LLM  
 Direction: right-to-left (reverse of F3e)  
-Position: draw below F3e to avoid arrow crossing  
+Position: draw below the outbound proposal/schema path to avoid arrow crossing  
 **Rationale:** Without this arrow, the Policy-Guard appears to silently discard rejected proposals with no agent-observable consequence. The ReAct loop requires that rejections are observable so the agent can revise its reasoning. This arrow closes the decide loop and makes the architecture reflexive.
 
 **F3g:**  
@@ -361,18 +421,52 @@ Style: solid, thin, enters from Gateway boundary
 (See §6 for full rationale of source correction.)
 
 **F_T1** ← *This was missing in the prior draft — significant addition*  
-Source → Target: LLM Agent (Tool Interface) → OPC UA Client (Sense band)  
+Source → Target: Tool Guard / Broker → OPC UA Client (Sense band)  
 Label: *tool call: opcua.read*  
 Style: **dotted**, thin  
 Direction: downward from Decide band to Sense band  
-Arrowhead: bidirectional or with return implied (tool call + result)  
-Note: Dotted style (not dashed) distinguishes tool-invoked pulls from passive data pushes. This arrow makes explicit that the agent can query OPC UA on demand, not only receive pushed data.
+Arrowhead: outward only; the observation return is modelled separately through the context guard  
+Note: Dotted style (not dashed) distinguishes tool-invoked pulls from passive data pushes. The broker enforces read-only guarantees and request schemas before dispatch.
 
 **F_T2** ← *This was missing in the prior draft — significant addition*  
-Source → Target: LLM Agent (Tool Interface) → AAS Repository  
+Source → Target: Tool Guard / Broker → AAS Repository  
 Label: *tool call: aas.query*  
-Style: dotted, thin, bidirectional or with return implied  
-Note: Complements F3a (which is a passive retrieval push) by showing the agent can also make targeted on-demand AAS queries via tool call.
+Style: dotted, thin, outward only  
+Note: Complements F3a by showing that targeted on-demand AAS queries also pass through the same deterministic tool broker.
+
+**F_T0_req:**  
+Source → Target: LLM Agent → Tool Guard / Broker  
+Label: *tool request (allowlist + schema checked)*  
+Style: dotted, thin  
+Note: The planner no longer dispatches external tools directly.
+
+**F_T0_obs:**  
+Source → Target: Tool Guard / Broker → Input / Context Guard  
+Label: *guarded tool observation*  
+Style: solid, medium  
+Note: Tool results re-enter through the same deterministic input/context guard as retrieved and sensed data.
+
+**F4:**  
+Source → Target: Deterministic Validators → Human Approval Gate  
+Label: *validated candidate plan (approval pending)*  
+Style: solid, medium  
+
+**F_H1_pass:**  
+Source → Target: Human Approval Gate → VoR Request Composer  
+Label: *approved plan bound to plan_hash + snapshot_id + expires_at*  
+Style: solid, medium  
+
+**F_M1_*:**  
+Source → Target: each guard node → Guardrail Monitor / Evals  
+Label: *guardrail event stream*  
+Style: solid, thin  
+Note: Emit pass, reject, deny, rate-limit, and approval events from DEC_G0, DEC_R0, DEC_T0, DEC_G1A, and DEC_H1.
+
+**F_M1_out:**  
+Source → Target: Guardrail Monitor / Evals → Audit Log  
+Label: *aggregated guardrail audit stream*  
+Style: solid, thin  
+Note: Guardrail events remain write-once and immutable.
 
 ---
 
@@ -467,7 +561,7 @@ Draw five rectangular blocks in a left-to-right sequence, connected by solid arr
 | 1 | **Auth & Authorisation** | Verify AEA identity certificate; check write-scope against session role (links to F3i) |
 | 2 | **Semantic Verification** | Validate request payload against AAS property types, unit dimensions, and IEC CDD IRDIs |
 | 3 | **Mapping** | Translate abstract non-plant-specific parameters into concrete DCS/PLC addresses; resolves asset IDs |
-| 4 | **Acceptance** | Configurable: human-in-the-loop OR automated plausibility gate. If any endpoint cannot accept, entire request is rejected (atomicity requirement) |
+| 4 | **Acceptance** | Gateway / endpoint acceptance only. If any endpoint cannot accept, entire request is rejected (atomicity requirement). AEA-side pre-VoR approval is modelled separately in Panel A and must not be collapsed into this step |
 | 5 | **Mapping Verification + Execution** | Verify mapped instruction before write; execute atomically; generate status record for audit log |
 
 ### 10.3 Panel B arrows
@@ -521,27 +615,35 @@ This is the definitive, ordered list of all arrows in the figure. Use this as a 
 
 | ID | Source | Target | Label | Style | Note |
 |---|---|---|---|---|---|
-| F3a | AAS Repository | RAG | *AAS submodel retrieval* | solid thin | |
-| F3b | Policy Store | RAG | *policy context (soft grounding)* | solid thin | |
+| F3a | AAS Repository | Retrieval Guard | *AAS submodel retrieval (ACL-gated)* | solid thin | |
+| F3b | Policy Store | Retrieval Guard | *policy context (soft grounding, ACL-gated)* | solid thin | |
 | F3b' **[NEW]** | Policy Store | Policy-Guard | *enforcement rules (hard)* | solid medium | Critical |
-| F3c | RAG | LLM Agent | *retrieved context* | solid | |
-| F3d | PA-DIM Harmonizer | LLM Agent | *plant state snapshot (t₀)* | solid | |
-| F3e | LLM Agent | Policy-Guard | *proposed action* | solid | |
+| F_R0_out **[NEW]** | Retrieval Guard | RAG | *approved, provenance-tagged retrieval context* | solid | |
+| F3c | RAG | Input / Context Guard | *retrieved context* | solid | Sole planner ingress path begins here |
+| F3d | PA-DIM Harmonizer | Input / Context Guard | *plant state snapshot (t0)* | solid | |
+| F_G0_out **[NEW]** | Input / Context Guard | LLM Agent | *sanitised, classified planner context* | solid | Sole planner ingress |
+| F3e | LLM Agent | Output Guard / Schema Checker | *raw candidate plan object* | solid | |
+| F_G1A_pass **[NEW]** | Output Guard / Schema Checker | Policy-Guard | *schema-valid plan object* | solid | |
+| F_G1A_reject **[NEW]** | Output Guard / Schema Checker | LLM Agent | *schema rejection + field/error feedback* | dashed | Loop-back |
 | F3f | Policy-Guard | Deterministic Validators | *policy-compliant candidates* | solid | |
 | F3f_reject **[NEW]** | Policy-Guard | LLM Agent | *rejection + constraints* | dashed | Loop-back |
 | F3g | AAS Repository | Deterministic Validators | *property bounds* | solid thin | |
-| F3h | PA-DIM Harmonizer | Deterministic Validators | *current values (t₀)* | solid thin | |
+| F3h | PA-DIM Harmonizer | Deterministic Validators | *current values (t0)* | solid thin | |
 | F3i **[CORRECTED]** | VoR Interface | Deterministic Validators | *permitted write scope / roles* | solid thin | Source changed from OPC UA Client |
-| F_T1 **[NEW]** | LLM (Tool Interface) | OPC UA Client | *tool call: opcua.read* | dotted | Agent-initiated |
-| F_T2 **[NEW]** | LLM (Tool Interface) | AAS Repository | *tool call: aas.query* | dotted | Agent-initiated |
+| F_T0_req **[NEW]** | LLM Agent | Tool Guard / Broker | *tool request* | dotted | Brokered |
+| F_T1 **[NEW]** | Tool Guard / Broker | OPC UA Client | *tool call: opcua.read* | dotted | Brokered, read-only |
+| F_T2 **[NEW]** | Tool Guard / Broker | AAS Repository | *tool call: aas.query* | dotted | Brokered, read-only |
+| F_T0_obs **[NEW]** | Tool Guard / Broker | Input / Context Guard | *guarded tool observation* | solid | Re-entry through deterministic gate |
 
 ### Act arrows
 
 | ID | Source | Target | Label | Style | Note |
 |---|---|---|---|---|---|
-| F4 | Deterministic Validators | VoR Request Composer | *validated candidate plan* | solid | |
+| F4 | Deterministic Validators | Human Approval Gate | *validated candidate plan (approval pending)* | solid | |
+| F_H1_pass **[NEW]** | Human Approval Gate | VoR Request Composer | *approved plan bound to plan_hash + snapshot_id + expires_at* | solid | Final pre-VoR gate |
 | F_KPI | PA-DIM Harmonizer | KPI Publisher | *KPI inputs (harmonised signals)* | solid thin | |
 | F_AUDIT **[NEW]** | VoR Request Composer | Audit Log | *decision event; VoR record* | solid thin | Replaces removed F_OPT |
+| F_M1_out **[NEW]** | Guardrail Monitor / Evals | Audit Log | *guardrail audit stream* | solid thin | Immutable sidecar feed |
 
 ### Write-back arrows
 

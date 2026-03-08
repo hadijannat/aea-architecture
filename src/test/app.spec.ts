@@ -241,7 +241,7 @@ test('desktop canvas keeps topology visible while the legend stays collapsed by 
   await page.getByRole('button', { name: 'Show legend' }).click()
   await expect(page.locator('[data-overview-legend-panel]')).toBeVisible()
   await expect(page.locator('[data-legend-item="status-ack"]')).toBeVisible()
-  await expect(page.locator('#legend-marker-status-ack')).toHaveAttribute('markerUnits', 'strokeWidth')
+  await expect(page.locator('#legend-marker-status-ack')).toHaveAttribute('markerUnits', 'userSpaceOnUse')
   await page.locator('[data-focus-preset="lane-c"]').click({ force: true })
   await page.locator('[data-hotspot-id="gateway"]').click({ force: true })
   await expect(page.locator('[data-overview-map]')).toBeVisible()
@@ -292,11 +292,11 @@ test('architecture edge labels retain ids in display and expanded modes', async 
 
   await ensureEdgeLabelMode(page, 'F4', 'display', 'zoom-in')
   await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'display')
-  await expect(edgeLabel).toHaveText('F4 · Validate plan')
+  await expect(edgeLabel).toHaveText('F4 · Await approval')
 
   await ensureEdgeLabelMode(page, 'F4', 'expanded', 'zoom-in')
   await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'expanded')
-  await expect(edgeLabel).toHaveText('F4 · Validate plan')
+  await expect(edgeLabel).toHaveText('F4 · Await approval')
 })
 
 test('diode edges keep the diode suffix across compact, display, and expanded label modes', async ({ page }) => {
@@ -348,6 +348,7 @@ test('toggle chips expose pressed state and the updated lane copy', async ({ pag
   )
   await expect(page.getByRole('button', { name: 'Hide VoR sequence' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Write corridor focus' })).toBeVisible()
+  await expect(page.locator('[data-focus-preset="guardrail"]')).toContainText('Guardrails')
   await expect(page.locator('[data-hotspot-id="write"] .semantic-overview__hotspot-label')).toHaveText('Write')
 
   const claimC4 = page.getByRole('button', { name: 'C4: Actuation is exclusive to the VoR path' })
@@ -361,18 +362,22 @@ test('toggle chips expose pressed state and the updated lane copy', async ({ pag
   await expect(claimC4).toHaveAttribute('aria-pressed', 'true')
 })
 
-test('write corridor preset stays single-line in the 2x2 focus grid', async ({ page }) => {
+test('focus presets stay single-line after adding the guardrail control view', async ({ page }) => {
   await page.goto('/?node=ACT1')
 
   const writePreset = page.locator('[data-focus-preset="write"]')
   const overviewPreset = page.locator('[data-focus-preset="overview"]')
+  const guardrailPreset = page.locator('[data-focus-preset="guardrail"]')
 
   await expect(writePreset).toContainText('Write corridor')
+  await expect(guardrailPreset).toContainText('Guardrails')
   const writeHeight = (await writePreset.boundingBox())?.height ?? 0
   const overviewHeight = (await overviewPreset.boundingBox())?.height ?? 0
+  const guardrailHeight = (await guardrailPreset.boundingBox())?.height ?? 0
 
   expect(writeHeight).toBeGreaterThan(0)
   expect(Math.abs(writeHeight - overviewHeight)).toBeLessThanOrEqual(2)
+  expect(Math.abs(guardrailHeight - overviewHeight)).toBeLessThanOrEqual(2)
 })
 
 test('reduce motion toggle disables animated writeback and tool-call edges', async ({ page }) => {
@@ -667,6 +672,14 @@ test('runtime node surfaces consume the manifest visual tokens', async ({ page }
     backgroundColor: hexToRgbString('#ffffff'),
     borderColor: hexToRgbString('#455a75'),
   })
+  expect(await nodeSurfaceStyles(page, 'DEC_G0')).toEqual({
+    backgroundColor: hexToRgbString('#ffffff'),
+    borderColor: hexToRgbString('#7c3aed'),
+  })
+  expect(await nodeSurfaceStyles(page, 'DEC_M1')).toEqual({
+    backgroundColor: hexToRgbString('#fffdf9'),
+    borderColor: hexToRgbString('#7c5a32'),
+  })
   expect(await nodeSurfaceStyles(page, 'LANE_A')).toEqual({
     backgroundColor: hexToRgbString('#f7f7f7'),
     borderColor: hexToRgbString('#c9d0d8'),
@@ -683,6 +696,9 @@ test('runtime node surfaces consume the manifest visual tokens', async ({ page }
     backgroundColor: hexToRgbString('#fdf1e7'),
     borderColor: hexToRgbString('#ddc8b6'),
   })
+
+  const humanGate = page.locator('.node-card[data-node-id="DEC_H1"]')
+  await expect(computedStyleValue(humanGate, '--node-accent')).resolves.toContain('#b45309')
 })
 
 test('overview navigator keeps corridor routes behind nodes and retains visible accents', async ({ page }) => {

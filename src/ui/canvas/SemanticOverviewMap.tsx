@@ -42,6 +42,7 @@ interface OverviewNodeRect {
 }
 
 const { canvas } = graphManifest.layoutDefaults
+const overviewWriteRouteIds = new Set(['F5', 'F6', 'F_CPC_INT'])
 
 function isHandleId(value?: string | null): value is HandleId {
   return value === 'left' || value === 'right' || value === 'top' || value === 'bottom'
@@ -177,7 +178,7 @@ export function SemanticOverviewMap({
         if (edge.hidden || !spec) {
           return false
         }
-        return spec.semantic === 'writeback' || spec.tags.includes('write-path')
+        return overviewWriteRouteIds.has(spec.id)
       })
       .map((edge) => {
         if (!edge.data) {

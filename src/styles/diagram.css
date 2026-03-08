@@ -1922,6 +1922,25 @@
   font-size: 0.96rem;
 }
 
+[data-node-id='DEC_G0'] .node-card,
+[data-node-id='DEC_R0'] .node-card,
+[data-node-id='DEC_T0'] .node-card,
+[data-node-id='DEC_G1A'] .node-card,
+[data-node-id='DEC_H1'] .node-card,
+[data-node-id='DEC_M1'] .node-card {
+  --node-border: #7c3aed;
+  --node-accent: #7c3aed;
+}
+
+[data-node-id='DEC_H1'] .node-card {
+  --node-accent: #b45309;
+}
+
+[data-node-id='DEC_M1'] .node-card {
+  --node-border: #7c5a32;
+  --node-accent: #7c5a32;
+}
+
 .semantic-edge.is-dimmed {
   opacity: 0.34;
 }
@@ -1933,6 +1952,17 @@
 .semantic-edge-family--telemetry:not(.is-optional):not(.is-dimmed):not(.is-selected):not(.is-highlighted):not(.is-shared-tag-focused) .react-flow__edge-path,
 .edge-label[data-edge-family='telemetry']:not(.is-optional):not(.is-dimmed):not(.is-selected):not(.is-highlighted):not(.is-shared-tag-focused) {
   opacity: 0.82;
+}
+
+.semantic-edge[data-edge-id^='F_M1']:not(.is-selected):not(.is-highlighted) .react-flow__edge-path,
+.edge-label[data-edge-id^='F_M1']:not(.is-selected):not(.is-highlighted) {
+  opacity: 0.62;
+}
+
+.edge-label[data-edge-id^='F_M1'] {
+  background: color-mix(in srgb, #7c5a32 10%, white);
+  border-color: color-mix(in srgb, #7c5a32 46%, white);
+  color: color-mix(in srgb, #7c5a32 92%, #2b2117);
 }
 
 .semantic-edge--rejection.is-dimmed,

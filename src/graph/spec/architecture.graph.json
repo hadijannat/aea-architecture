@@ -1,10 +1,10 @@
 {
-  "specVersion": "aea-master-spec-2026-03-05",
+  "specVersion": "aea-master-spec-2026-03-08",
   "sourceSpec": {
     "title": "AEA Architecture Figure — Master Specification",
     "path": "docs/AEA_Figure_Specification.md",
     "authority": "markdown",
-    "importedAt": "2026-03-05",
+    "importedAt": "2026-03-08",
     "notes": [
       "Detailed per-arrow sections override conflicting summary prose.",
       "The app mirrors the spec as structured graph data and keeps semantic objects spec-locked."
@@ -62,6 +62,18 @@
       "label": "NIST AI RMF",
       "version": "1.0"
     },
+    "NISTAI6001": {
+      "id": "NISTAI6001",
+      "label": "NIST AI 600-1 Generative AI Profile",
+      "version": "2024",
+      "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf"
+    },
+    "OWASPLMM25": {
+      "id": "OWASPLMM25",
+      "label": "OWASP Top 10 for LLM Applications",
+      "version": "2025",
+      "url": "https://genai.owasp.org/llm-top-10/"
+    },
     "OPC1000018": {
       "id": "OPC1000018",
       "label": "OPC 10000-18",
@@ -96,7 +108,7 @@
     "C3": {
       "id": "C3",
       "label": "Decision-making is semantically grounded and gated",
-      "summary": "PA-DIM, AAS, policy guardrails, and deterministic validators constrain decisions."
+      "summary": "PA-DIM, AAS, retrieval controls, context guards, schema enforcement, policy guardrails, deterministic validators, and human approval constrain decisions before VoR emission."
     },
     "C4": {
       "id": "C4",
@@ -107,6 +119,11 @@
       "id": "C5",
       "label": "Telemetry is publish-only and decoupled",
       "summary": "KPI publication flows northbound independently from actuation."
+    },
+    "C6": {
+      "id": "C6",
+      "label": "AI safety controls are deterministic and external to the model",
+      "summary": "Input classification, retrieval access control, tool brokering, output schema enforcement, approval freshness, and monitoring execute as independent deterministic controls rather than prompt-only instructions."
     }
   },
   "nodes": [
@@ -676,9 +693,9 @@
       "nodeType": "PolicyNode",
       "title": "Policy Store",
       "subtitle": "Site-specific operational policies; safety interlocks; change approval rules",
-      "description": "Policy source with separate soft-grounding and hard-enforcement outbound paths.",
-      "standardIds": [],
-      "claimIds": ["C3", "C4"],
+      "description": "Policy source with separate retrieval, refusal, and hard-enforcement outbound paths.",
+      "standardIds": ["OWASPLMM25"],
+      "claimIds": ["C3", "C4", "C6"],
       "tags": ["decide", "policy-path", "policy-store"],
       "parentId": "BAND_DECIDE",
       "width": 220,
@@ -691,10 +708,46 @@
       },
       "inspector": {
         "role": "Policy source of truth",
-        "rationale": "The policy store supplies both soft context for reasoning and a separate hard enforcement feed for deterministic policy validation.",
-        "notes": ["F3b and F3b' must never be collapsed into a single arrow."],
-        "relatedEdgeIds": ["F3b", "F3b'"],
+        "rationale": "The policy store supplies soft retrieval grounding, refusal criteria, and a separate hard-enforcement feed for deterministic policy validation.",
+        "notes": [
+          "F3b and F3b' must never be collapsed into a single arrow.",
+          "Refusal and sensitive-topic rules are external policy, not prompt text."
+        ],
+        "relatedEdgeIds": ["F3b", "F3b'", "F_G0_pol"],
         "relatedStepIds": ["PB4"]
+      }
+    },
+    {
+      "id": "DEC_R0",
+      "panel": ["architecture"],
+      "lane": "B",
+      "band": "Decide",
+      "kind": "gateway-module",
+      "nodeType": "GatewayModuleNode",
+      "title": "Retrieval Guard",
+      "subtitle": "ACL-aware; provenance-tagged; source-scoped retrieval filter",
+      "description": "Deterministic access-control gate between the semantic stores and the retrieval stage.",
+      "standardIds": ["OWASPLMM25", "IEC63278"],
+      "claimIds": ["C3", "C6"],
+      "tags": ["decide", "policy-path", "guardrail", "retrieval"],
+      "parentId": "BAND_DECIDE",
+      "width": 230,
+      "height": 120,
+      "visual": {
+        "fill": "#ffffff",
+        "border": "#7c3aed",
+        "accent": "#7c3aed",
+        "badgeStyle": "pill"
+      },
+      "inspector": {
+        "role": "Retrieval access-control gate",
+        "rationale": "DEC_R0 enforces ACL scope, provenance, and source trust before repository material can reach the RAG stage.",
+        "notes": [
+          "Retrieved chunks must carry source ID, timestamp, scope, and trust classification.",
+          "Only approved slices may reach DEC_R1."
+        ],
+        "relatedEdgeIds": ["F3a", "F3b", "F_R0_out", "F_M1_R0"],
+        "relatedStepIds": ["PB2"]
       }
     },
     {
@@ -706,7 +759,7 @@
       "nodeType": "RepositoryNode",
       "title": "RAG / Knowledge Retrieval",
       "subtitle": "AAS-structured retrieval; semantic chunking; IDTA Part 2 API",
-      "description": "Retrieval stage collecting AAS excerpts and policy summaries for the LLM planner.",
+      "description": "Retrieval stage collecting AAS excerpts and policy summaries for the guarded planner context.",
       "standardIds": ["IDTAPART2311", "IEC63278"],
       "claimIds": ["C3"],
       "tags": ["decide", "policy-path", "retrieval"],
@@ -721,8 +774,41 @@
       },
       "inspector": {
         "role": "Semantic retrieval stage",
-        "rationale": "DEC_R1 keeps grounding explicit by assembling AAS and policy context before the planner reasons over it.",
-        "relatedEdgeIds": ["F3a", "F3b", "F3c"],
+        "rationale": "DEC_R1 assembles approved AAS and policy context before the input/context guard classifies it for model use.",
+        "relatedEdgeIds": ["F_R0_out", "F3c"],
+        "relatedStepIds": ["PB2"]
+      }
+    },
+    {
+      "id": "DEC_G0",
+      "panel": ["architecture"],
+      "lane": "B",
+      "band": "Decide",
+      "kind": "policy",
+      "nodeType": "PolicyNode",
+      "title": "Input / Context Guard",
+      "subtitle": "Sole planner ingress; classifies, redacts, and refuses before model access",
+      "description": "Deterministic input gate for retrieved text, plant snapshots, and tool observations before any model sees them.",
+      "standardIds": ["OWASPLMM25"],
+      "claimIds": ["C3", "C6"],
+      "tags": ["decide", "policy-path", "guardrail", "context"],
+      "parentId": "BAND_DECIDE",
+      "width": 230,
+      "height": 128,
+      "visual": {
+        "fill": "#ffffff",
+        "border": "#7c3aed",
+        "accent": "#7c3aed",
+        "badgeStyle": "pill"
+      },
+      "inspector": {
+        "role": "Pre-model context gate",
+        "rationale": "DEC_G0 is the sole ingress into the planner context window and enforces classification, redaction, refusal, and snapshot consistency before model access.",
+        "notes": [
+          "Retrieved narrative, plant-state snapshots, and tool observations all terminate here first.",
+          "Refusal policy is sourced from DEC_K2, not from prompt text."
+        ],
+        "relatedEdgeIds": ["F3c", "F3d", "F_G0_pol", "F_G0_out", "F_T0_obs", "F_M1_G0"],
         "relatedStepIds": ["PB2"]
       }
     },
@@ -735,7 +821,7 @@
       "nodeType": "AgentNode",
       "title": "LLM Agent / Planner",
       "subtitle": "Tool-using; ReAct reasoning loop",
-      "description": "Planner that consumes t0 state and retrieved context, proposes actions, and reacts to policy rejections or tool results.",
+      "description": "Planner that consumes only guarded context, proposes structured plans, and reacts to deterministic schema or policy rejections.",
       "standardIds": [],
       "claimIds": ["C3", "C4"],
       "tags": ["decide", "policy-path", "write-path", "agent"],
@@ -750,14 +836,80 @@
         "icon": "ReAct"
       },
       "inspector": {
-        "role": "Proposal generator and tool orchestrator",
-        "rationale": "The planner operates inside psM+O, but its outputs are constrained by policy and deterministic validation before any actuation path is available.",
+        "role": "Proposal generator and tool requester",
+        "rationale": "The planner operates inside psM+O, but all inbound context and outbound tool use are mediated by deterministic controls before any actuation path is available.",
         "notes": [
           "Local tools: anomaly.detect, kpi.compute, sim.check.",
-          "External arrows only exist for opcua.read and aas.query."
+          "External arrows only exist for brokered opcua.read and aas.query."
         ],
-        "relatedEdgeIds": ["F3c", "F3d", "F3e", "F3f_reject", "F_T1", "F_T2"],
+        "relatedEdgeIds": ["F_G0_out", "F3e", "F_G1A_reject", "F3f_reject", "F_T0_req"],
         "relatedStepIds": ["PB1", "PB2"]
+      }
+    },
+    {
+      "id": "DEC_T0",
+      "panel": ["architecture"],
+      "lane": "B",
+      "band": "Decide",
+      "kind": "gateway-module",
+      "nodeType": "GatewayModuleNode",
+      "title": "Tool Guard / Broker",
+      "subtitle": "Read-only tool mediation; schema-checked requests; guarded observations",
+      "description": "Deterministic broker that is solely responsible for dispatching external tool calls and returning observations through the guarded context path.",
+      "standardIds": ["OWASPLMM25"],
+      "claimIds": ["C3", "C6"],
+      "tags": ["decide", "policy-path", "guardrail", "tooling"],
+      "parentId": "BAND_DECIDE",
+      "width": 230,
+      "height": 120,
+      "visual": {
+        "fill": "#ffffff",
+        "border": "#7c3aed",
+        "accent": "#7c3aed",
+        "badgeStyle": "pill"
+      },
+      "inspector": {
+        "role": "Tool-call broker",
+        "rationale": "DEC_T0 enforces tool allowlists, parameter schemas, read-only guarantees, rate limits, provenance tagging, and monitored re-entry of tool observations.",
+        "notes": [
+          "DEC_R2 no longer invokes external tools directly.",
+          "Tool observations must return through DEC_G0 before they can affect reasoning."
+        ],
+        "relatedEdgeIds": ["F_T0_req", "F_T1", "F_T2", "F_T0_obs", "F_M1_T0"],
+        "relatedStepIds": []
+      }
+    },
+    {
+      "id": "DEC_G1A",
+      "panel": ["architecture"],
+      "lane": "B",
+      "band": "Decide",
+      "kind": "policy",
+      "nodeType": "PolicyNode",
+      "title": "Output Guard / Schema Checker",
+      "subtitle": "Strict plan schema; deterministic fields remain external",
+      "description": "Schema-validation gate that accepts only a machine-readable plan object and rejects free text or unsupported fields before policy evaluation.",
+      "standardIds": ["OWASPLMM25", "NISTAIRMF10"],
+      "claimIds": ["C3", "C6"],
+      "tags": ["decide", "policy-path", "guardrail", "schema"],
+      "parentId": "BAND_DECIDE",
+      "width": 230,
+      "height": 128,
+      "visual": {
+        "fill": "#ffffff",
+        "border": "#7c3aed",
+        "accent": "#7c3aed",
+        "badgeStyle": "pill"
+      },
+      "inspector": {
+        "role": "LLM output schema gate",
+        "rationale": "DEC_G1A rejects any non-structured or unsupported model output before deterministic policy, validation, or approval logic runs.",
+        "notes": [
+          "Required fields are structural only: action_type, asset_id, parameter_id, requested_value, unit, snapshot_id, evidence_refs.",
+          "Risk tier, approval requirement, and approval token are deterministic downstream outputs, not LLM-authored fields."
+        ],
+        "relatedEdgeIds": ["F3e", "F_G1A_pass", "F_G1A_reject", "F_M1_G1A"],
+        "relatedStepIds": ["PB2"]
       }
     },
     {
@@ -784,8 +936,8 @@
       },
       "inspector": {
         "role": "Policy enforcement gate",
-        "rationale": "DEC_G1 is the non-bypassable guard that receives hard rules from DEC_K2 and forces the LLM loop to react to rejections.",
-        "relatedEdgeIds": ["F3b'", "F3e", "F3f", "F3f_reject"],
+        "rationale": "DEC_G1 is the non-bypassable policy guard that receives hard rules from DEC_K2 and forces the planner loop to react to rejections.",
+        "relatedEdgeIds": ["F3b'", "F_G1A_pass", "F3f", "F3f_reject"],
         "relatedStepIds": ["PB4"]
       }
     },
@@ -799,9 +951,9 @@
       "nodeType": "SystemNode",
       "title": "Deterministic Validators",
       "subtitle": "AAS bounds validator + OPC UA RBAC validator",
-      "description": "Deterministic stage validating typed bounds, current values, and permitted write scope before any VoR request is composed.",
-      "standardIds": ["OPC1000018", "IEC63278"],
-      "claimIds": ["C3", "C4"],
+      "description": "Deterministic stage validating typed bounds, current values, permitted write scope, plan hash, and approval freshness before any VoR request is composed.",
+      "standardIds": ["OPC1000018", "IEC63278", "NISTAI6001"],
+      "claimIds": ["C3", "C4", "C6"],
       "tags": ["decide", "policy-path", "write-path", "validator"],
       "parentId": "BAND_DECIDE",
       "width": 240,
@@ -814,10 +966,79 @@
       },
       "inspector": {
         "role": "Deterministic safety gate",
-        "rationale": "DEC_G2 is the final deterministic barrier before VoR request composition and therefore carries both AAS and RBAC evidence.",
-        "notes": ["The spec alias DEC3 resolves here for traceability."],
+        "rationale": "DEC_G2 is the final deterministic barrier before human approval and VoR request composition and therefore carries both AAS and RBAC evidence.",
+        "notes": [
+          "The spec alias DEC3 resolves here for traceability.",
+          "Approval freshness is bound to plan_hash + snapshot_id + expires_at."
+        ],
         "relatedEdgeIds": ["F3f", "F3g", "F3h", "F3i", "F4"],
         "relatedStepIds": ["PB1", "PB2", "PB5"]
+      }
+    },
+    {
+      "id": "DEC_H1",
+      "panel": ["architecture"],
+      "lane": "B",
+      "band": "Decide",
+      "kind": "gateway-module",
+      "nodeType": "GatewayModuleNode",
+      "title": "Human Approval Gate",
+      "subtitle": "All VoR-bound plans require explicit operator approval",
+      "description": "Human-in-the-loop gate that approves a specific plan hash against a specific snapshot and expiry window before VoR composition.",
+      "standardIds": ["OWASPLMM25", "NISTAI6001"],
+      "claimIds": ["C4", "C6"],
+      "tags": ["decide", "write-path", "guardrail", "human-in-loop"],
+      "parentId": "BAND_DECIDE",
+      "width": 230,
+      "height": 120,
+      "visual": {
+        "fill": "#ffffff",
+        "border": "#7c3aed",
+        "accent": "#b45309",
+        "badgeStyle": "pill"
+      },
+      "inspector": {
+        "role": "Pre-VoR approval gate",
+        "rationale": "DEC_H1 makes human approval mandatory for all VoR-bound plans and binds approval to the validated plan hash, snapshot, and expiry window.",
+        "notes": [
+          "If approval expires or t0 changes before ACT1, the plan must return to deterministic validation.",
+          "Panel B remains an NE 178 protocol view and does not absorb this AEA-side gate."
+        ],
+        "relatedEdgeIds": ["F4", "F_H1_pass", "F_M1_H1"],
+        "relatedStepIds": []
+      }
+    },
+    {
+      "id": "DEC_M1",
+      "panel": ["architecture"],
+      "lane": "B",
+      "band": "Decide",
+      "kind": "audit",
+      "nodeType": "AuditNode",
+      "title": "Guardrail Monitor / Evals",
+      "subtitle": "Write-once event stream for guardrails, denials, and approvals",
+      "description": "Sidecar monitor that aggregates guardrail pass, reject, deny, and approval events for audit and evaluation.",
+      "standardIds": ["NISTAI6001", "OWASPLMM25"],
+      "claimIds": ["C6"],
+      "tags": ["decide", "guardrail", "audit"],
+      "parentId": "BAND_DECIDE",
+      "width": 220,
+      "height": 120,
+      "visual": {
+        "fill": "#fffdf9",
+        "border": "#7c5a32",
+        "accent": "#7c5a32",
+        "badgeStyle": "pill"
+      },
+      "inspector": {
+        "role": "Guardrail monitoring sidecar",
+        "rationale": "DEC_M1 makes the guardrail layer observable, reviewable, and operationally testable without becoming an actuation path.",
+        "notes": [
+          "Monitoring is a sidecar and must not block decision execution.",
+          "Events are write-once and immutable once committed."
+        ],
+        "relatedEdgeIds": ["F_M1_G0", "F_M1_R0", "F_M1_T0", "F_M1_G1A", "F_M1_H1", "F_M1_out"],
+        "relatedStepIds": []
       }
     },
     {
@@ -829,7 +1050,7 @@
       "nodeType": "AgentNode",
       "title": "VoR Request Composer",
       "subtitle": "Primary actuation path; composes non-plant-specific VoR request payload",
-      "description": "AEA-side actuation block that translates the validated plan into the non-plant-specific VoR request payload.",
+      "description": "AEA-side actuation block that translates the approved plan into the non-plant-specific VoR request payload.",
       "standardIds": ["NE178"],
       "claimIds": ["C4"],
       "tags": ["act", "write-path", "vor"],
@@ -844,8 +1065,8 @@
       },
       "inspector": {
         "role": "VoR initiation point",
-        "rationale": "ACT1 owns the exclusive write-back initiation path and is the AEA object most tightly linked to Panel B.",
-        "relatedEdgeIds": ["F4", "F5", "F_VoR_ACK", "F_AUDIT"],
+        "rationale": "ACT1 owns the exclusive write-back initiation path and can only be entered through explicit approval or feedback from the VoR interface.",
+        "relatedEdgeIds": ["F_H1_pass", "F5", "F_VoR_ACK", "F_AUDIT"],
         "relatedStepIds": ["PB1", "PB2", "PB3", "PB4", "PB5"]
       }
     },
@@ -886,10 +1107,10 @@
       "kind": "audit",
       "nodeType": "AuditNode",
       "title": "Audit Log",
-      "subtitle": "Decision events; VoR request records; policy-guard outcomes",
-      "description": "Dedicated audit sink for decision and VoR records, separated from KPI publication.",
-      "standardIds": ["NE178", "NISTAIRMF10"],
-      "claimIds": ["C4"],
+      "subtitle": "Decision events; VoR request records; guardrail outcomes",
+      "description": "Dedicated audit sink for decision, guardrail, and VoR records, separated from KPI publication.",
+      "standardIds": ["NE178", "NISTAIRMF10", "NISTAI6001"],
+      "claimIds": ["C4", "C6"],
       "tags": ["act", "write-path", "audit"],
       "parentId": "BAND_ACT",
       "width": 210,
@@ -902,8 +1123,8 @@
       },
       "inspector": {
         "role": "Traceability sink",
-        "rationale": "Audit records are separated from KPI telemetry so the actuation trail remains explicit and reviewable.",
-        "relatedEdgeIds": ["F_AUDIT"],
+        "rationale": "Audit records are separated from KPI telemetry so the actuation trail and guardrail trail remain explicit and reviewable.",
+        "relatedEdgeIds": ["F_AUDIT", "F_M1_out"],
         "relatedStepIds": ["PB5"]
       }
     },
@@ -1155,14 +1376,14 @@
       "panel": ["architecture"],
       "band": "Decide",
       "source": "DEC_K1",
-      "target": "DEC_R1",
+      "target": "DEC_R0",
       "semantic": "retrieval",
       "style": "thin",
-      "label": "AAS submodel retrieval",
-      "displayLabel": "Get AAS",
+      "label": "AAS submodel retrieval (ACL-gated)",
+      "displayLabel": "Gate AAS",
       "direction": "ltr",
-      "standardIds": ["IEC63278", "IDTAPART2311"],
-      "claimIds": ["C3"],
+      "standardIds": ["IEC63278", "IDTAPART2311", "OWASPLMM25"],
+      "claimIds": ["C3", "C6"],
       "tags": ["policy-path"],
       "interactive": {
         "relatedStepIds": ["PB2"],
@@ -1171,7 +1392,7 @@
         "highlightGroup": "policy"
       },
       "inspector": {
-        "rationale": "F3a is the semantic retrieval edge pulling AAS submodels into the RAG stage.",
+        "rationale": "F3a now terminates at the Retrieval Guard so AAS submodels pass through provenance and scope checks before the RAG stage.",
         "constraints": ["Source must remain DEC_K1."]
       }
     },
@@ -1180,14 +1401,14 @@
       "panel": ["architecture"],
       "band": "Decide",
       "source": "DEC_K2",
-      "target": "DEC_R1",
+      "target": "DEC_R0",
       "semantic": "policy-soft",
       "style": "thin",
-      "label": "policy context (soft grounding)",
-      "displayLabel": "Guide plan",
+      "label": "policy context (soft grounding, ACL-gated)",
+      "displayLabel": "Gate policy",
       "direction": "ltr",
-      "standardIds": [],
-      "claimIds": ["C3"],
+      "standardIds": ["OWASPLMM25"],
+      "claimIds": ["C3", "C6"],
       "tags": ["policy-path"],
       "interactive": {
         "relatedStepIds": ["PB2"],
@@ -1196,9 +1417,34 @@
         "highlightGroup": "policy"
       },
       "inspector": {
-        "rationale": "F3b provides policy summaries as soft grounding for reasoning; it informs the LLM but is not itself the enforcement mechanism.",
+        "rationale": "F3b provides soft-grounding policy context, but only after the Retrieval Guard checks provenance, scope, and trust classification.",
         "notes": ["This edge must be clearly distinguished from F3b', which is hard enforcement."],
         "constraints": ["Soft grounding only."]
+      }
+    },
+    {
+      "id": "F_R0_out",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_R0",
+      "target": "DEC_R1",
+      "semantic": "retrieval",
+      "style": "medium",
+      "label": "approved, provenance-tagged retrieval context",
+      "displayLabel": "Pass context",
+      "direction": "ltr",
+      "standardIds": ["OWASPLMM25", "IEC63278"],
+      "claimIds": ["C3", "C6"],
+      "tags": ["policy-path", "guardrail"],
+      "interactive": {
+        "relatedStepIds": ["PB2"],
+        "sourceHandle": "bottom",
+        "targetHandle": "top",
+        "highlightGroup": "policy"
+      },
+      "inspector": {
+        "rationale": "F_R0_out carries only ACL-approved, provenance-tagged chunks into the RAG stage.",
+        "constraints": ["Content must carry provenance metadata before reaching DEC_R1."]
       }
     },
     {
@@ -1232,16 +1478,16 @@
       "panel": ["architecture"],
       "band": "Decide",
       "source": "DEC_R1",
-      "target": "DEC_R2",
+      "target": "DEC_G0",
       "semantic": "retrieval",
       "style": "medium",
-      "label": "retrieved context",
-      "displayLabel": "Get context",
+      "label": "retrieved context (untrusted until classified)",
+      "displayLabel": "Deliver ctx",
       "detail": "AAS + policy summaries",
       "direction": "ltr",
-      "standardIds": ["IEC63278", "IDTAPART2311"],
-      "claimIds": ["C3"],
-      "tags": ["policy-path"],
+      "standardIds": ["IEC63278", "IDTAPART2311", "OWASPLMM25"],
+      "claimIds": ["C3", "C6"],
+      "tags": ["policy-path", "guardrail"],
       "interactive": {
         "relatedStepIds": ["PB2"],
         "sourceHandle": "right",
@@ -1249,7 +1495,7 @@
         "highlightGroup": "policy"
       },
       "inspector": {
-        "rationale": "F3c carries assembled semantic context into the planner so the agent does not reason from raw telemetry alone."
+        "rationale": "F3c now terminates at the Input / Context Guard so retrieved context cannot bypass deterministic classification before reaching the planner."
       }
     },
     {
@@ -1257,15 +1503,15 @@
       "panel": ["architecture"],
       "band": "Decide",
       "source": "S2",
-      "target": "DEC_R2",
+      "target": "DEC_G0",
       "semantic": "retrieval",
       "style": "medium",
-      "label": "harmonised plant state (snapshot t0)",
-      "displayLabel": "Load t0 state",
+      "label": "harmonised plant state (snapshot t0) to guarded ingress",
+      "displayLabel": "Load t0",
       "direction": "ttb",
-      "standardIds": ["PADIM102"],
-      "claimIds": ["C3"],
-      "tags": ["policy-path", "telemetry-path", "t0"],
+      "standardIds": ["PADIM102", "OWASPLMM25"],
+      "claimIds": ["C3", "C6"],
+      "tags": ["policy-path", "telemetry-path", "t0", "guardrail"],
       "interactive": {
         "relatedStepIds": ["PB2"],
         "sourceHandle": "bottom",
@@ -1273,8 +1519,58 @@
         "highlightGroup": "policy"
       },
       "inspector": {
-        "rationale": "F3d injects the harmonized t0 plant-state snapshot into the planner for temporally consistent reasoning.",
+        "rationale": "F3d now terminates at DEC_G0 so the harmonised t0 plant-state snapshot is deterministically classified before model access.",
         "constraints": ["Must share the same t0 snapshot group as F3h."]
+      }
+    },
+    {
+      "id": "F_G0_pol",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_K2",
+      "target": "DEC_G0",
+      "semantic": "policy-hard",
+      "style": "thin",
+      "label": "refusal policy / sensitive-topic rules",
+      "displayLabel": "Refusal rules",
+      "direction": "ltr",
+      "standardIds": ["OWASPLMM25"],
+      "claimIds": ["C6"],
+      "tags": ["policy-path", "guardrail"],
+      "interactive": {
+        "relatedStepIds": [],
+        "sourceHandle": "right",
+        "targetHandle": "left",
+        "highlightGroup": "policy"
+      },
+      "inspector": {
+        "rationale": "F_G0_pol feeds refusal and sensitive-topic rules directly into DEC_G0 so refusal logic remains external to the model.",
+        "constraints": ["Refusal rules must be versioned external policy."]
+      }
+    },
+    {
+      "id": "F_G0_out",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_G0",
+      "target": "DEC_R2",
+      "semantic": "retrieval",
+      "style": "medium",
+      "label": "sanitised, classified planner context",
+      "displayLabel": "Guard ctx",
+      "direction": "ltr",
+      "standardIds": ["OWASPLMM25"],
+      "claimIds": ["C3", "C6"],
+      "tags": ["policy-path", "guardrail"],
+      "interactive": {
+        "relatedStepIds": ["PB2"],
+        "sourceHandle": "bottom",
+        "targetHandle": "top",
+        "highlightGroup": "policy"
+      },
+      "inspector": {
+        "rationale": "F_G0_out is the sole planner-context ingress after deterministic classification, redaction, refusal, and trust assignment.",
+        "constraints": ["No contextual data may reach DEC_R2 without traversing DEC_G0."]
       }
     },
     {
@@ -1282,23 +1578,73 @@
       "panel": ["architecture"],
       "band": "Decide",
       "source": "DEC_R2",
-      "target": "DEC_G1",
+      "target": "DEC_G1A",
       "semantic": "proposal",
       "style": "medium",
-      "label": "proposed action / tool call",
+      "label": "raw candidate plan object",
       "displayLabel": "Submit plan",
       "direction": "ltr",
-      "standardIds": [],
-      "claimIds": ["C3", "C4"],
-      "tags": ["policy-path", "write-path"],
+      "standardIds": ["OWASPLMM25"],
+      "claimIds": ["C3", "C4", "C6"],
+      "tags": ["policy-path", "write-path", "guardrail"],
       "interactive": {
         "relatedStepIds": ["PB1", "PB2"],
+        "sourceHandle": "bottom",
+        "targetHandle": "left",
+        "highlightGroup": "policy"
+      },
+      "inspector": {
+        "rationale": "F3e now terminates at the Output Guard / Schema Checker so raw model output cannot reach downstream deterministic gates unchecked."
+      }
+    },
+    {
+      "id": "F_G1A_pass",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_G1A",
+      "target": "DEC_G1",
+      "semantic": "validation",
+      "style": "medium",
+      "label": "schema-valid plan object",
+      "displayLabel": "Pass schema",
+      "direction": "ttb",
+      "standardIds": ["OWASPLMM25", "NISTAIRMF10"],
+      "claimIds": ["C3", "C6"],
+      "tags": ["policy-path", "write-path", "guardrail"],
+      "interactive": {
+        "relatedStepIds": [],
         "sourceHandle": "bottom",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
       "inspector": {
-        "rationale": "F3e hands the planner proposal to the Policy-Guard before it can become a candidate plan."
+        "rationale": "F_G1A_pass carries only schema-conformant plan objects to the Policy-Guard.",
+        "constraints": ["Only structural plan fields may traverse this edge."]
+      }
+    },
+    {
+      "id": "F_G1A_reject",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_G1A",
+      "target": "DEC_R2",
+      "semantic": "rejection",
+      "style": "dashed",
+      "label": "schema rejection + field/error feedback",
+      "displayLabel": "Schema reject",
+      "direction": "rtl",
+      "standardIds": ["OWASPLMM25"],
+      "claimIds": ["C6"],
+      "tags": ["policy-path", "guardrail"],
+      "interactive": {
+        "relatedStepIds": [],
+        "sourceHandle": "left",
+        "targetHandle": "right",
+        "highlightGroup": "policy"
+      },
+      "inspector": {
+        "rationale": "F_G1A_reject returns machine-readable schema failures to the planner without exposing downstream deterministic logic as free text.",
+        "constraints": ["Reject payloads must be machine-readable and bounded."]
       }
     },
     {
@@ -1432,17 +1778,17 @@
       "id": "F_T1",
       "panel": ["architecture"],
       "band": "Decide",
-      "source": "DEC_R2",
+      "source": "DEC_T0",
       "target": "S1",
       "semantic": "tool-call",
       "style": "dotted",
       "label": "tool call: opcua.read",
       "displayLabel": "Run read",
-      "detail": "Return path implied",
+      "detail": "Observation return traverses F_T0_obs -> F_G0_out",
       "direction": "btt",
-      "standardIds": ["OPC62541"],
-      "claimIds": ["C3"],
-      "tags": ["policy-path", "telemetry-path", "tool-call"],
+      "standardIds": ["OPC62541", "OWASPLMM25"],
+      "claimIds": ["C3", "C6"],
+      "tags": ["policy-path", "telemetry-path", "tool-call", "guardrail"],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "left",
@@ -1450,7 +1796,7 @@
         "highlightGroup": "policy"
       },
       "inspector": {
-        "rationale": "F_T1 makes the on-demand opcua.read tool explicit so the planner's active read behavior is not mistaken for the passive sensing stream.",
+        "rationale": "F_T1 is now dispatched only by the Tool Guard / Broker so read-only guarantees and request schemas are enforced before the OPC UA client is queried.",
         "constraints": ["Tool calls are dotted, never dashed."]
       }
     },
@@ -1458,17 +1804,17 @@
       "id": "F_T2",
       "panel": ["architecture"],
       "band": "Decide",
-      "source": "DEC_R2",
+      "source": "DEC_T0",
       "target": "DEC_K1",
       "semantic": "tool-call",
       "style": "dotted",
       "label": "tool call: aas.query",
       "displayLabel": "Query AAS",
-      "detail": "Return path implied",
+      "detail": "Observation return traverses F_T0_obs -> F_G0_out",
       "direction": "rtl",
-      "standardIds": ["IEC63278", "IDTAPART2311"],
-      "claimIds": ["C3"],
-      "tags": ["policy-path", "tool-call"],
+      "standardIds": ["IEC63278", "IDTAPART2311", "OWASPLMM25"],
+      "claimIds": ["C3", "C6"],
+      "tags": ["policy-path", "tool-call", "guardrail"],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "left",
@@ -1476,32 +1822,240 @@
         "highlightGroup": "policy"
       },
       "inspector": {
-        "rationale": "F_T2 complements passive retrieval by making targeted AAS lookups explicit as a dotted agent-initiated tool call.",
+        "rationale": "F_T2 is now dispatched only by the Tool Guard / Broker so targeted AAS lookups also remain behind deterministic request validation.",
         "constraints": ["Tool calls are dotted, never dashed."]
+      }
+    },
+    {
+      "id": "F_T0_req",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_R2",
+      "target": "DEC_T0",
+      "semantic": "tool-call",
+      "style": "dotted",
+      "label": "tool request (allowlist + schema checked)",
+      "displayLabel": "Broker tools",
+      "direction": "btt",
+      "standardIds": ["OWASPLMM25"],
+      "claimIds": ["C6"],
+      "tags": ["policy-path", "tool-call", "guardrail"],
+      "interactive": {
+        "relatedStepIds": [],
+        "sourceHandle": "bottom",
+        "targetHandle": "top",
+        "highlightGroup": "policy"
+      },
+      "inspector": {
+        "rationale": "F_T0_req is the only path through which the planner can request external tools.",
+        "constraints": ["DEC_R2 must not source F_T1 or F_T2 directly."]
+      }
+    },
+    {
+      "id": "F_T0_obs",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_T0",
+      "target": "DEC_G0",
+      "semantic": "retrieval",
+      "style": "medium",
+      "label": "guarded tool observation",
+      "displayLabel": "Guard obs",
+      "direction": "rtl",
+      "standardIds": ["OWASPLMM25"],
+      "claimIds": ["C3", "C6"],
+      "tags": ["policy-path", "guardrail"],
+      "interactive": {
+        "relatedStepIds": [],
+        "sourceHandle": "top",
+        "targetHandle": "bottom",
+        "highlightGroup": "policy"
+      },
+      "inspector": {
+        "rationale": "F_T0_obs forces tool observations back through the same deterministic context gate as retrieved and sensed data.",
+        "constraints": ["Tool observations may not re-enter the planner directly."]
       }
     },
     {
       "id": "F4",
       "panel": ["architecture"],
-      "band": "Act",
+      "band": "Decide",
       "source": "DEC_G2",
-      "target": "ACT1",
+      "target": "DEC_H1",
       "semantic": "validation",
       "style": "medium",
-      "label": "validated candidate plan",
-      "displayLabel": "Validate plan",
-      "direction": "ttb",
-      "standardIds": ["NE178", "OPC1000018"],
-      "claimIds": ["C4"],
-      "tags": ["write-path"],
+      "label": "validated candidate plan (approval pending)",
+      "displayLabel": "Await approval",
+      "direction": "rtl",
+      "standardIds": ["OWASPLMM25", "NISTAI6001", "OPC1000018"],
+      "claimIds": ["C4", "C6"],
+      "tags": ["write-path", "guardrail"],
       "interactive": {
-        "relatedStepIds": ["PB1"],
+        "relatedStepIds": [],
         "sourceHandle": "bottom",
         "targetHandle": "top",
         "highlightGroup": "write"
       },
       "inspector": {
-        "rationale": "F4 is the handoff from deterministic validation into VoR request composition and must only occur after all gating stages pass."
+        "rationale": "F4 now terminates at the Human Approval Gate so validator-passed plans still require explicit operator approval before VoR composition."
+      }
+    },
+    {
+      "id": "F_H1_pass",
+      "panel": ["architecture"],
+      "band": "Act",
+      "source": "DEC_H1",
+      "target": "ACT1",
+      "semantic": "validation",
+      "style": "medium",
+      "label": "approved plan bound to plan_hash + snapshot_id + expires_at",
+      "displayLabel": "Approve plan",
+      "direction": "ttb",
+      "standardIds": ["OWASPLMM25", "NISTAI6001"],
+      "claimIds": ["C4", "C6"],
+      "tags": ["write-path", "guardrail"],
+      "interactive": {
+        "relatedStepIds": [],
+        "sourceHandle": "bottom",
+        "targetHandle": "top",
+        "highlightGroup": "write"
+      },
+      "inspector": {
+        "rationale": "F_H1_pass is the only validation edge that may enter ACT1; approval is bound to a specific plan hash, snapshot, and expiry window.",
+        "constraints": ["F_H1_pass is the only validation edge allowed to target ACT1."]
+      }
+    },
+    {
+      "id": "F_M1_G0",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_G0",
+      "target": "DEC_M1",
+      "semantic": "audit",
+      "style": "thin",
+      "label": "input/context guard events",
+      "displayLabel": "Log input",
+      "direction": "ltr",
+      "standardIds": ["NISTAI6001"],
+      "claimIds": ["C6"],
+      "tags": ["guardrail", "audit"],
+      "interactive": {
+        "optional": true,
+        "highlightGroup": "policy"
+      },
+      "inspector": {
+        "rationale": "F_M1_G0 emits classification, redaction, refusal, and snapshot-consistency events from the Input / Context Guard."
+      }
+    },
+    {
+      "id": "F_M1_R0",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_R0",
+      "target": "DEC_M1",
+      "semantic": "audit",
+      "style": "thin",
+      "label": "retrieval guard events",
+      "displayLabel": "Log retrieval",
+      "direction": "ltr",
+      "standardIds": ["NISTAI6001"],
+      "claimIds": ["C6"],
+      "tags": ["guardrail", "audit"],
+      "interactive": {
+        "optional": true,
+        "highlightGroup": "policy"
+      },
+      "inspector": {
+        "rationale": "F_M1_R0 emits provenance, ACL, and denied-source events from the Retrieval Guard."
+      }
+    },
+    {
+      "id": "F_M1_T0",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_T0",
+      "target": "DEC_M1",
+      "semantic": "audit",
+      "style": "thin",
+      "label": "tool broker events",
+      "displayLabel": "Log tools",
+      "direction": "ltr",
+      "standardIds": ["NISTAI6001"],
+      "claimIds": ["C6"],
+      "tags": ["guardrail", "audit"],
+      "interactive": {
+        "optional": true,
+        "highlightGroup": "policy"
+      },
+      "inspector": {
+        "rationale": "F_M1_T0 emits allowlist, schema, rate-limit, and read-only enforcement events from the Tool Guard / Broker."
+      }
+    },
+    {
+      "id": "F_M1_G1A",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_G1A",
+      "target": "DEC_M1",
+      "semantic": "audit",
+      "style": "thin",
+      "label": "schema guard events",
+      "displayLabel": "Log schema",
+      "direction": "ltr",
+      "standardIds": ["NISTAI6001"],
+      "claimIds": ["C6"],
+      "tags": ["guardrail", "audit"],
+      "interactive": {
+        "optional": true,
+        "highlightGroup": "policy"
+      },
+      "inspector": {
+        "rationale": "F_M1_G1A emits schema-pass and schema-reject events from the Output Guard / Schema Checker."
+      }
+    },
+    {
+      "id": "F_M1_H1",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_H1",
+      "target": "DEC_M1",
+      "semantic": "audit",
+      "style": "thin",
+      "label": "approval gate events",
+      "displayLabel": "Log approval",
+      "direction": "ltr",
+      "standardIds": ["NISTAI6001"],
+      "claimIds": ["C6"],
+      "tags": ["guardrail", "audit"],
+      "interactive": {
+        "optional": true,
+        "highlightGroup": "policy"
+      },
+      "inspector": {
+        "rationale": "F_M1_H1 emits approve, reject, expiry, and stale-snapshot events from the Human Approval Gate."
+      }
+    },
+    {
+      "id": "F_M1_out",
+      "panel": ["architecture"],
+      "band": "Act",
+      "source": "DEC_M1",
+      "target": "ACT3",
+      "semantic": "audit",
+      "style": "thin",
+      "label": "guardrail audit stream",
+      "displayLabel": "Guardrail log",
+      "direction": "ttb",
+      "standardIds": ["NISTAI6001", "OWASPLMM25"],
+      "claimIds": ["C6"],
+      "tags": ["guardrail", "audit"],
+      "interactive": {
+        "sourceHandle": "bottom",
+        "targetHandle": "top",
+        "highlightGroup": "policy"
+      },
+      "inspector": {
+        "rationale": "F_M1_out forwards the aggregated guardrail event stream to the audit sink alongside ACT1's actuation record."
       }
     },
     {
@@ -1888,11 +2442,14 @@
     {
       "id": "PB4",
       "title": "Acceptance",
-      "summary": "Evaluate whether the mapped request is accepted by the configured human or automated plausibility gate.",
-      "linkedNodeIds": ["VOI", "ACT1", "DEC_K2", "DEC_G1", "PB_REJECT_OUT"],
+      "summary": "Evaluate whether the mapped request is accepted by the configured human or automated plausibility gate on the NE 178 / gateway side.",
+      "linkedNodeIds": ["VOI", "DEC_K2", "DEC_G1", "PB_REJECT_OUT"],
       "linkedEdgeIds": ["PB_F3", "PB_F4", "PB_REJECT", "F3b'"],
       "order": 4,
-      "notes": ["If any endpoint cannot accept the request, the entire transaction is rejected atomically."]
+      "notes": [
+        "If any endpoint cannot accept the request, the entire transaction is rejected atomically.",
+        "AEA-side pre-VoR approval remains in Panel A and the guardrail interaction view; Panel B stays NE 178-pure."
+      ]
     },
     {
       "id": "PB5",
@@ -1909,8 +2466,8 @@
       "id": "RULE_VOR_CHAIN",
       "title": "VoR request chain",
       "triggerIds": ["edge:F5", "node:ACT1", "node:VOI"],
-      "relatedNodeIds": ["node:ACT1", "node:VOI", "node:A3", "node:ACT3"],
-      "relatedEdgeIds": ["edge:F4", "edge:F5", "edge:F6", "edge:F_VoR_ACK", "edge:F_AUDIT"],
+      "relatedNodeIds": ["node:DEC_H1", "node:ACT1", "node:VOI", "node:A3", "node:ACT3"],
+      "relatedEdgeIds": ["edge:F4", "edge:F_H1_pass", "edge:F5", "edge:F6", "edge:F_VoR_ACK", "edge:F_AUDIT"],
       "relatedStepIds": ["step:PB1", "step:PB2", "step:PB3", "step:PB4", "step:PB5"],
       "focusPath": "write"
     },
@@ -1937,39 +2494,80 @@
       "title": "Acceptance rejection",
       "triggerIds": ["edge:PB_REJECT"],
       "relatedNodeIds": ["node:ACT1", "node:VOI", "node:DEC_G1"],
-      "relatedEdgeIds": ["edge:PB_REJECT", "edge:F_VoR_ACK", "edge:F3f_reject"],
+      "relatedEdgeIds": ["edge:PB_REJECT", "edge:F3f_reject"],
       "relatedStepIds": ["step:PB4"],
       "focusPath": "write"
+    },
+    {
+      "id": "RULE_GUARDRAIL_LAYER",
+      "title": "Guardrail control layer",
+      "triggerIds": [
+        "node:DEC_G0",
+        "node:DEC_R0",
+        "node:DEC_T0",
+        "node:DEC_G1A",
+        "node:DEC_H1",
+        "node:DEC_M1"
+      ],
+      "relatedNodeIds": [
+        "node:DEC_K2",
+        "node:DEC_G0",
+        "node:DEC_R0",
+        "node:DEC_R2",
+        "node:DEC_T0",
+        "node:DEC_G1A",
+        "node:DEC_H1",
+        "node:DEC_M1",
+        "node:ACT3"
+      ],
+      "relatedEdgeIds": [
+        "edge:F_G0_pol",
+        "edge:F_G0_out",
+        "edge:F_R0_out",
+        "edge:F_T0_req",
+        "edge:F_T0_obs",
+        "edge:F_G1A_pass",
+        "edge:F_G1A_reject",
+        "edge:F_H1_pass",
+        "edge:F_M1_G0",
+        "edge:F_M1_R0",
+        "edge:F_M1_T0",
+        "edge:F_M1_G1A",
+        "edge:F_M1_H1",
+        "edge:F_M1_out"
+      ],
+      "relatedStepIds": [],
+      "focusPath": "policy"
     }
   ],
   "layoutDefaults": {
     "canvas": {
-      "width": 1920,
-      "height": 1240
+      "width": 2176,
+      "height": 1320
     },
     "viewport": {
       "x": 18,
       "y": 18,
-      "zoom": 0.62
+      "zoom": 0.56
     },
     "lanes": {
       "A": {
         "x": 24,
         "y": 24,
         "width": 360,
-        "height": 1160
+        "height": 1260
       },
       "B": {
         "x": 584,
         "y": 24,
-        "width": 940,
-        "height": 1160
+        "width": 1180,
+        "height": 1260
       },
       "C": {
-        "x": 1552,
+        "x": 1800,
         "y": 24,
         "width": 344,
-        "height": 1160
+        "height": 1260
       }
     },
     "gateway": {
@@ -1983,11 +2581,11 @@
     "aea": {
       "x": 620,
       "y": 150,
-      "width": 860,
-      "height": 890,
+      "width": 1100,
+      "height": 1040,
       "bandHeights": {
         "Sense": 190,
-        "Decide": 340,
+        "Decide": 490,
         "Act": 190
       }
     }

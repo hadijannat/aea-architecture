@@ -59,7 +59,7 @@ export const edgeSemanticFamilySchema = z.enum([
   'sequence',
 ])
 export const edgeStyleSchema = z.enum(['bold', 'medium', 'thin', 'dashed', 'dotted'])
-export const claimIdSchema = z.enum(['C1', 'C2', 'C3', 'C4', 'C5'])
+export const claimIdSchema = z.enum(['C1', 'C2', 'C3', 'C4', 'C5', 'C6'])
 export const handlePositionSchema = z.enum(['left', 'right', 'top', 'bottom'])
 export const projectionThemeSchema = z.enum(['default', 'analysis'])
 

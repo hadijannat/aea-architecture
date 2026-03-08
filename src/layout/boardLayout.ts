@@ -38,7 +38,7 @@ export async function computeBoardNodePositions(
   Object.assign(positions, {
     A1: { x: lanes.A.x + 56, y: lanes.A.y + 186 },
     A2: { x: lanes.A.x + 56, y: lanes.A.y + 412 },
-    A3: { x: lanes.A.x + 56, y: lanes.A.y + 760 },
+    A3: { x: lanes.A.x + 56, y: lanes.A.y + 910 },
   })
 
   Object.assign(positions, {
@@ -50,27 +50,33 @@ export async function computeBoardNodePositions(
 
   Object.assign(positions, {
     S1: { x: positions.BAND_SENSE.x + 24, y: positions.BAND_SENSE.y + 40 },
-    S2: { x: positions.BAND_SENSE.x + 308, y: positions.BAND_SENSE.y + 34 },
+    S2: { x: positions.BAND_SENSE.x + 360, y: positions.BAND_SENSE.y + 34 },
   })
 
   Object.assign(positions, {
     DEC_K1: { x: positions.BAND_DECIDE.x + 24, y: positions.BAND_DECIDE.y + 34 },
-    DEC_R1: { x: positions.BAND_DECIDE.x + 304, y: positions.BAND_DECIDE.y + 34 },
-    DEC_R2: { x: positions.BAND_DECIDE.x + 570, y: positions.BAND_DECIDE.y + 28 },
-    DEC_K2: { x: positions.BAND_DECIDE.x + 24, y: positions.BAND_DECIDE.y + 190 },
-    DEC_G1: { x: positions.BAND_DECIDE.x + 314, y: positions.BAND_DECIDE.y + 186 },
-    DEC_G2: { x: positions.BAND_DECIDE.x + 566, y: positions.BAND_DECIDE.y + 180 },
+    DEC_R0: { x: positions.BAND_DECIDE.x + 292, y: positions.BAND_DECIDE.y + 34 },
+    DEC_R1: { x: positions.BAND_DECIDE.x + 560, y: positions.BAND_DECIDE.y + 34 },
+    DEC_T0: { x: positions.BAND_DECIDE.x + 828, y: positions.BAND_DECIDE.y + 34 },
+    DEC_K2: { x: positions.BAND_DECIDE.x + 24, y: positions.BAND_DECIDE.y + 186 },
+    DEC_G0: { x: positions.BAND_DECIDE.x + 292, y: positions.BAND_DECIDE.y + 182 },
+    DEC_R2: { x: positions.BAND_DECIDE.x + 560, y: positions.BAND_DECIDE.y + 181 },
+    DEC_G1A: { x: positions.BAND_DECIDE.x + 828, y: positions.BAND_DECIDE.y + 182 },
+    DEC_H1: { x: positions.BAND_DECIDE.x + 24, y: positions.BAND_DECIDE.y + 338 },
+    DEC_M1: { x: positions.BAND_DECIDE.x + 292, y: positions.BAND_DECIDE.y + 338 },
+    DEC_G1: { x: positions.BAND_DECIDE.x + 560, y: positions.BAND_DECIDE.y + 338 },
+    DEC_G2: { x: positions.BAND_DECIDE.x + 828, y: positions.BAND_DECIDE.y + 334 },
   })
 
   Object.assign(positions, {
-    ACT1: { x: positions.BAND_ACT.x + 30, y: positions.BAND_ACT.y + 42 },
-    ACT3: { x: positions.BAND_ACT.x + 314, y: positions.BAND_ACT.y + 44 },
-    ACT2: { x: positions.BAND_ACT.x + 588, y: positions.BAND_ACT.y + 40 },
+    ACT1: { x: positions.BAND_ACT.x + 24, y: positions.BAND_ACT.y + 42 },
+    ACT3: { x: positions.BAND_ACT.x + 396, y: positions.BAND_ACT.y + 44 },
+    ACT2: { x: positions.BAND_ACT.x + 820, y: positions.BAND_ACT.y + 40 },
   })
 
   Object.assign(positions, {
-    C1: { x: lanes.C.x + 58, y: lanes.C.y + 824 },
-    C2: { x: lanes.C.x + 38, y: lanes.C.y + 996 },
+    C1: { x: lanes.C.x + 58, y: lanes.C.y + 906 },
+    C2: { x: lanes.C.x + 38, y: lanes.C.y + 1076 },
   })
 
   for (const [nodeId, position] of Object.entries(overrides?.nodePositions ?? {})) {

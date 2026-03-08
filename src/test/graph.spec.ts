@@ -181,20 +181,34 @@ describe('graph manifest', () => {
       F_GW3: { source: 'G2', target: 'G3', semantic: 'gateway-internal', style: 'medium', direction: 'ttb' },
       F1: { source: 'G3', target: 'S1', semantic: 'read-only', style: 'medium', direction: 'ltr' },
       F2: { source: 'S1', target: 'S2', semantic: 'normalization', style: 'thin', direction: 'ttb' },
-      F3a: { source: 'DEC_K1', target: 'DEC_R1', semantic: 'retrieval', style: 'thin', direction: 'ltr' },
-      F3b: { source: 'DEC_K2', target: 'DEC_R1', semantic: 'policy-soft', style: 'thin', direction: 'ltr' },
+      F3a: { source: 'DEC_K1', target: 'DEC_R0', semantic: 'retrieval', style: 'thin', direction: 'ltr' },
+      F3b: { source: 'DEC_K2', target: 'DEC_R0', semantic: 'policy-soft', style: 'thin', direction: 'ltr' },
+      F_R0_out: { source: 'DEC_R0', target: 'DEC_R1', semantic: 'retrieval', style: 'medium', direction: 'ltr' },
       "F3b'": { source: 'DEC_K2', target: 'DEC_G1', semantic: 'policy-hard', style: 'medium', direction: 'ltr' },
-      F3c: { source: 'DEC_R1', target: 'DEC_R2', semantic: 'retrieval', style: 'medium', direction: 'ltr' },
-      F3d: { source: 'S2', target: 'DEC_R2', semantic: 'retrieval', style: 'medium', direction: 'ttb' },
-      F3e: { source: 'DEC_R2', target: 'DEC_G1', semantic: 'proposal', style: 'medium', direction: 'ltr' },
+      F3c: { source: 'DEC_R1', target: 'DEC_G0', semantic: 'retrieval', style: 'medium', direction: 'ltr' },
+      F3d: { source: 'S2', target: 'DEC_G0', semantic: 'retrieval', style: 'medium', direction: 'ttb' },
+      F_G0_pol: { source: 'DEC_K2', target: 'DEC_G0', semantic: 'policy-hard', style: 'thin', direction: 'ltr' },
+      F_G0_out: { source: 'DEC_G0', target: 'DEC_R2', semantic: 'retrieval', style: 'medium', direction: 'ltr' },
+      F3e: { source: 'DEC_R2', target: 'DEC_G1A', semantic: 'proposal', style: 'medium', direction: 'ltr' },
+      F_G1A_pass: { source: 'DEC_G1A', target: 'DEC_G1', semantic: 'validation', style: 'medium', direction: 'ttb' },
+      F_G1A_reject: { source: 'DEC_G1A', target: 'DEC_R2', semantic: 'rejection', style: 'dashed', direction: 'rtl' },
       F3f: { source: 'DEC_G1', target: 'DEC_G2', semantic: 'validation', style: 'medium', direction: 'ltr' },
       F3f_reject: { source: 'DEC_G1', target: 'DEC_R2', semantic: 'rejection', style: 'dashed', direction: 'rtl' },
       F3g: { source: 'DEC_K1', target: 'DEC_G2', semantic: 'validation', style: 'thin', direction: 'ltr' },
       F3h: { source: 'S2', target: 'DEC_G2', semantic: 'validation', style: 'thin', direction: 'ttb' },
       F3i: { source: 'VOI', target: 'DEC_G2', semantic: 'validation', style: 'thin', direction: 'ltr' },
-      F_T1: { source: 'DEC_R2', target: 'S1', semantic: 'tool-call', style: 'dotted', direction: 'btt' },
-      F_T2: { source: 'DEC_R2', target: 'DEC_K1', semantic: 'tool-call', style: 'dotted', direction: 'rtl' },
-      F4: { source: 'DEC_G2', target: 'ACT1', semantic: 'validation', style: 'medium', direction: 'ttb' },
+      F_T1: { source: 'DEC_T0', target: 'S1', semantic: 'tool-call', style: 'dotted', direction: 'btt' },
+      F_T2: { source: 'DEC_T0', target: 'DEC_K1', semantic: 'tool-call', style: 'dotted', direction: 'rtl' },
+      F_T0_req: { source: 'DEC_R2', target: 'DEC_T0', semantic: 'tool-call', style: 'dotted', direction: 'btt' },
+      F_T0_obs: { source: 'DEC_T0', target: 'DEC_G0', semantic: 'retrieval', style: 'medium', direction: 'rtl' },
+      F4: { source: 'DEC_G2', target: 'DEC_H1', semantic: 'validation', style: 'medium', direction: 'rtl' },
+      F_H1_pass: { source: 'DEC_H1', target: 'ACT1', semantic: 'validation', style: 'medium', direction: 'ttb' },
+      F_M1_G0: { source: 'DEC_G0', target: 'DEC_M1', semantic: 'audit', style: 'thin', direction: 'ltr' },
+      F_M1_R0: { source: 'DEC_R0', target: 'DEC_M1', semantic: 'audit', style: 'thin', direction: 'ltr' },
+      F_M1_T0: { source: 'DEC_T0', target: 'DEC_M1', semantic: 'audit', style: 'thin', direction: 'ltr' },
+      F_M1_G1A: { source: 'DEC_G1A', target: 'DEC_M1', semantic: 'audit', style: 'thin', direction: 'ltr' },
+      F_M1_H1: { source: 'DEC_H1', target: 'DEC_M1', semantic: 'audit', style: 'thin', direction: 'ltr' },
+      F_M1_out: { source: 'DEC_M1', target: 'ACT3', semantic: 'audit', style: 'thin', direction: 'ttb' },
       F_KPI: { source: 'S2', target: 'ACT2', semantic: 'kpi', style: 'thin', direction: 'ttb' },
       F_AUDIT: { source: 'ACT1', target: 'ACT3', semantic: 'audit', style: 'thin', direction: 'ltr' },
       F5: { source: 'ACT1', target: 'VOI', semantic: 'writeback', style: 'bold', direction: 'rtl' },
@@ -225,12 +239,17 @@ describe('graph manifest', () => {
       F_GW3: 'No return',
       F1: 'Read PA-DIM',
       F2: 'Normalise',
-      F3a: 'Get AAS',
-      F3b: 'Guide plan',
+      F3a: 'Gate AAS',
+      F3b: 'Gate policy',
+      F_R0_out: 'Pass context',
       "F3b'": 'Enforce rules',
-      F3c: 'Get context',
-      F3d: 'Load t0 state',
+      F3c: 'Deliver ctx',
+      F3d: 'Load t0',
+      F_G0_pol: 'Refusal rules',
+      F_G0_out: 'Guard ctx',
       F3e: 'Submit plan',
+      F_G1A_pass: 'Pass schema',
+      F_G1A_reject: 'Schema reject',
       F3f: 'Pass plan',
       F3f_reject: 'Reject',
       F3g: 'Provide bounds',
@@ -238,7 +257,16 @@ describe('graph manifest', () => {
       F3i: 'Limit writes',
       F_T1: 'Run read',
       F_T2: 'Query AAS',
-      F4: 'Validate plan',
+      F_T0_req: 'Broker tools',
+      F_T0_obs: 'Guard obs',
+      F4: 'Await approval',
+      F_H1_pass: 'Approve plan',
+      F_M1_G0: 'Log input',
+      F_M1_R0: 'Log retrieval',
+      F_M1_T0: 'Log tools',
+      F_M1_G1A: 'Log schema',
+      F_M1_H1: 'Log approval',
+      F_M1_out: 'Guardrail log',
       F_KPI: 'Feed KPI',
       F_AUDIT: 'Record VoR',
       F5: 'Send request',
@@ -287,6 +315,66 @@ describe('graph manifest', () => {
     const validatorNode = graphManifest.nodes.find((node) => node.id === 'DEC_G2')
     expect(f3i?.source).toBe('VOI')
     expect(validatorNode?.aliases).toContain('DEC3')
+  })
+
+  it('enforces guardrail node presence and kinds', () => {
+    const expectedKinds = {
+      DEC_G0: 'policy',
+      DEC_R0: 'gateway-module',
+      DEC_T0: 'gateway-module',
+      DEC_G1A: 'policy',
+      DEC_H1: 'gateway-module',
+      DEC_M1: 'audit',
+    } as const
+
+    for (const [id, kind] of Object.entries(expectedKinds)) {
+      const node = graphManifest.nodes.find((candidate) => candidate.id === id)
+      expect(node, `Missing node ${id}`).toBeDefined()
+      expect(node?.kind).toBe(kind)
+      expect(node?.claimIds).toContain('C6')
+    }
+  })
+
+  it('forces planner ingress, tool brokering, and approval through guardrail edges', () => {
+    const edgeMap = Object.fromEntries(graphManifest.edges.map((edge) => [edge.id, edge]))
+
+    expect(edgeMap.F3c?.target).toBe('DEC_G0')
+    expect(edgeMap.F3d?.target).toBe('DEC_G0')
+    expect(edgeMap.F_T0_req?.target).toBe('DEC_T0')
+    expect(edgeMap.F_T1?.source).toBe('DEC_T0')
+    expect(edgeMap.F_T2?.source).toBe('DEC_T0')
+    expect(edgeMap.F4?.target).toBe('DEC_H1')
+  })
+
+  it('keeps ACT1 validation ingress exclusive to the approval gate while preserving VoR feedback', () => {
+    const incomingAct1 = graphManifest.edges.filter((edge) => edge.target === 'ACT1')
+    const validationEdges = incomingAct1.filter((edge) => edge.semantic === 'validation')
+    const feedbackEdges = incomingAct1.filter((edge) => edge.semantic === 'status-ack')
+
+    expect(validationEdges).toHaveLength(1)
+    expect(validationEdges[0]?.id).toBe('F_H1_pass')
+    expect(validationEdges[0]?.source).toBe('DEC_H1')
+    expect(feedbackEdges).toHaveLength(1)
+    expect(feedbackEdges[0]?.id).toBe('F_VoR_ACK')
+  })
+
+  it('requires the guardrail monitor and interaction rule to stay complete', () => {
+    const monitorInputs = ['DEC_G0', 'DEC_R0', 'DEC_T0', 'DEC_G1A', 'DEC_H1']
+    for (const sourceId of monitorInputs) {
+      const edge = graphManifest.edges.find((candidate) => candidate.source === sourceId && candidate.target === 'DEC_M1')
+      expect(edge, `Missing monitor feed from ${sourceId}`).toBeDefined()
+      expect(edge?.semantic).toBe('audit')
+    }
+
+    const monitorOutput = graphManifest.edges.find((edge) => edge.id === 'F_M1_out')
+    expect(monitorOutput?.source).toBe('DEC_M1')
+    expect(monitorOutput?.target).toBe('ACT3')
+
+    const rule = graphManifest.interactionRules.find((candidate) => candidate.id === 'RULE_GUARDRAIL_LAYER')
+    expect(rule).toBeDefined()
+    expect(rule?.triggerIds.every((id) => id.startsWith('node:'))).toBe(true)
+    expect(rule?.relatedEdgeIds.every((id) => id.startsWith('edge:'))).toBe(true)
+    expect(rule?.focusPath).toBe('policy')
   })
 })
 
@@ -556,60 +644,80 @@ describe('exports', () => {
     const state = await createState()
     const expectedRoutes = {
       F3e: {
-        path: 'M 1335 590 L 1335 706 Q 1335 720 1321 720 L 1078 720 Q 1064 720 1064 706 L 1064 618',
-        labelPoint: { x: 1199.5, y: 704 },
+        path: 'M 1325 743 L 1383 743 Q 1397 743 1397 729 L 1397 692 Q 1397 678 1411 678 L 1468 678',
+        labelPoint: { x: 1361, y: 729 },
+      },
+      F_G1A_pass: {
+        path: 'M 1583 742 L 1583 784 Q 1583 798 1569 798 L 1324 798 Q 1310 798 1310 784 L 1310 770',
+        labelPoint: { x: 1464.5, y: 798 },
+      },
+      F_G1A_reject: {
+        path: 'M 1468 678 L 1468 755 Q 1468 764 1459 764 L 1459 764 Q 1450 764 1450 755 L 1450 678',
+        labelPoint: { x: 1459, y: 782 },
       },
       F3f_reject: {
-        path: 'M 1064 738 L 1064 778 Q 1064 792 1078 792 L 1166 792 Q 1180 792 1180 778 L 1180 539 Q 1180 525 1194 525 L 1210 525',
-        labelPoint: { x: 1122, y: 810 },
+        path: 'M 1310 890 L 1310 778 Q 1310 764 1296 764 L 1244 764 Q 1230 764 1230 750 L 1230 692 Q 1230 678 1216 678 L 1200 678',
+        labelPoint: { x: 1270, y: 782 },
       },
       F3g: {
-        path: 'M 774 586 L 774 714 Q 774 728 788 728 L 1312 728 Q 1326 728 1326 714 L 1326 612',
-        labelPoint: { x: 1050, y: 712 },
+        path: 'M 774 586 L 774 882 Q 774 896 788 896 L 1574 896 Q 1588 896 1588 882 L 1588 766',
+        labelPoint: { x: 1181, y: 880 },
       },
       F3h: {
-        path: 'M 1198 310 L 1198 586 Q 1198 600 1212 600 L 1284 600 Q 1290 600 1290 606 L 1290 606 Q 1290 612 1296 612 L 1326 612',
-        labelPoint: { x: 1272, y: 606 },
+        path: 'M 1250 310 L 1250 740 Q 1250 754 1264 754 L 1546 754 Q 1552 754 1552 760 L 1552 760 Q 1552 766 1558 766 L 1588 766',
+        labelPoint: { x: 1534, y: 760 },
       },
       F3i: {
-        path: 'M 534 823 L 534 762 Q 534 748 548 748 L 1192 748 Q 1206 748 1206 734 L 1206 676',
-        labelPoint: { x: 870, y: 732 },
+        path: 'M 534 823 L 534 902 Q 534 916 548 916 L 1454 916 Q 1468 916 1468 902 L 1468 830',
+        labelPoint: { x: 1001, y: 900 },
+      },
+      F_T0_req: {
+        path: 'M 1325 743 L 1325 574 Q 1325 560 1339 560 L 1569 560 Q 1583 560 1583 546 L 1583 466',
+        labelPoint: { x: 1325, y: 637.5 },
       },
       F_T1: {
-        path: 'M 1210 525 L 1200 525 Q 1190 525 1190 515 L 1190 406 Q 1190 392 1176 392 L 654 392 Q 640 392 640 378 L 640 242 Q 640 228 654 228 L 744 228 Q 758 228 758 242 L 758 256',
-        labelPoint: { x: 915, y: 410 },
+        path: 'M 1468 526 L 1468 420 Q 1468 406 1454 406 L 654 406 Q 640 406 640 392 L 640 242 Q 640 228 654 228 L 744 228 Q 758 228 758 242 L 758 256',
+        labelPoint: { x: 640, y: 335 },
       },
       F_T2: {
-        path: 'M 1210 525 L 1210 586 Q 1210 600 1196 600 L 914 600 Q 900 600 900 586 L 900 534 Q 900 526 892 526 L 884 526',
-        labelPoint: { x: 882, y: 563 },
+        path: 'M 1468 526 L 884 526',
+        labelPoint: { x: 1176, y: 512 },
+      },
+      F_T0_obs: {
+        path: 'M 1583 466 L 1583 632 Q 1583 646 1569 646 L 1061 646 Q 1047 646 1047 660 L 1047 742',
+        labelPoint: { x: 1315, y: 590 },
       },
       F4: {
-        path: 'M 1326 740 L 1326 798 Q 1326 812 1312 812 L 804 812 Q 790 812 790 826 L 790 840',
-        labelPoint: { x: 1058, y: 794 },
+        path: 'M 1588 894 L 1198 894 Q 1184 894 1184 880 L 1184 784 Q 1184 770 1170 770 L 779 770',
+        labelPoint: { x: 1386, y: 880 },
+      },
+      F_H1_pass: {
+        path: 'M 779 890 L 779 929.5 Q 779 932 781.5 932 L 781.5 932 Q 784 932 784 934.5 L 784 990',
+        labelPoint: { x: 799, y: 911 },
       },
       F5: {
-        path: 'M 670 900 L 648 900 Q 634 900 634 914 L 634 982 Q 634 996 620 996 L 576 996 Q 562 996 562 982 L 562 837 Q 562 823 548 823 L 534 823',
-        labelPoint: { x: 598, y: 1020 },
+        path: 'M 664 1050 L 642 1050 Q 628 1050 628 1064 L 628 1124 Q 628 1138 614 1138 L 576 1138 Q 562 1138 562 1124 L 562 837 Q 562 823 548 823 L 534 823',
+        labelPoint: { x: 595, y: 1162 },
       },
       F6: {
-        path: 'M 424 823 L 374 823 Q 360 823 360 837 L 360 984 Q 360 996 348 996 L 348 996 Q 336 996 336 984 L 336 857 Q 336 843 322 843 L 308 843',
-        labelPoint: { x: 380, y: 909.5 },
+        path: 'M 424 823 L 374 823 Q 360 823 360 837 L 360 1126 Q 360 1138 348 1138 L 348 1138 Q 336 1138 336 1126 L 336 1007 Q 336 993 322 993 L 308 993',
+        labelPoint: { x: 380, y: 980.5 },
       },
       F_VoR_ACK: {
-        path: 'M 534 823 L 548 823 Q 562 823 562 837 L 562 922 Q 562 936 576 936 L 626 936 Q 640 936 640 922 L 640 914 Q 640 900 654 900 L 670 900',
-        labelPoint: { x: 590, y: 879.5 },
+        path: 'M 534 823 L 548 823 Q 562 823 562 837 L 562 1040 Q 562 1054 576 1054 L 632 1054 Q 634 1054 634 1052 L 634 1052 Q 634 1050 636 1050 L 664 1050',
+        labelPoint: { x: 590, y: 938.5 },
       },
       F_CPC_INT: {
-        path: 'M 80 843 L 62 843 Q 48 843 48 829 L 48 279 Q 48 265 62 265 L 80 265',
-        labelPoint: { x: 64, y: 554 },
+        path: 'M 80 993 L 62 993 Q 48 993 48 979 L 48 279 Q 48 265 62 265 L 80 265',
+        labelPoint: { x: 64, y: 629 },
       },
       F7a: {
-        path: 'M 1438 893 L 1461.5 893 Q 1472 893 1472 903.5 L 1472 903.5 Q 1472 914 1482.5 914 L 1578 914 Q 1584 914 1584 908 L 1584 908 Q 1584 902 1590 902 L 1610 902',
-        labelPoint: { x: 1528, y: 934 },
+        path: 'M 1670 1043 L 1690 1043 Q 1704 1043 1704 1057 L 1704 1104 Q 1704 1118 1718 1118 L 1818 1118 Q 1832 1118 1832 1104 L 1832 997 Q 1832 984 1845 984 L 1858 984',
+        labelPoint: { x: 1768, y: 1138 },
       },
       F7_sub: {
-        path: 'M 1710 1020 L 1854 1020 Q 1868 1020 1868 1006 L 1868 970 Q 1868 956 1854 956 L 1710 956',
-        labelPoint: { x: 1789, y: 1002 },
+        path: 'M 1958 1100 L 2102 1100 Q 2116 1100 2116 1086 L 2116 1052 Q 2116 1038 2102 1038 L 1958 1038',
+        labelPoint: { x: 2037, y: 1082 },
       },
     } as const
 
@@ -622,7 +730,28 @@ describe('exports', () => {
 
   it('keeps critical architecture routes axis-aligned', async () => {
     const state = await createState()
-    const edgeIds = ['F3e', 'F3f_reject', 'F3g', 'F3h', 'F3i', 'F_T1', 'F_T2', 'F4', 'F5', 'F6', 'F_VoR_ACK', 'F_AUDIT', 'F_CPC_INT', 'F7a', 'F7_sub']
+    const edgeIds = [
+      'F3e',
+      'F_G1A_pass',
+      'F_G1A_reject',
+      'F3f_reject',
+      'F3g',
+      'F3h',
+      'F3i',
+      'F_T0_req',
+      'F_T1',
+      'F_T2',
+      'F_T0_obs',
+      'F4',
+      'F_H1_pass',
+      'F5',
+      'F6',
+      'F_VoR_ACK',
+      'F_AUDIT',
+      'F_CPC_INT',
+      'F7a',
+      'F7_sub',
+    ]
 
     for (const edgeId of edgeIds) {
       expect(routeIsAxisAligned(buildArchitectureRoute(state, edgeId).points)).toBe(true)
@@ -657,8 +786,10 @@ describe('exports', () => {
   it('keeps newly rerouted labels outside their guarded node boxes', async () => {
     const state = await createState()
     const checks = [
-      { edgeId: 'F3h', nodes: ['DEC_R2', 'DEC_G1', 'DEC_G2'] },
-      { edgeId: 'F_T1', nodes: ['S1', 'S2', 'DEC_R2'] },
+      { edgeId: 'F_G1A_pass', nodes: ['DEC_G1A', 'DEC_G1', 'DEC_M1'] },
+      { edgeId: 'F_T1', nodes: ['S1', 'S2', 'DEC_T0'] },
+      { edgeId: 'F_T0_obs', nodes: ['DEC_T0', 'DEC_G0', 'DEC_R2'] },
+      { edgeId: 'F_H1_pass', nodes: ['DEC_H1', 'ACT1', 'ACT3'] },
       { edgeId: 'F_CPC_INT', nodes: ['A1', 'A2', 'A3'] },
     ] as const
 
@@ -711,7 +842,7 @@ describe('exports', () => {
     expect(viewportDocument.svg).toContain('<title>AEA Architecture Viewport Export</title>')
     expect(viewportDocument.svg).toContain('data-export-theme="default"')
     expect(viewportDocument.svg).toContain('viewBox="60 40 320 180"')
-    for (const edgeId of ['F3h', 'F_T1', 'F4', 'F5', 'F6', 'F_VoR_ACK', 'F_CPC_INT', 'F7a', 'F7_sub']) {
+    for (const edgeId of ['F_G1A_pass', 'F_T1', 'F_T0_obs', 'F4', 'F_H1_pass', 'F5', 'F6', 'F_VoR_ACK', 'F_CPC_INT', 'F7a', 'F7_sub']) {
       const route = buildArchitectureRoute(state, edgeId)
       const label = resolveBoardLabelPosition(route.label)
       expect(viewportDocument.svg).toContain(`d="${route.path}"`)
