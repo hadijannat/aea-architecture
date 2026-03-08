@@ -727,7 +727,7 @@
       "claimIds": ["C3"],
       "tags": ["decide", "policy-path", "repository"],
       "parentId": "BAND_DECIDE",
-      "width": 220,
+      "width": 230,
       "height": 120,
       "visual": {
         "fill": "#ffffff",
@@ -756,7 +756,7 @@
       "claimIds": ["C3", "C4", "C6"],
       "tags": ["decide", "policy-path", "policy-store"],
       "parentId": "BAND_DECIDE",
-      "width": 220,
+      "width": 230,
       "height": 120,
       "visual": {
         "fill": "#ffffff",
@@ -984,7 +984,7 @@
       "claimIds": ["C3", "C4"],
       "tags": ["decide", "policy-path", "guard"],
       "parentId": "BAND_DECIDE",
-      "width": 220,
+      "width": 230,
       "height": 120,
       "visual": {
         "fill": "#ffffff",
@@ -1081,7 +1081,7 @@
       "claimIds": ["C6"],
       "tags": ["decide", "guardrail", "audit"],
       "parentId": "BAND_DECIDE",
-      "width": 220,
+      "width": 230,
       "height": 120,
       "visual": {
         "fill": "#fffdf9",

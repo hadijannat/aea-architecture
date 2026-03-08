@@ -37,7 +37,7 @@ export async function computeBoardNodePositions(
 
   const decideBandX = positions.BAND_DECIDE.x
   const decideBandY = positions.BAND_DECIDE.y
-  const decideColumnOffsets = [24, 280, 548, 816] as const
+  const decideColumnOffsets = [24, 292, 560, 828] as const
   const decideRowOffsets = [34, 224, 424] as const
 
   Object.assign(positions, {
