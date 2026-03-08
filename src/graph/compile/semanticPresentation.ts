@@ -94,11 +94,11 @@ const semanticMarkerCoordinateSystem: Pick<SemanticMarkerDimensions, 'refY' | 'v
 
 const semanticMarkerTokensMap: Record<SemanticMarkerSurface, SemanticMarkerTokens> = {
   architecture: {
-    width: 18,
-    height: 14,
+    width: 12,
+    height: 10,
     refY: semanticMarkerCoordinateSystem.refY,
     viewBox: semanticMarkerCoordinateSystem.viewBox,
-    units: 'strokeWidth',
+    units: 'userSpaceOnUse',
   },
   legend: {
     width: 12,

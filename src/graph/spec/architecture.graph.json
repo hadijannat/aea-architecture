@@ -1342,8 +1342,8 @@
       "markers": ["diode"],
       "interactive": {
         "relatedStepIds": [],
-        "sourceHandle": "right",
-        "targetHandle": "left",
+        "sourceHandle": "bottom",
+        "targetHandle": "top",
         "highlightGroup": "telemetry"
       },
       "inspector": {

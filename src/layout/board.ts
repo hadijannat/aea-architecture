@@ -67,13 +67,24 @@ export function resolveBoardLabelPosition(label: RoutedBoardLabel): Point {
   }
 }
 
+function anchoredLabel(x: number, y: number, side: RoutedLabelSide, offset: number): RoutedBoardLabel {
+  return { x, y, side, offset }
+}
+
+function gatewayGutterLabel(points: Point[]): RoutedBoardLabel {
+  const start = points[0] ?? point(0, 0)
+  const end = points[points.length - 1] ?? start
+
+  return anchoredLabel(channels.gatewayLabelX, midpoint(start, end).y, 'right', 0)
+}
+
 function buildLabel(edge: EdgeSpec, points: Point[]): RoutedBoardLabel {
   switch (edge.id) {
     case 'F_GW1':
-      return segmentLabel(points, 1, 'left', 20)
+      return anchoredLabel(channels.gatewayApproachX - 6, points.at(-1)?.y ?? 0, 'top', 14)
     case 'F_GW2':
     case 'F_GW3':
-      return segmentLabel(points, 0, 'right', 18)
+      return gatewayGutterLabel(points)
     case 'F1':
       return segmentLabel(points, 3, 'top', 18)
     case 'F2':
@@ -151,6 +162,7 @@ function buildLabel(edge: EdgeSpec, points: Point[]): RoutedBoardLabel {
 const { lanes, gateway, aea } = graphManifest.layoutDefaults
 const channels = {
   gatewayApproachX: gateway.x - 28,
+  gatewayLabelX: gateway.x + gateway.width + 28,
   laneReturnX: gateway.x - 44,
   telemetryY: aea.y + 160,
   policyY: aea.y + 471,
