@@ -72,6 +72,8 @@ In practical terms: the spec defines what the architecture means, the graph JSON
 
 - Selecting a node, edge, or sequence step updates the inspector with rationale, participation maps, standards anchors, and linked claims.
 - Cross-panel mappings keep the architecture board and VoR sequence tied to the same runtime entities.
+- Selecting architecture content with linked sequence steps auto-reveals Panel B at a readable split, so the corresponding VoR state is visible without manual resizing.
+- Panel B keeps its split as a persisted percentage of the workspace height and uses its own scroll container on short viewports so the lower VoR terminals remain reachable.
 - URL search params mirror the current selection and filter state, making focused views shareable and reproducible.
 
 ![AEA writeback state with linked sequence mapping](docs/assets/readme-vor-sync.png)
@@ -142,6 +144,8 @@ npm run test:e2e
 ```
 
 That Playwright suite covers interaction flows, keyboard accessibility, panel synchronization, and screenshot-based visual regression. Small screenshot diffs can be environment-sensitive; if failures are limited to snapshot comparisons, inspect the generated artifacts in `test-results/` before treating them as functional regressions.
+
+Recent sequence-panel coverage specifically checks stale persisted splits, auto-opening from mapped architecture selections, and short-viewport scrolling inside Panel B.
 
 ## Repository Map
 

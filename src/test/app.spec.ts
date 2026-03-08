@@ -70,6 +70,25 @@ async function viewportTransform(page: Page) {
   return page.locator('.react-flow__viewport').evaluate((element) => getComputedStyle(element).transform)
 }
 
+async function boxHeight(locator: Locator) {
+  return locator.evaluate((element) => element.getBoundingClientRect().height)
+}
+
+async function intersectsScrollContainer(container: Locator, subject: Locator) {
+  return container.evaluate(
+    (containerElement, subjectElement) => {
+      if (!(containerElement instanceof HTMLElement) || !(subjectElement instanceof HTMLElement)) {
+        return false
+      }
+
+      const containerRect = containerElement.getBoundingClientRect()
+      const subjectRect = subjectElement.getBoundingClientRect()
+      return subjectRect.bottom > containerRect.top && subjectRect.top < containerRect.bottom
+    },
+    await subject.elementHandle(),
+  )
+}
+
 async function architectureEdgeIsAnimated(page: Page, edgeId: string) {
   return page.locator(`.semantic-edge[data-edge-id="${edgeId}"]`).evaluate((element) => {
     const edge = element.closest('.react-flow__edge')
@@ -551,23 +570,57 @@ test('short desktop viewports keep the sequence panel reachable even with a stal
   await page.setViewportSize({ width: 1600, height: 760 })
   await page.goto('/')
 
-  const sequencePanel = page.locator('.sequence-panel')
+  const sequencePanel = page.getByTestId('sequence')
+  const sequenceShell = sequencePanel.locator('.sequence-board-shell')
+  const rejectTerminal = sequencePanel.locator('.sequence-terminal--reject')
   await expect(sequencePanel).toBeVisible()
+  await expect(sequencePanel.getByRole('heading', { name: 'VoR Domain-Transition Sequence' })).toBeVisible()
+  await expect(sequencePanel.getByText('VoR boundary')).toBeVisible()
 
-  const panelHeight = await sequencePanel.evaluate((element) => element.getBoundingClientRect().height)
+  const panelHeight = await boxHeight(sequencePanel)
   expect(panelHeight).toBeGreaterThan(150)
 
-  const sequenceHeading = page.getByRole('heading', { name: 'VoR Domain-Transition Sequence' })
-  for (let index = 0; index < 6; index += 1) {
-    if (await sequenceHeading.isVisible()) {
-      break
-    }
-    await page.locator('.architecture-canvas').hover()
-    await page.mouse.wheel(0, 900)
-    await page.waitForTimeout(140)
-  }
+  const shellMetrics = await sequenceShell.evaluate((element) => ({
+    scrollHeight: element.scrollHeight,
+    clientHeight: element.clientHeight,
+  }))
+  expect(shellMetrics.scrollHeight).toBeGreaterThan(shellMetrics.clientHeight)
+  expect(await intersectsScrollContainer(sequenceShell, rejectTerminal)).toBe(false)
 
-  await expect(sequenceHeading).toBeVisible()
+  await sequenceShell.evaluate((element) => {
+    element.scrollTop = element.scrollHeight
+  })
+  await page.waitForTimeout(140)
+
+  await expect.poll(() => sequenceShell.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
+  expect(await intersectsScrollContainer(sequenceShell, rejectTerminal)).toBe(true)
+})
+
+test('mapped architecture selections auto-open the sequence panel at a readable size', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'aea-architecture-ui',
+      JSON.stringify({
+        state: {
+          ui: {
+            panelBVisible: false,
+            panelBSize: 6,
+          },
+          projection: {},
+        },
+        version: 0,
+      }),
+    )
+  })
+  await page.setViewportSize({ width: 1600, height: 900 })
+  await page.goto('/?edge=F_VoR_ACK')
+
+  const sequencePanel = page.getByTestId('sequence')
+  await expect(sequencePanel).toBeVisible()
+  expect(await boxHeight(sequencePanel)).toBeGreaterThan(200)
+  await expect(sequencePanel.getByRole('button', { name: /PB_ACK/ })).toBeVisible()
+  await expect(sequencePanel.locator('.sequence-panel__header')).toHaveClass(/sequence-panel__header--active/)
+  await expect(page.getByRole('button', { name: 'Hide VoR sequence' })).toBeVisible()
 })
 
 test('edge inspector surfaces diode and optional rendering semantics', async ({ page }) => {
@@ -939,7 +992,7 @@ test('visual regression: selected sequence feedback states', async ({ page }) =>
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/?edge=F_VoR_ACK')
   await page.mouse.move(0, 0)
-  await expect(page.locator('.sequence-panel')).toHaveScreenshot('sequence-feedback-selected.png')
+  await expect(page.getByTestId('sequence')).toHaveScreenshot('sequence-feedback-selected.png')
 })
 
 test('visual regression: compact-node summary state', async ({ page }) => {

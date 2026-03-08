@@ -246,7 +246,7 @@ export const projectionSnapshotStateSchema = z.object({
       }),
     )
     .default({}),
-  panelBSize: z.number().default(24),
+  panelBSize: z.number().default(34),
   panelBVisible: z.boolean().default(true),
   theme: projectionThemeSchema.default('default'),
 })
@@ -275,7 +275,7 @@ export const projectionOverridesSchema = z.object({
   annotations: z.record(z.string(), z.string()).default({}),
   theme: projectionThemeSchema.default('default'),
   exportPreset: z.enum(['viewport', 'publication']).default('viewport'),
-  panelBSize: z.number().default(24),
+  panelBSize: z.number().default(34),
   panelBVisible: z.boolean().default(true),
   snapshots: z.array(projectionSnapshotSchema).default([]),
 })

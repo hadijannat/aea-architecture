@@ -48,7 +48,7 @@ async function createState(overrides?: Partial<DiagramStore['ui']>): Promise<Dia
       highlightedEntityKeys: [],
       viewport: graphManifest.layoutDefaults.viewport,
       panelBVisible: true,
-      panelBSize: 24,
+      panelBSize: 34,
       viewportLocked: false,
       reduceMotion: false,
       systemReduceMotion: false,

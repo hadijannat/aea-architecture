@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels'
+import { Group as PanelGroup, Panel, Separator as PanelResizeHandle, type PanelImperativeHandle } from 'react-resizable-panels'
 import type { OnNodeDrag } from '@xyflow/react'
 import { jsPDF } from 'jspdf'
 import { svg2pdf } from 'svg2pdf.js'
@@ -44,14 +44,21 @@ function mermaidDownloadName(panel: 'architecture' | 'vor-sequence') {
   return panel === 'architecture' ? 'architecture-topology.mmd' : 'vor-sequence-topology.mmd'
 }
 
-const sequencePanelMinSize = 24
-const sequencePanelMaxSize = 42
+const minSequencePanelPercent = 28
+const defaultSequencePanelPercent = 34
+const maxSequencePanelPercent = 54
+
+function toPanelPercent(percent: number) {
+  return `${percent}%`
+}
 
 export default function App() {
   const store = useDiagramStore()
   const { actions } = store
   const architectureCanvasRef = useRef<HTMLDivElement>(null)
   const sequencePanelRef = useRef<HTMLElement>(null)
+  const sequencePanelHandleRef = useRef<PanelImperativeHandle | null>(null)
+  const lastAutoRevealSelectionRef = useRef<string | undefined>(undefined)
   const [snapshotName, setSnapshotName] = useState('')
   const [snapshotComposerOpen, setSnapshotComposerOpen] = useState(false)
 
@@ -188,6 +195,44 @@ export default function App() {
   const selectedNode = store.ui.selectedNodeId ? resolveGraphNode(store.ui.selectedNodeId) : undefined
   const selectedEdge = store.ui.selectedEdgeId ? resolveGraphEdge(store.ui.selectedEdgeId) : undefined
   const selectedStep = store.ui.selectedStepId ? resolveSequenceStep(store.ui.selectedStepId) : undefined
+  const mappedSelectionKey = selectedStep
+    ? `step:${selectedStep.id}`
+    : selectedEdge?.interactive.relatedStepIds.length
+      ? `edge:${selectedEdge.id}`
+      : selectedNode?.inspector.relatedStepIds.length
+        ? `node:${selectedNode.id}`
+        : undefined
+
+  useEffect(() => {
+    if (!mappedSelectionKey) {
+      lastAutoRevealSelectionRef.current = undefined
+      return
+    }
+
+    const selectionChanged = lastAutoRevealSelectionRef.current !== mappedSelectionKey
+    lastAutoRevealSelectionRef.current = mappedSelectionKey
+
+    if (!store.ui.panelBVisible) {
+      if (!selectionChanged) {
+        return
+      }
+      if (store.ui.panelBSize < defaultSequencePanelPercent) {
+        actions.setPanelBSize(defaultSequencePanelPercent)
+      }
+      actions.togglePanelB()
+      return
+    }
+
+    const currentPercent = sequencePanelHandleRef.current?.getSize().asPercentage ?? store.ui.panelBSize
+    if (currentPercent < defaultSequencePanelPercent) {
+      sequencePanelHandleRef.current?.resize(toPanelPercent(defaultSequencePanelPercent))
+    }
+  }, [
+    actions,
+    mappedSelectionKey,
+    store.ui.panelBVisible,
+    store.ui.panelBSize,
+  ])
 
   const hoverSummary = useMemo(() => {
     const key = store.ui.hoveredEntityKey
@@ -206,7 +251,7 @@ export default function App() {
     return step ? { title: `${step.id} · ${step.title}`, summary: step.summary } : undefined
   }, [store.ui.hoveredEntityKey])
 
-  const sequencePanelSize = Math.min(sequencePanelMaxSize, Math.max(sequencePanelMinSize, store.ui.panelBSize))
+  const sequencePanelPercent = Math.min(maxSequencePanelPercent, Math.max(minSequencePanelPercent, store.ui.panelBSize))
 
   const onNodeDragStop: OnNodeDrag = (_, node) => {
     if (store.ui.mode !== 'author') {
@@ -383,6 +428,7 @@ export default function App() {
       <main className="workspace">
         <div className="workspace__panels">
           <PanelGroup
+            key={store.ui.panelBVisible ? 'workspace-panels--with-sequence' : 'workspace-panels--architecture-only'}
             orientation="vertical"
             onLayoutChanged={(layout: Record<string, number>) => {
               const panelBSize = layout.sequence
@@ -391,7 +437,7 @@ export default function App() {
               }
             }}
           >
-            <Panel id="architecture" defaultSize={100 - sequencePanelSize} minSize={48}>
+            <Panel id="architecture" defaultSize={toPanelPercent(100 - sequencePanelPercent)} minSize={48}>
               <ArchitectureCanvas
                 containerRef={architectureCanvasRef}
                 nodes={architectureNodes}
@@ -410,9 +456,10 @@ export default function App() {
                 <PanelResizeHandle className="panel-resize-handle" />
                 <Panel
                   id="sequence"
-                  defaultSize={sequencePanelSize}
-                  minSize={sequencePanelMinSize}
-                  maxSize={sequencePanelMaxSize}
+                  panelRef={sequencePanelHandleRef}
+                  defaultSize={toPanelPercent(sequencePanelPercent)}
+                  minSize={toPanelPercent(minSequencePanelPercent)}
+                  maxSize={toPanelPercent(maxSequencePanelPercent)}
                 >
                   <SequencePanel
                     containerRef={sequencePanelRef}

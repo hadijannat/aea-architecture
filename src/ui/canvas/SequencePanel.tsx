@@ -56,6 +56,10 @@ export function SequencePanel({
   const visibleTerminals = model.terminals.filter((terminal) => !terminal.hidden)
   const visibleEdges = model.edges.filter((edge) => !edge.hidden)
   const visibleSemantics = [...new Set(visibleEdges.map((edge) => edge.edge.semantic))]
+  const hasActiveHighlights =
+    visibleSteps.some((step) => step.highlighted || step.selected) ||
+    visibleEdges.some((edge) => edge.highlighted || edge.selected) ||
+    visibleTerminals.some((terminal) => terminal.highlighted || terminal.selected)
 
   return (
     <section
@@ -64,7 +68,7 @@ export function SequencePanel({
       data-theme={theme}
       aria-label="VoR domain transition sequence"
     >
-      <header className="sequence-panel__header">
+      <header className={clsx('sequence-panel__header', hasActiveHighlights && 'sequence-panel__header--active')}>
         <div>
           <p className="eyebrow">(b)</p>
           <h2>VoR Domain-Transition Sequence</h2>
