@@ -55,17 +55,17 @@ export async function computeBoardNodePositions(
 
   Object.assign(positions, {
     DEC_K1: { x: positions.BAND_DECIDE.x + 24, y: positions.BAND_DECIDE.y + 34 },
-    DEC_R0: { x: positions.BAND_DECIDE.x + 292, y: positions.BAND_DECIDE.y + 34 },
-    DEC_R1: { x: positions.BAND_DECIDE.x + 560, y: positions.BAND_DECIDE.y + 34 },
-    DEC_T0: { x: positions.BAND_DECIDE.x + 828, y: positions.BAND_DECIDE.y + 34 },
+    DEC_R0: { x: positions.BAND_DECIDE.x + 280, y: positions.BAND_DECIDE.y + 34 },
+    DEC_R1: { x: positions.BAND_DECIDE.x + 548, y: positions.BAND_DECIDE.y + 34 },
+    DEC_T0: { x: positions.BAND_DECIDE.x + 816, y: positions.BAND_DECIDE.y + 34 },
     DEC_K2: { x: positions.BAND_DECIDE.x + 24, y: positions.BAND_DECIDE.y + 224 },
-    DEC_G0: { x: positions.BAND_DECIDE.x + 292, y: positions.BAND_DECIDE.y + 224 },
-    DEC_R2: { x: positions.BAND_DECIDE.x + 560, y: positions.BAND_DECIDE.y + 224 },
-    DEC_G1A: { x: positions.BAND_DECIDE.x + 828, y: positions.BAND_DECIDE.y + 224 },
+    DEC_G0: { x: positions.BAND_DECIDE.x + 280, y: positions.BAND_DECIDE.y + 224 },
+    DEC_R2: { x: positions.BAND_DECIDE.x + 548, y: positions.BAND_DECIDE.y + 224 },
+    DEC_G1A: { x: positions.BAND_DECIDE.x + 816, y: positions.BAND_DECIDE.y + 224 },
     DEC_H1: { x: positions.BAND_DECIDE.x + 24, y: positions.BAND_DECIDE.y + 424 },
-    DEC_M1: { x: positions.BAND_DECIDE.x + 292, y: positions.BAND_DECIDE.y + 424 },
-    DEC_G1: { x: positions.BAND_DECIDE.x + 560, y: positions.BAND_DECIDE.y + 424 },
-    DEC_G2: { x: positions.BAND_DECIDE.x + 828, y: positions.BAND_DECIDE.y + 424 },
+    DEC_M1: { x: positions.BAND_DECIDE.x + 280, y: positions.BAND_DECIDE.y + 424 },
+    DEC_G1: { x: positions.BAND_DECIDE.x + 548, y: positions.BAND_DECIDE.y + 424 },
+    DEC_G2: { x: positions.BAND_DECIDE.x + 816, y: positions.BAND_DECIDE.y + 424 },
   })
 
   Object.assign(positions, {

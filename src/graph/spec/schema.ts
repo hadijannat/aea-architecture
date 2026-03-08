@@ -68,6 +68,9 @@ export const standardRefSchema = z.object({
   label: z.string(),
   version: z.string().optional(),
   url: z.string().url().optional(),
+  sourceUrl: z.string().url().optional(),
+  releaseDate: z.string().optional(),
+  lastReviewed: z.string().optional(),
 })
 
 export const claimRefSchema = z.object({

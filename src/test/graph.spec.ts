@@ -394,6 +394,84 @@ describe('graph manifest', () => {
     expect(rule?.relatedEdgeIds.every((id) => id.startsWith('edge:'))).toBe(true)
     expect(rule?.focusPath).toBe('policy')
   })
+
+  it('C1: no agent-kind node exists in Lane A (CPC/OT)', () => {
+    const agentsInLaneA = graphManifest.nodes.filter((node) => node.kind === 'agent' && node.lane === 'A')
+    expect(agentsInLaneA, 'Agent node found inside CPC lane').toHaveLength(0)
+    const agentNode = graphManifest.nodes.find((node) => node.kind === 'agent')
+    expect(agentNode?.lane).toBe('B')
+  })
+
+  it('C2: sensing path is read-only with diode enforcement and zero write-back bypass into sensing chain', () => {
+    // The NE177 gateway chain enforces unidirectionality via diode markers on the gateway-internal edges
+    const diodeEdges = graphManifest.edges.filter((edge) => edge.markers.includes('diode'))
+    expect(diodeEdges.length, 'Expected at least two diode-marked edges in the NE177 chain').toBeGreaterThanOrEqual(2)
+    expect(diodeEdges.every((edge) => edge.id.startsWith('F_GW'))).toBe(true)
+
+    // The read-only entry from gateway to Lane B must carry the read-only semantic
+    const readOnlyEdges = graphManifest.edges.filter((edge) => edge.semantic === 'read-only')
+    expect(readOnlyEdges.length, 'Expected at least one read-only edge from the gateway').toBeGreaterThan(0)
+
+    // No writeback-semantic edge from Lane B may target Lane A directly (bypass check)
+    // Legitimate path: ACT1 (Lane B) → VOI (gateway) → A3 (Lane A) — VOI is the only allowed bridge
+    const nodes = Object.fromEntries(graphManifest.nodes.map((node) => [node.id, node]))
+    const illegalBypasses = graphManifest.edges.filter((edge) => {
+      if (edge.semantic !== 'writeback') return false
+      const source = nodes[edge.source]
+      const target = nodes[edge.target]
+      return source?.lane === 'B' && target?.lane === 'A'
+    })
+    expect(illegalBypasses, 'Writeback edge crosses directly from Lane B to Lane A, bypassing VOI').toHaveLength(0)
+  })
+
+  it('C4: the only write-back initiation path from Lane B is F5 from ACT1 through VOI', () => {
+    // F5 must source from ACT1 and terminate at VOI
+    const f5 = graphManifest.edges.find((edge) => edge.id === 'F5')
+    expect(f5?.source).toBe('ACT1')
+    expect(f5?.target).toBe('VOI')
+    expect(f5?.semantic).toBe('writeback')
+
+    // The full write-back chain: F5 (ACT1→VOI) → F6 (VOI→A3) → F_CPC_INT (A3→A1)
+    // Only F5 may cross from Lane B into the VoR interface — no other Lane-B writeback exists
+    const nodes = Object.fromEntries(graphManifest.nodes.map((node) => [node.id, node]))
+    const laneBWritebacks = graphManifest.edges.filter((edge) => {
+      if (edge.semantic !== 'writeback') return false
+      const source = nodes[edge.source]
+      return source?.lane === 'B'
+    })
+    expect(laneBWritebacks, 'Multiple writeback edges originate from Lane B').toHaveLength(1)
+    expect(laneBWritebacks[0]?.id).toBe('F5')
+
+    // Only one edge may carry writeback semantics inbound to VOI
+    const edgesTargetingVoi = graphManifest.edges.filter((edge) => edge.target === 'VOI')
+    expect(edgesTargetingVoi, 'Multiple edges target VOI directly').toHaveLength(1)
+    expect(edgesTargetingVoi[0]?.id).toBe('F5')
+
+    // VOI outbound must include the write-back delivery edge (F6) and the ACK edge (F_VoR_ACK)
+    const edgesFromVoi = graphManifest.edges.filter((edge) => edge.source === 'VOI')
+    const writeFromVoi = edgesFromVoi.filter((edge) => edge.id === 'F6')
+    const ackFromVoi = edgesFromVoi.filter((edge) => edge.id === 'F_VoR_ACK')
+    expect(writeFromVoi, 'Missing VoR write-back delivery edge F6 from VOI').toHaveLength(1)
+    expect(ackFromVoi, 'Missing acknowledgement edge F_VoR_ACK from VOI').toHaveLength(1)
+  })
+
+  it('C5: KPI publication flows northbound only and never writes back into actuation', () => {
+    const kpiEdges = graphManifest.edges.filter((edge) => edge.semantic === 'kpi')
+    expect(kpiEdges.length).toBeGreaterThan(0)
+
+    for (const edge of kpiEdges) {
+      const target = graphManifest.nodes.find((node) => node.id === edge.target)
+      // KPI must not target nodes in Lane A or the actuation chain
+      expect(target?.lane, `${edge.id} KPI edge targets Lane A`).not.toBe('A')
+      expect(target?.id, `${edge.id} KPI edge targets actuation node`).not.toBe('ACT1')
+      expect(target?.id, `${edge.id} KPI edge targets VoR interface`).not.toBe('VOI')
+    }
+
+    // KPI edges must carry C5 claim
+    for (const edge of kpiEdges) {
+      expect(edge.claimIds, `${edge.id} missing C5 claim`).toContain('C5')
+    }
+  })
 })
 
 describe('derived projections', () => {
@@ -662,60 +740,60 @@ describe('exports', () => {
     const state = await createState()
     const expectedRoutes = {
       F3e: {
-        path: 'M 1325 786 L 1383 786 Q 1397 786 1397 772 L 1397 734 Q 1397 720 1411 720 L 1468 720',
-        labelPoint: { x: 1361, y: 766 },
+        path: 'M 1303 786 L 1366 786 Q 1380 786 1380 772 L 1380 734 Q 1380 720 1394 720 L 1456 720',
+        labelPoint: { x: 1341.5, y: 766 },
       },
       F_G1A_pass: {
-        path: 'M 1583 784 L 1583 841 Q 1583 855 1569 855 L 1310.5 855 Q 1310 855 1310 855.5 L 1310 856',
-        labelPoint: { x: 1464.5, y: 855 },
+        path: 'M 1571 784 L 1571 841 Q 1571 855 1557 855 L 1298.5 855 Q 1298 855 1298 855.5 L 1298 856',
+        labelPoint: { x: 1452.5, y: 855 },
       },
       F_G1A_reject: {
-        path: 'M 1468 720 L 1468 790 Q 1468 799 1459 799 L 1459 799 Q 1450 799 1450 790 L 1450 721',
-        labelPoint: { x: 1459, y: 817 },
+        path: 'M 1456 720 L 1456 785 Q 1456 799 1442 799 L 1432 799 Q 1418 799 1418 785 L 1418 721',
+        labelPoint: { x: 1437, y: 817 },
       },
       F3f_reject: {
-        path: 'M 1310 976 L 1310 835 Q 1310 821 1296 821 L 1244 821 Q 1230 821 1230 807 L 1230 735 Q 1230 721 1216 721 L 1200 721',
-        labelPoint: { x: 1270, y: 839 },
+        path: 'M 1298 976 L 1298 835 Q 1298 821 1284 821 L 1232 821 Q 1218 821 1218 807 L 1218 735 Q 1218 721 1204 721 L 1188 721',
+        labelPoint: { x: 1258, y: 839 },
       },
       F3g: {
-        path: 'M 774 586 L 774 970 Q 774 984 788 984 L 1574 984 Q 1588 984 1588 970 L 1588 856',
-        labelPoint: { x: 1181, y: 956 },
+        path: 'M 774 586 L 774 970 Q 774 984 788 984 L 1562 984 Q 1576 984 1576 970 L 1576 856',
+        labelPoint: { x: 1175, y: 956 },
       },
       F3h: {
-        path: 'M 1230 310 L 1230 830 Q 1230 844 1244 844 L 1546 844 Q 1552 844 1552 850 L 1552 850 Q 1552 856 1558 856 L 1588 856',
-        labelPoint: { x: 1534, y: 850 },
+        path: 'M 1230 310 L 1230 830 Q 1230 844 1244 844 L 1534 844 Q 1540 844 1540 850 L 1540 850 Q 1540 856 1546 856 L 1576 856',
+        labelPoint: { x: 1522, y: 850 },
       },
       F3i: {
-        path: 'M 534 973 L 534 990 Q 534 1004 548 1004 L 1454 1004 Q 1468 1004 1468 990 L 1468 920',
-        labelPoint: { x: 1001, y: 990 },
+        path: 'M 534 973 L 534 990 Q 534 1004 548 1004 L 1442 1004 Q 1456 1004 1456 990 L 1456 920',
+        labelPoint: { x: 995, y: 990 },
       },
       F_T0_req: {
-        path: 'M 1325 656 L 1325 635 Q 1325 621 1339 621 L 1569 621 Q 1583 621 1583 607 L 1583 586',
-        labelPoint: { x: 1325, y: 624.5 },
+        path: 'M 1303 656 L 1303 635 Q 1303 621 1317 621 L 1557 621 Q 1571 621 1571 607 L 1571 586',
+        labelPoint: { x: 1303, y: 624.5 },
       },
       F_T1: {
-        path: 'M 1468 526 L 1468 459 Q 1468 445 1454 445 L 654 445 Q 640 445 640 431 L 640 242 Q 640 228 654 228 L 744 228 Q 758 228 758 242 L 758 256',
+        path: 'M 1456 526 L 1456 459 Q 1456 445 1442 445 L 654 445 Q 640 445 640 431 L 640 242 Q 640 228 654 228 L 744 228 Q 758 228 758 242 L 758 256',
         labelPoint: { x: 640, y: 354.5 },
       },
       F_T2: {
-        path: 'M 1468 526 L 884 526',
-        labelPoint: { x: 1176, y: 512 },
+        path: 'M 1456 526 L 884 526',
+        labelPoint: { x: 1170, y: 512 },
       },
       F_T0_obs: {
-        path: 'M 1583 466 L 1583 616 Q 1583 630 1569 630 L 1061 630 Q 1047 630 1047 644 L 1047 784',
-        labelPoint: { x: 1315, y: 574 },
+        path: 'M 1571 466 L 1571 616 Q 1571 630 1557 630 L 1049 630 Q 1035 630 1035 644 L 1035 784',
+        labelPoint: { x: 1303, y: 574 },
       },
       F4: {
-        path: 'M 1588 984 L 1198 984 Q 1184 984 1184 970 L 1184 870 Q 1184 856 1170 856 L 779 856',
-        labelPoint: { x: 1386, y: 970 },
+        path: 'M 1576 984 L 1192 984 Q 1178 984 1178 970 L 1178 870 Q 1178 856 1164 856 L 779 856',
+        labelPoint: { x: 1377, y: 970 },
       },
       F_H1_revalidate: {
-        path: 'M 894 916 L 1179 916 Q 1181 916 1181 918 L 1181 918 Q 1181 920 1183 920 L 1468 920',
-        labelPoint: { x: 1037.5, y: 902 },
+        path: 'M 894 916 L 1173 916 Q 1175 916 1175 918 L 1175 918 Q 1175 920 1177 920 L 1456 920',
+        labelPoint: { x: 1034.5, y: 902 },
       },
       F_H1_reject: {
-        path: 'M 779 856 L 779 849.5 Q 779 843 785.5 843 L 1311 843 Q 1325 843 1325 829 L 1325 786',
-        labelPoint: { x: 1052, y: 825 },
+        path: 'M 779 856 L 779 849.5 Q 779 843 785.5 843 L 1289 843 Q 1303 843 1303 829 L 1303 786',
+        labelPoint: { x: 1041, y: 825 },
       },
       F_H1_pass: {
         path: 'M 779 976 L 779 1015.5 Q 779 1018 781.5 1018 L 781.5 1018 Q 784 1018 784 1020.5 L 784 1140',
@@ -848,14 +926,14 @@ describe('exports', () => {
     }
 
     expect(buildArchitectureRoute(state, 'F_M1_G0').points).toEqual([
-      { x: 1162, y: 720 },
-      { x: 1162, y: 818 },
-      { x: 932, y: 818 },
-      { x: 932, y: 916 },
+      { x: 1150, y: 720 },
+      { x: 1150, y: 818 },
+      { x: 920, y: 818 },
+      { x: 920, y: 916 },
     ])
     expect(buildArchitectureRoute(state, 'F_M1_H1').points).toEqual([
       { x: 894, y: 916 },
-      { x: 932, y: 916 },
+      { x: 920, y: 916 },
     ])
   })
 
