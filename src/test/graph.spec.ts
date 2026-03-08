@@ -472,6 +472,35 @@ describe('graph manifest', () => {
       expect(edge.claimIds, `${edge.id} missing C5 claim`).toContain('C5')
     }
   })
+
+  it('keeps standards provenance populated and exposes the new NAMUR references to search', () => {
+    for (const standard of Object.values(graphManifest.standards)) {
+      expect(standard.sourceUrl, `${standard.id} is missing a provenance source URL`).toBeDefined()
+      expect(standard.lastReviewed, `${standard.id} is missing a last-reviewed date`).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    }
+
+    expect(graphManifest.standards.NE176).toMatchObject({
+      id: 'NE176',
+      label: 'NAMUR NE 176',
+      releaseDate: '2022',
+    })
+    expect(graphManifest.standards.NE179).toMatchObject({
+      id: 'NE179',
+      label: 'NAMUR NE 179',
+      releaseDate: '2023',
+    })
+
+    expect(
+      buildSearchResults('NAMUR NE 176', graphManifest).some(
+        (result) => result.kind === 'standard' && result.id === 'NE176',
+      ),
+    ).toBe(true)
+    expect(
+      buildSearchResults('NAMUR NE 179', graphManifest).some(
+        (result) => result.kind === 'standard' && result.id === 'NE179',
+      ),
+    ).toBe(true)
+  })
 })
 
 describe('derived projections', () => {
@@ -734,6 +763,49 @@ describe('exports', () => {
     expect(sequenceMermaid).toContain('%% Canonical topology export only; schematic and not viewport/state-aware.')
     expect(sequenceMermaid).toContain('PB_AEA')
     expect(sequenceMermaid).toContain('PB_REJECT_OUT')
+  })
+
+  it('keeps the shifted Decide columns aligned and preserves 38 px gaps between the 230 px cells', async () => {
+    const positions = await computeBoardNodePositions(graphManifest, defaultProjectionOverrides)
+    const columns = [
+      ['DEC_R0', 'DEC_G0', 'DEC_M1'],
+      ['DEC_R1', 'DEC_R2', 'DEC_G1'],
+      ['DEC_T0', 'DEC_G1A', 'DEC_G2'],
+    ] as const
+    const routedRows = [
+      ['DEC_R0', 'DEC_R1', 'DEC_T0'],
+      ['DEC_G0', 'DEC_R2', 'DEC_G1A'],
+    ] as const
+
+    expect(resolveGraphNode('DEC_R2')?.width).toBe(230)
+
+    for (const column of columns) {
+      const [anchorId, ...rest] = column
+      const anchorX = positions[anchorId]?.x
+
+      for (const nodeId of rest) {
+        expect(positions[nodeId]?.x, `${nodeId} drifted off the shared Decide column`).toBe(anchorX)
+      }
+    }
+
+    for (const row of routedRows) {
+      for (let index = 0; index < row.length - 1; index += 1) {
+        const leftId = row[index]
+        const rightId = row[index + 1]
+        const leftNode = resolveGraphNode(leftId)
+        const leftPosition = positions[leftId]
+        const rightPosition = positions[rightId]
+
+        if (!leftNode || !leftPosition || !rightPosition) {
+          throw new Error(`Missing routed Decide-band layout state for ${leftId} or ${rightId}`)
+        }
+
+        expect(
+          rightPosition.x - (leftPosition.x + leftNode.width),
+          `${leftId} and ${rightId} should keep a 38 px gap`,
+        ).toBe(38)
+      }
+    }
   })
 
   it('keeps critical architecture routes on their reserved board channels', async () => {
