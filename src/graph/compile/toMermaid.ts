@@ -3,6 +3,7 @@ import type { EdgeSpec, GraphManifest, NodeSpec } from '@/graph/spec/schema'
 
 import { sortSequenceEdges, sortSequenceSteps } from './sequence'
 import { edgeStrokeWidth } from './semanticPresentation'
+import { resolveSemanticVisual } from './visualSystem'
 
 const mermaidExportNotice = '%% Canonical topology export only; schematic and not viewport/state-aware.'
 
@@ -33,27 +34,11 @@ function edgeConnector(edge: EdgeSpec) {
 }
 
 function edgeColor(edge: EdgeSpec) {
-  switch (edge.semantic) {
-    case 'writeback':
-      return '#d35400'
-    case 'status-ack':
-    case 'rejection':
-      return '#7d8597'
-    case 'tool-call':
-      return '#148a8a'
-    case 'subscription':
-    case 'kpi':
-    case 'read-only':
-      return '#2d6cdf'
-    case 'audit':
-      return '#8d6e63'
-    default:
-      return '#455a75'
-  }
+  return resolveSemanticVisual(edge.semantic).stroke
 }
 
 function edgeWidth(edge: EdgeSpec) {
-  return `${edgeStrokeWidth(edge.style)}px`
+  return `${edgeStrokeWidth(edge.style, edge.semantic)}px`
 }
 
 function edgeLabel(edge: EdgeSpec) {

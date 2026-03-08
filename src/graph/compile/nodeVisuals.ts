@@ -1,5 +1,12 @@
 import type { NodeSpec } from '@/graph/spec/schema'
 
+import {
+  resolveBandVisual,
+  resolveKindGlyph,
+  resolveLaneVisual,
+  resolveNodeBandAccent,
+} from './visualSystem'
+
 const kindBadgeMap: Record<NodeSpec['kind'], string> = {
   lane: 'Lane',
   band: 'Band',
@@ -26,9 +33,13 @@ export interface ResolvedNodeVisual {
   fill: string
   border: string
   accent: string
+  bandAccent: string
   badgeStyle: NodeSpec['visual']['badgeStyle']
   icon?: string
   badgeText: string
+  glyphPath: string
+  glyphViewBox: string
+  glyphLabel: string
   isStructural: boolean
 }
 
@@ -37,7 +48,13 @@ export function isStructuralNodeSpec(node: Pick<NodeSpec, 'kind'>): boolean {
 }
 
 export function resolveNodeVisual(node: NodeSpec): ResolvedNodeVisual {
-  const accent = node.visual.accent ?? node.visual.border
+  const laneVisual = node.lane ? resolveLaneVisual(node) : undefined
+  const bandVisual = node.band ? resolveBandVisual(node) : undefined
+  const glyph = resolveKindGlyph(node.kind)
+  const fill = laneVisual?.fill ?? bandVisual?.fill ?? node.visual.fill
+  const border = laneVisual?.border ?? bandVisual?.accent ?? node.visual.border
+  const accent = node.visual.accent ?? border
+  const bandAccent = resolveNodeBandAccent(node)
 
   let badgeText = node.visual.icon?.trim()
   if (!badgeText) {
@@ -55,12 +72,16 @@ export function resolveNodeVisual(node: NodeSpec): ResolvedNodeVisual {
   }
 
   return {
-    fill: node.visual.fill,
-    border: node.visual.border,
+    fill,
+    border,
     accent,
+    bandAccent,
     badgeStyle: node.visual.badgeStyle,
     icon: node.visual.icon,
     badgeText,
+    glyphPath: glyph.path,
+    glyphViewBox: glyph.viewBox ?? '0 0 16 16',
+    glyphLabel: glyph.label,
     isStructural: isStructuralNodeSpec(node),
   }
 }

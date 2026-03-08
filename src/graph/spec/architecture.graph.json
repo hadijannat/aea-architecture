@@ -201,9 +201,9 @@
       "height": 1160,
       "fixed": true,
       "visual": {
-        "fill": "#f7f7f7",
-        "border": "#c9d0d8",
-        "accent": "#8793a3",
+        "fill": "#FFF7ED",
+        "border": "#FED7AA",
+        "accent": "#F97316",
         "badgeStyle": "inline"
       },
       "inspector": {
@@ -233,9 +233,9 @@
       "height": 1160,
       "fixed": true,
       "visual": {
-        "fill": "#ffffff",
-        "border": "#c9d0d8",
-        "accent": "#59677b",
+        "fill": "#EFF6FF",
+        "border": "#BFDBFE",
+        "accent": "#2B7BE9",
         "badgeStyle": "inline"
       },
       "inspector": {
@@ -265,9 +265,9 @@
       "height": 1160,
       "fixed": true,
       "visual": {
-        "fill": "#eef2f7",
-        "border": "#c9d0d8",
-        "accent": "#75849a",
+        "fill": "#F0FDF4",
+        "border": "#BBF7D0",
+        "accent": "#10B981",
         "badgeStyle": "inline"
       },
       "inspector": {
@@ -296,9 +296,9 @@
       "height": 834,
       "fixed": true,
       "visual": {
-        "fill": "#f7fbff",
-        "border": "#4a6fa5",
-        "accent": "#4a6fa5",
+        "fill": "#F8FBFF",
+        "border": "#2B7BE9",
+        "accent": "#2B7BE9",
         "badgeStyle": "inline"
       },
       "inspector": {
@@ -328,9 +328,9 @@
       "height": 890,
       "fixed": true,
       "visual": {
-        "fill": "#fcfdff",
-        "border": "#aeb7c5",
-        "accent": "#1f2937",
+        "fill": "#F8FBFF",
+        "border": "#60A5FA",
+        "accent": "#2B7BE9",
         "badgeStyle": "inline"
       },
       "inspector": {
@@ -358,13 +358,13 @@
       "claimIds": ["C2", "C3"],
       "tags": ["band", "sense", "telemetry-path"],
       "parentId": "AEA",
-      "width": 820,
+      "width": 1060,
       "height": 190,
       "fixed": true,
       "visual": {
-        "fill": "#edf5ff",
-        "border": "#bfd4ef",
-        "accent": "#2d6cdf",
+        "fill": "#F5FAFF",
+        "border": "#BFDBFE",
+        "accent": "#2B7BE9",
         "badgeStyle": "inline"
       },
       "inspector": {
@@ -392,13 +392,13 @@
       "claimIds": ["C3", "C4"],
       "tags": ["band", "decide", "policy-path"],
       "parentId": "AEA",
-      "width": 820,
+      "width": 1060,
       "height": 340,
       "fixed": true,
       "visual": {
-        "fill": "#f6f8fc",
-        "border": "#ccd4e0",
-        "accent": "#4b607c",
+        "fill": "#F7F5FF",
+        "border": "#DDD6FE",
+        "accent": "#6D5CE7",
         "badgeStyle": "inline"
       },
       "inspector": {
@@ -426,13 +426,13 @@
       "claimIds": ["C4", "C5"],
       "tags": ["band", "act", "write-path", "telemetry-path"],
       "parentId": "AEA",
-      "width": 820,
+      "width": 1060,
       "height": 190,
       "fixed": true,
       "visual": {
-        "fill": "#fdf1e7",
-        "border": "#ddc8b6",
-        "accent": "#bf7a44",
+        "fill": "#FFF8EB",
+        "border": "#FDE68A",
+        "accent": "#F59E0B",
         "badgeStyle": "inline"
       },
       "inspector": {
@@ -520,9 +520,9 @@
       "width": 228,
       "height": 118,
       "visual": {
-        "fill": "#fff7ef",
-        "border": "#d35400",
-        "accent": "#d35400",
+        "fill": "#FFF5F5",
+        "border": "#EF4444",
+        "accent": "#EF4444",
         "badgeStyle": "pill"
       },
       "inspector": {
@@ -2654,7 +2654,7 @@
   "layoutDefaults": {
     "canvas": {
       "width": 2176,
-      "height": 1480
+      "height": 1600
     },
     "viewport": {
       "x": 18,
@@ -2666,37 +2666,37 @@
         "x": 24,
         "y": 24,
         "width": 360,
-        "height": 1420
+        "height": 1540
       },
       "B": {
         "x": 584,
         "y": 24,
         "width": 1180,
-        "height": 1420
+        "height": 1540
       },
       "C": {
         "x": 1800,
         "y": 24,
         "width": 344,
-        "height": 1420
+        "height": 1540
       }
     },
     "gateway": {
       "x": 404,
-      "y": 172,
+      "y": 144,
       "width": 152,
-      "height": 984,
-      "ne177Height": 404,
-      "ne178Height": 250
+      "height": 1140,
+      "ne177Height": 430,
+      "ne178Height": 284
     },
     "aea": {
       "x": 620,
-      "y": 150,
+      "y": 132,
       "width": 1100,
-      "height": 1190,
+      "height": 1280,
       "bandHeights": {
         "Sense": 190,
-        "Decide": 640,
+        "Decide": 730,
         "Act": 190
       }
     }

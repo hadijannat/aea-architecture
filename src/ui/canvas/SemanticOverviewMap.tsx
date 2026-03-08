@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useState, type RefObject } from 'react'
+import { useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent, type RefObject } from 'react'
 import clsx from 'clsx'
 import { useReactFlow, useViewport } from '@xyflow/react'
 
-import { isStructuralNodeSpec, resolveNodeVisual } from '@/graph/compile/nodeVisuals'
+import { isStructuralNodeSpec } from '@/graph/compile/nodeVisuals'
 import type { DiagramFlowEdge, DiagramFlowNode } from '@/graph/compile/toReactFlow'
 import { graphManifest } from '@/graph/spec/manifest'
 import { buildBoardEdgeRoute, type Point } from '@/layout/board'
 import type { HandleId } from '@/layout/ports'
+import { resolveLaneVisual } from '@/graph/compile/visualSystem'
 
 import {
   deriveOverviewRegions,
   fitNodesToPreset,
-  focusPresetOptions,
   getFocusPresetAccessibleLabel,
 } from './focusPresets'
 import { SemanticLegend } from './SemanticLegend'
@@ -29,14 +29,10 @@ interface OverviewWriteRoute {
   points: Point[]
 }
 
-interface OverviewNodeRect {
+interface OverviewNodeDot {
   id: string
   x: number
   y: number
-  width: number
-  height: number
-  fill: string
-  border: string
   accent: string
   selected: boolean
 }
@@ -64,43 +60,6 @@ function nodeAnchor(node: DiagramFlowNode, handleId: HandleId): Point {
   }
 }
 
-function buildCorridorArrow(
-  region?: { x: number; y: number; width: number; height: number },
-  routes: OverviewWriteRoute[] = [],
-) {
-  if (!region) {
-    return ''
-  }
-
-  const averageDeltaX = routes.reduce((total, route) => {
-    const start = route.points[0]
-    const end = route.points[route.points.length - 1]
-    if (!start || !end) {
-      return total
-    }
-    return total + (end.x - start.x)
-  }, 0)
-
-  const direction = averageDeltaX <= 0 ? -1 : 1
-  const length = Math.max(64, Math.min(128, region.width * 0.18))
-  const thickness = Math.max(14, Math.min(24, region.height * 0.14))
-  const wing = Math.max(20, Math.min(34, length * 0.28))
-  const tipX = direction < 0 ? region.x + region.width * 0.32 : region.x + region.width * 0.68
-  const tipY = region.y + region.height - 28
-  const baseX = tipX - direction * length
-  const shaftX = tipX - direction * (length - wing)
-
-  return [
-    `${tipX},${tipY}`,
-    `${shaftX},${tipY - wing}`,
-    `${shaftX},${tipY - thickness / 2}`,
-    `${baseX},${tipY - thickness / 2}`,
-    `${baseX},${tipY + thickness / 2}`,
-    `${shaftX},${tipY + thickness / 2}`,
-    `${shaftX},${tipY + wing}`,
-  ].join(' ')
-}
-
 export function SemanticOverviewMap({
   containerRef,
   nodes,
@@ -113,13 +72,14 @@ export function SemanticOverviewMap({
   const [open, setOpen] = useState(() => window.innerWidth >= 900)
   const [legendOpen, setLegendOpen] = useState(false)
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
+  const [draggingViewport, setDraggingViewport] = useState(false)
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 900px)')
     const syncMode = () => {
       setCompactMode(mediaQuery.matches)
-      if (!mediaQuery.matches) {
-        setOpen(true)
+      if (mediaQuery.matches) {
+        setOpen(false)
       }
     }
 
@@ -147,9 +107,22 @@ export function SemanticOverviewMap({
     return () => observer.disconnect()
   }, [containerRef])
 
+  useEffect(() => {
+    if (!draggingViewport) {
+      return
+    }
+
+    function endDrag() {
+      setDraggingViewport(false)
+    }
+
+    window.addEventListener('pointerup', endDrag)
+    return () => window.removeEventListener('pointerup', endDrag)
+  }, [draggingViewport])
+
   const selectionLabel = useMemo(() => {
     if (!activeSelectionLabel) {
-      return 'Navigate the topology or jump to a corridor.'
+      return 'Jump between gateway, write corridor, and central telemetry zones.'
     }
 
     return `Selection: ${activeSelectionLabel}`
@@ -207,219 +180,340 @@ export function SemanticOverviewMap({
   }, [edges, nodes])
 
   const overviewRegions = useMemo(() => deriveOverviewRegions(nodes, writeRoutes), [nodes, writeRoutes])
-  const writeRegion = overviewRegions.find((region) => region.id === 'write')
-  const corridorArrow = useMemo(() => buildCorridorArrow(writeRegion, writeRoutes), [writeRegion, writeRoutes])
+  const nodesById = useMemo(() => new Map(nodes.filter((node) => !node.hidden).map((node) => [node.id, node])), [nodes])
 
-  const overviewNodes = useMemo<OverviewNodeRect[]>(() => {
+  const bandRegions = useMemo(() => {
+    return ['BAND_SENSE', 'BAND_DECIDE', 'BAND_ACT']
+      .map((id) => nodesById.get(id))
+      .filter((node): node is DiagramFlowNode => Boolean(node))
+      .map((node) => ({
+        id: node.id,
+        x: node.position.x,
+        y: node.position.y,
+        width: node.width ?? node.data.spec.width,
+        height: node.height ?? node.data.spec.height,
+        accent: node.data.visual.bandAccent,
+      }))
+  }, [nodesById])
+
+  const aeaRect = useMemo(() => {
+    const node = nodesById.get('AEA')
+    if (!node) {
+      return undefined
+    }
+
+    return {
+      x: node.position.x,
+      y: node.position.y,
+      width: node.width ?? node.data.spec.width,
+      height: node.height ?? node.data.spec.height,
+    }
+  }, [nodesById])
+
+  const overviewNodes = useMemo<OverviewNodeDot[]>(() => {
     return nodes
       .filter((node) => !node.hidden && !isStructuralNodeSpec(node.data.spec))
       .map((node) => {
-        const visual = resolveNodeVisual(node.data.spec)
         const width = node.width ?? node.data.spec.width
         const height = node.height ?? node.data.spec.height
 
         return {
           id: node.id,
-          x: node.position.x,
-          y: node.position.y,
-          width,
-          height,
-          fill: visual.fill,
-          border: visual.border,
-          accent: visual.accent,
+          x: node.position.x + width / 2,
+          y: node.position.y + height / 2,
+          accent: node.data.visual.accent,
           selected: node.selected || node.data.selected,
         }
       })
   }, [nodes])
 
-  function onMapClick(event: React.MouseEvent<HTMLDivElement>) {
+  function centerFromPointer(event: ReactPointerEvent<HTMLDivElement>) {
     const rect = event.currentTarget.getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) {
-      return
+      return undefined
     }
 
     const clickX = ((event.clientX - rect.left) / rect.width) * canvas.width
     const clickY = ((event.clientY - rect.top) / rect.height) * canvas.height
-    void setCenter(clickX, clickY, {
+
+    return { x: clickX, y: clickY }
+  }
+
+  function viewportHit(point?: { x: number; y: number }) {
+    if (!point) {
+      return false
+    }
+
+    return (
+      point.x >= viewportRect.x &&
+      point.x <= viewportRect.x + viewportRect.width &&
+      point.y >= viewportRect.y &&
+      point.y <= viewportRect.y + viewportRect.height
+    )
+  }
+
+  function moveViewport(event: ReactPointerEvent<HTMLDivElement>) {
+    const boardPoint = centerFromPointer(event)
+    if (!boardPoint) {
+      return
+    }
+
+    void setCenter(boardPoint.x, boardPoint.y, {
       zoom: viewport.zoom,
-      duration: 260,
+      duration: draggingViewport ? 0 : 260,
     })
   }
 
+  function onMapPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    const boardPoint = centerFromPointer(event)
+    if (!boardPoint) {
+      return
+    }
+
+    if (viewportHit(boardPoint)) {
+      setDraggingViewport(true)
+      moveViewport(event)
+      return
+    }
+
+    moveViewport(event)
+  }
+
+  function onMapPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!draggingViewport) {
+      return
+    }
+
+    moveViewport(event)
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className="semantic-overview semantic-overview--collapsed-button"
+        data-overview-toggle
+        aria-expanded={false}
+        onClick={() => setOpen(true)}
+      >
+        <span className="semantic-overview__collapsed-icon" aria-hidden="true">
+          ▣
+        </span>
+        <span className="semantic-overview__collapsed-arrow" aria-hidden="true">
+          ↗
+        </span>
+      </button>
+    )
+  }
+
   return (
-    <div className={clsx('semantic-overview', compactMode && 'is-compact', !open && 'is-collapsed')}>
+    <div className={clsx('semantic-overview', compactMode && 'is-compact')}>
       <div className="semantic-overview__header">
         <div className="semantic-overview__copy">
           <span className="semantic-overview__eyebrow">Canvas navigator</span>
-          <strong>Map + focus</strong>
-          {(!compactMode || open) ? <p>{selectionLabel}</p> : null}
+          <strong>Zone map</strong>
+          <p>{selectionLabel}</p>
         </div>
-        {compactMode ? (
-          <button
-            type="button"
-            className="chip semantic-overview__toggle"
-            onClick={() => setOpen((current) => !current)}
-            aria-expanded={open}
-            data-overview-toggle
-          >
-            {open ? 'Hide map' : 'Show map'}
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className="chip semantic-overview__toggle"
+          onClick={() => setOpen(false)}
+          aria-expanded={open}
+          data-overview-toggle
+        >
+          Collapse
+        </button>
       </div>
 
-      {open ? (
-        <div className="semantic-overview__body">
-          <div
-            className="semantic-overview__map-shell"
-            role="img"
-            aria-label="Semantic board overview map"
-            onClick={onMapClick}
-            data-overview-map
-          >
-            <svg className="semantic-overview__map" viewBox={`0 0 ${canvas.width} ${canvas.height}`} aria-hidden="true">
-              {writeRegion ? (
-                <rect
-                  x={writeRegion.x}
-                  y={writeRegion.y}
-                  width={writeRegion.width}
-                  height={writeRegion.height}
-                  rx="36"
-                  className="semantic-overview__write-band"
-                  data-overview-region-id="write"
-                />
-              ) : null}
-              {overviewRegions
-                .filter((region) => region.accent !== 'write')
-                .map((region) => (
-                  <rect
-                    key={region.id}
-                    x={region.x}
-                    y={region.y}
-                    width={region.width}
-                    height={region.height}
-                    rx={region.accent === 'gateway' ? 28 : 22}
-                    className={`semantic-overview__region semantic-overview__region--${region.accent}`}
-                    data-overview-region-id={region.id}
-                  />
-                ))}
-              {writeRoutes.map((route) => (
-                <path
-                  key={route.id}
-                  d={route.path}
-                  className="semantic-overview__write-path"
-                  data-write-route-id={route.id}
-                />
-              ))}
-              {overviewNodes.map((node) => (
-                <g key={node.id}>
-                  <rect
-                    x={node.x}
-                    y={node.y}
-                    width={node.width}
-                    height={node.height}
-                    rx="18"
-                    className={clsx('semantic-overview__node', node.selected && 'is-selected')}
-                    data-overview-node-id={node.id}
-                    fill={node.fill}
-                    stroke={node.border}
-                  />
-                  <rect
-                    x={node.x}
-                    y={node.y}
-                    width={node.width}
-                    height={Math.max(48, Math.min(56, node.height * 0.24))}
-                    rx="5"
-                    className="semantic-overview__node-accent"
-                    fill={node.accent}
-                    data-overview-node-accent-id={node.id}
-                  />
-                </g>
-              ))}
-              {corridorArrow ? (
-                <polygon
-                  points={corridorArrow}
-                  className="semantic-overview__write-arrow"
-                  data-overview-write-arrow="corridor"
-                />
-              ) : null}
-              <rect
-                x={viewportRect.x}
-                y={viewportRect.y}
-                width={viewportRect.width}
-                height={viewportRect.height}
-                rx="24"
-                className="semantic-overview__viewport"
-              />
-            </svg>
-
+      <div className="semantic-overview__body">
+        <div
+          className="semantic-overview__map-shell"
+          role="img"
+          aria-label="Semantic board overview map"
+          onPointerDown={onMapPointerDown}
+          onPointerMove={onMapPointerMove}
+          data-overview-map
+        >
+          <svg className="semantic-overview__map" viewBox={`0 0 ${canvas.width} ${canvas.height}`} aria-hidden="true">
             {overviewRegions.map((region) => {
+              const laneKey =
+                region.accent === 'gateway' || region.accent === 'write'
+                  ? 'B'
+                  : region.accent === 'lane-a'
+                    ? 'A'
+                    : region.accent === 'lane-c'
+                      ? 'C'
+                      : 'B'
+              const laneVisual = resolveLaneVisual({ lane: laneKey })
               return (
-                <button
+                <rect
                   key={region.id}
-                  type="button"
-                  className={clsx('semantic-overview__hotspot', `semantic-overview__hotspot--${region.accent}`)}
-                  style={{
-                    left: `${(region.x / canvas.width) * 100}%`,
-                    top: `${(region.y / canvas.height) * 100}%`,
-                    width: `${(region.width / canvas.width) * 100}%`,
-                    height: `${(region.height / canvas.height) * 100}%`,
-                  }}
-                  data-hotspot-id={region.id}
-                  aria-label={region.preset ? `Focus ${region.label}` : `Center ${region.label}`}
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    if (region.preset) {
-                      fitNodesToPreset(nodes, fitView, region.preset)
-                      return
-                    }
-
-                    void setCenter(region.x + region.width / 2, region.y + region.height / 2, {
-                      zoom: viewport.zoom,
-                      duration: 260,
-                    })
-                  }}
-                >
-                  {region.id === 'write' ? (
-                    <span className="semantic-overview__hotspot-label" aria-hidden="true">
-                      Write
-                    </span>
-                  ) : null}
-                </button>
+                  x={region.x}
+                  y={region.y}
+                  width={region.width}
+                  height={region.height}
+                  rx={region.accent === 'gateway' ? 24 : 18}
+                  className={`semantic-overview__region semantic-overview__region--${region.accent}`}
+                  fill={laneVisual?.fill}
+                  stroke={laneVisual?.border}
+                  data-overview-region-id={region.id}
+                />
               )
             })}
-          </div>
-
-          <div className="semantic-overview__preset-grid">
-            {focusPresetOptions.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                className="chip"
-                data-focus-preset={option.id}
-                aria-label={getFocusPresetAccessibleLabel(option.id)}
-                title={getFocusPresetAccessibleLabel(option.id)}
-                onClick={() => fitNodesToPreset(nodes, fitView, option.id)}
-              >
-                {option.label}
-              </button>
+            {bandRegions.map((region) => (
+              <rect
+                key={region.id}
+                x={region.x}
+                y={region.y}
+                width={region.width}
+                height={region.height}
+                rx="18"
+                className="semantic-overview__band"
+                fill={region.accent}
+                opacity="0.12"
+              />
             ))}
-          </div>
+            {aeaRect ? (
+              <rect
+                x={aeaRect.x}
+                y={aeaRect.y}
+                width={aeaRect.width}
+                height={aeaRect.height}
+                rx="24"
+                className="semantic-overview__aea"
+              />
+            ) : null}
+            {writeRoutes.map((route) => (
+              <path
+                key={route.id}
+                d={route.path}
+                className="semantic-overview__write-path"
+                data-write-route-id={route.id}
+                data-overview-write-arrow={route.id === 'F5' ? 'corridor' : undefined}
+              />
+            ))}
+            {overviewNodes.map((node) => (
+              <circle
+                key={node.id}
+                cx={node.x}
+                cy={node.y}
+                r={node.selected ? 10 : 7}
+                className={clsx('semantic-overview__node-dot', node.selected && 'is-selected')}
+                data-overview-node-id={node.id}
+                data-overview-node-accent-id={node.id}
+                fill={node.accent}
+              />
+            ))}
+            <rect
+              x={viewportRect.x}
+              y={viewportRect.y}
+              width={viewportRect.width}
+              height={viewportRect.height}
+              rx="18"
+              className="semantic-overview__viewport"
+            />
+          </svg>
+
+          {overviewRegions.map((region) => (
+            <button
+              key={region.id}
+              type="button"
+              className={clsx('semantic-overview__hotspot', `semantic-overview__hotspot--${region.accent}`)}
+              style={{
+                left: `${(region.x / canvas.width) * 100}%`,
+                top: `${(region.y / canvas.height) * 100}%`,
+                width: `${(region.width / canvas.width) * 100}%`,
+                height: `${(region.height / canvas.height) * 100}%`,
+              }}
+              data-hotspot-id={region.id}
+              aria-label={region.preset ? `Focus ${region.label}` : `Center ${region.label}`}
+              onClick={(event) => {
+                event.stopPropagation()
+                if (region.preset) {
+                  fitNodesToPreset(nodes, fitView, region.preset)
+                  return
+                }
+
+                void setCenter(region.x + region.width / 2, region.y + region.height / 2, {
+                  zoom: viewport.zoom,
+                  duration: 260,
+                })
+              }}
+            >
+              {region.id === 'write' ? (
+                <span className="semantic-overview__hotspot-label" aria-hidden="true">
+                  Write corridor
+                </span>
+              ) : null}
+            </button>
+          ))}
+        </div>
+
+        <div className="semantic-overview__action-grid">
           <button
             type="button"
-            className={clsx('chip semantic-overview__legend-toggle', legendOpen && 'is-active')}
+            className="chip semantic-overview__action semantic-overview__action--primary"
+            data-focus-preset="overview"
+            aria-label={getFocusPresetAccessibleLabel('overview')}
+            onClick={() => fitNodesToPreset(nodes, fitView, 'overview')}
+          >
+            Full map
+          </button>
+          <button
+            type="button"
+            className="chip semantic-overview__action semantic-overview__action--jump"
+            data-focus-preset="gateway"
+            aria-label={getFocusPresetAccessibleLabel('gateway')}
+            onClick={() => fitNodesToPreset(nodes, fitView, 'gateway')}
+          >
+            Gateway + AEA
+          </button>
+          <button
+            type="button"
+            className="chip semantic-overview__action semantic-overview__action--jump"
+            data-focus-preset="lane-c"
+            aria-label={getFocusPresetAccessibleLabel('lane-c')}
+            onClick={() => fitNodesToPreset(nodes, fitView, 'lane-c')}
+          >
+            Central M+O
+          </button>
+          <button
+            type="button"
+            className="chip semantic-overview__action semantic-overview__action--jump"
+            data-focus-preset="write"
+            aria-label={getFocusPresetAccessibleLabel('write')}
+            onClick={() => fitNodesToPreset(nodes, fitView, 'write')}
+          >
+            Write corridor
+          </button>
+          <button
+            type="button"
+            className="chip semantic-overview__action semantic-overview__action--ghost"
+            data-focus-preset="guardrail"
+            aria-label={getFocusPresetAccessibleLabel('guardrail')}
+            onClick={() => fitNodesToPreset(nodes, fitView, 'guardrail')}
+          >
+            Guardrails
+          </button>
+          <button
+            type="button"
+            className={clsx(
+              'chip semantic-overview__action semantic-overview__action--ghost semantic-overview__legend-toggle',
+              legendOpen && 'is-active',
+            )}
             aria-expanded={legendOpen}
             data-overview-legend-toggle
             onClick={() => setLegendOpen((current) => !current)}
           >
-            {legendOpen ? 'Hide legend' : 'Show legend'}
+            {legendOpen ? 'Hide legend' : 'Expand legend'}
           </button>
-          {legendOpen ? (
-            <div className="semantic-overview__legend-shell" data-overview-legend-panel>
-              <SemanticLegend />
-            </div>
-          ) : null}
         </div>
-      ) : null}
+        {legendOpen ? (
+          <div className="semantic-overview__legend-shell" data-overview-legend-panel>
+            <SemanticLegend />
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }

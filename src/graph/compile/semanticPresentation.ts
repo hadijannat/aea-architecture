@@ -1,6 +1,12 @@
 import type { EdgeSemantic, EdgeSemanticFamily, EdgeStyle } from '@/graph/spec/schema'
 
-export type SemanticMarkerKind = 'arrow' | 'arrowclosed' | 'circle' | 'tee' | 'diamond'
+import {
+  resolveSemanticStrokeWidth,
+  resolveSemanticVisual,
+  type CanvasLod,
+} from './visualSystem'
+
+export type SemanticMarkerKind = 'arrow' | 'arrowclosed' | 'circle' | 'tee' | 'diamond' | 'diode'
 
 export interface SemanticMarkerDimensions {
   width: number
@@ -88,36 +94,36 @@ const semanticMarkerCoordinateSystem: Pick<SemanticMarkerDimensions, 'refY' | 'v
 
 const semanticMarkerTokensMap: Record<SemanticMarkerSurface, SemanticMarkerTokens> = {
   architecture: {
-    width: 14,
-    height: 11,
+    width: 18,
+    height: 14,
     refY: semanticMarkerCoordinateSystem.refY,
     viewBox: semanticMarkerCoordinateSystem.viewBox,
     units: 'strokeWidth',
   },
   legend: {
-    width: 10,
-    height: 8,
+    width: 12,
+    height: 10,
     refY: semanticMarkerCoordinateSystem.refY,
     viewBox: semanticMarkerCoordinateSystem.viewBox,
     units: 'userSpaceOnUse',
   },
   sequence: {
-    width: 10,
-    height: 8,
+    width: 12,
+    height: 10,
     refY: semanticMarkerCoordinateSystem.refY,
     viewBox: semanticMarkerCoordinateSystem.viewBox,
     units: 'userSpaceOnUse',
   },
   'export-viewport': {
-    width: 10,
-    height: 8,
+    width: 12,
+    height: 10,
     refY: semanticMarkerCoordinateSystem.refY,
     viewBox: semanticMarkerCoordinateSystem.viewBox,
     units: 'userSpaceOnUse',
   },
   'export-publication': {
-    width: 7,
-    height: 5.5,
+    width: 10,
+    height: 8,
     refY: semanticMarkerCoordinateSystem.refY,
     viewBox: semanticMarkerCoordinateSystem.viewBox,
     units: 'userSpaceOnUse',
@@ -128,8 +134,8 @@ export const semanticFamilyMembers: Record<EdgeSemanticFamily, EdgeSemantic[]> =
   context: ['gateway-internal', 'read-only', 'normalization', 'retrieval'],
   policy: ['proposal', 'policy-soft', 'policy-hard', 'validation'],
   runtime: ['tool-call'],
-  write: ['writeback'],
-  feedback: ['status-ack', 'rejection'],
+  write: ['writeback', 'status-ack'],
+  feedback: ['rejection'],
   telemetry: ['kpi', 'subscription', 'audit'],
   sequence: ['sequence'],
 }
@@ -140,8 +146,8 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'context',
     familyLabel: semanticFamilyLabels.context,
     label: 'Gateway internal',
-    stroke: '#3b5998',
-    marker: 'diamond',
+    stroke: resolveSemanticVisual('gateway-internal').stroke,
+    marker: resolveSemanticVisual('gateway-internal').marker,
     referenceStyle: 'medium',
     icon: 'GW',
   },
@@ -150,8 +156,8 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'context',
     familyLabel: semanticFamilyLabels.context,
     label: 'Read-only',
-    stroke: '#2563eb',
-    marker: 'arrow',
+    stroke: resolveSemanticVisual('read-only').stroke,
+    marker: resolveSemanticVisual('read-only').marker,
     referenceStyle: 'medium',
     icon: 'RO',
   },
@@ -160,8 +166,8 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'context',
     familyLabel: semanticFamilyLabels.context,
     label: 'Normalization',
-    stroke: '#7c3aed',
-    marker: 'arrow',
+    stroke: resolveSemanticVisual('normalization').stroke,
+    marker: resolveSemanticVisual('normalization').marker,
     referenceStyle: 'thin',
     icon: 'NM',
   },
@@ -170,8 +176,8 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'context',
     familyLabel: semanticFamilyLabels.context,
     label: 'Retrieval',
-    stroke: '#15803d',
-    marker: 'arrow',
+    stroke: resolveSemanticVisual('retrieval').stroke,
+    marker: resolveSemanticVisual('retrieval').marker,
     referenceStyle: 'medium',
     icon: 'RT',
   },
@@ -180,8 +186,8 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'policy',
     familyLabel: semanticFamilyLabels.policy,
     label: 'Proposal',
-    stroke: '#b45309',
-    marker: 'diamond',
+    stroke: resolveSemanticVisual('proposal').stroke,
+    marker: resolveSemanticVisual('proposal').marker,
     referenceStyle: 'medium',
     icon: 'PR',
   },
@@ -190,8 +196,8 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'policy',
     familyLabel: semanticFamilyLabels.policy,
     label: 'Policy soft gate',
-    stroke: '#7c6f18',
-    marker: 'diamond',
+    stroke: resolveSemanticVisual('policy-soft').stroke,
+    marker: resolveSemanticVisual('policy-soft').marker,
     referenceStyle: 'thin',
     icon: 'PS',
   },
@@ -200,8 +206,8 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'policy',
     familyLabel: semanticFamilyLabels.policy,
     label: 'Policy hard gate',
-    stroke: '#9a3412',
-    marker: 'diamond',
+    stroke: resolveSemanticVisual('policy-hard').stroke,
+    marker: resolveSemanticVisual('policy-hard').marker,
     referenceStyle: 'medium',
     icon: 'PH',
   },
@@ -210,8 +216,8 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'policy',
     familyLabel: semanticFamilyLabels.policy,
     label: 'Validation',
-    stroke: '#0f766e',
-    marker: 'diamond',
+    stroke: resolveSemanticVisual('validation').stroke,
+    marker: resolveSemanticVisual('validation').marker,
     referenceStyle: 'medium',
     icon: 'VL',
   },
@@ -220,8 +226,8 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'runtime',
     familyLabel: semanticFamilyLabels.runtime,
     label: 'Tool call',
-    stroke: '#0f9ba8',
-    marker: 'circle',
+    stroke: resolveSemanticVisual('tool-call').stroke,
+    marker: resolveSemanticVisual('tool-call').marker,
     referenceStyle: 'dotted',
     icon: 'TC',
   },
@@ -230,18 +236,18 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'write',
     familyLabel: semanticFamilyLabels.write,
     label: 'Writeback',
-    stroke: '#d35400',
-    marker: 'arrowclosed',
+    stroke: resolveSemanticVisual('writeback').stroke,
+    marker: resolveSemanticVisual('writeback').marker,
     referenceStyle: 'medium',
     icon: 'WR',
   },
   'status-ack': {
     semantic: 'status-ack',
-    family: 'feedback',
-    familyLabel: semanticFamilyLabels.feedback,
+    family: 'write',
+    familyLabel: semanticFamilyLabels.write,
     label: 'Status acknowledgement',
-    stroke: '#64748b',
-    marker: 'arrow',
+    stroke: resolveSemanticVisual('status-ack').stroke,
+    marker: resolveSemanticVisual('status-ack').marker,
     referenceStyle: 'dashed',
     icon: 'AK',
   },
@@ -250,8 +256,8 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'feedback',
     familyLabel: semanticFamilyLabels.feedback,
     label: 'Rejection',
-    stroke: '#b91c1c',
-    marker: 'tee',
+    stroke: resolveSemanticVisual('rejection').stroke,
+    marker: resolveSemanticVisual('rejection').marker,
     referenceStyle: 'dashed',
     icon: 'RJ',
   },
@@ -260,8 +266,8 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'telemetry',
     familyLabel: semanticFamilyLabels.telemetry,
     label: 'KPI',
-    stroke: '#0284c7',
-    marker: 'circle',
+    stroke: resolveSemanticVisual('kpi').stroke,
+    marker: resolveSemanticVisual('kpi').marker,
     referenceStyle: 'medium',
     icon: 'KP',
   },
@@ -270,8 +276,8 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'telemetry',
     familyLabel: semanticFamilyLabels.telemetry,
     label: 'Subscription',
-    stroke: '#6366f1',
-    marker: 'circle',
+    stroke: resolveSemanticVisual('subscription').stroke,
+    marker: resolveSemanticVisual('subscription').marker,
     referenceStyle: 'dotted',
     icon: 'SB',
   },
@@ -280,8 +286,8 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'telemetry',
     familyLabel: semanticFamilyLabels.telemetry,
     label: 'Audit',
-    stroke: '#7c5a32',
-    marker: 'tee',
+    stroke: resolveSemanticVisual('audit').stroke,
+    marker: resolveSemanticVisual('audit').marker,
     referenceStyle: 'thin',
     icon: 'AU',
   },
@@ -290,24 +296,25 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     family: 'sequence',
     familyLabel: semanticFamilyLabels.sequence,
     label: 'Sequence transition',
-    stroke: '#455a75',
-    marker: 'arrowclosed',
+    stroke: resolveSemanticVisual('sequence').stroke,
+    marker: resolveSemanticVisual('sequence').marker,
     referenceStyle: 'dashed',
     icon: 'SQ',
   },
 }
 
 const edgeStyleDashMap: Partial<Record<EdgeStyle, string>> = {
-  dashed: '12 7',
-  dotted: '2.2 7.4',
+  dashed: '7 4',
+  dotted: '1 5',
 }
 
 const semanticDashMap: Partial<Record<EdgeSemantic, string>> = {
-  sequence: '10 4 2 4',
-  'status-ack': '11 7',
-  rejection: '5 7',
-  'tool-call': '3.2 7.2 1.6 7.2',
-  subscription: '1.2 8.4',
+  'policy-soft': '6 3',
+  rejection: '7 4',
+  'tool-call': '2 5',
+  subscription: '1 5',
+  audit: '1 5',
+  kpi: '1 5',
 }
 
 const semanticAnimationMap: Partial<Record<EdgeSemantic, boolean>> = {
@@ -368,15 +375,16 @@ export function getSemanticFamilyStrokeDash(family: EdgeSemanticFamily): string 
 }
 
 export function getSemanticStrokeDash(semantic: EdgeSemantic, style?: EdgeStyle): string | undefined {
+  const semanticDash = resolveSemanticVisual(semantic).dash ?? semanticDashMap[semantic]
   if (!style) {
-    return semanticDashMap[semantic] ?? getSemanticFamilyStrokeDash(getSemanticPresentation(semantic).family)
+    return semanticDash ?? getSemanticFamilyStrokeDash(getSemanticPresentation(semantic).family)
   }
 
   if (style === 'bold' || style === 'medium' || style === 'thin') {
-    return semantic === 'sequence' ? semanticDashMap.sequence : undefined
+    return semanticDash
   }
 
-  return semanticDashMap[semantic] ?? edgeStyleDashMap[style]
+  return semanticDash ?? edgeStyleDashMap[style]
 }
 
 export function getSemanticLegendStyle(semantic: EdgeSemantic): EdgeStyle {
@@ -393,6 +401,9 @@ export function getSemanticMarkerRefX(marker: SemanticMarkerKind): number {
   }
   if (marker === 'circle') {
     return 5
+  }
+  if (marker === 'diode') {
+    return 10
   }
   return 9
 }
@@ -431,6 +442,14 @@ export function getSemanticMarkerGeometry(marker: SemanticMarkerKind): SemanticM
         d: 'M 5 0.8 L 9.2 4 L 5 7.2 L 0.8 4 z',
         fill: 'currentColor',
       }
+    case 'diode':
+      return {
+        element: 'path',
+        d: 'M 1 1 L 7 4 L 1 7 z M 7.5 1 L 7.5 7',
+        fill: 'currentColor',
+        stroke: 'currentColor',
+        strokeWidth: 1.8,
+      }
     case 'arrowclosed':
     default:
       return {
@@ -441,18 +460,22 @@ export function getSemanticMarkerGeometry(marker: SemanticMarkerKind): SemanticM
   }
 }
 
-export function edgeStrokeWidth(style: EdgeStyle): number {
+export function edgeStrokeWidth(style: EdgeStyle, semantic?: EdgeSemantic, lod?: CanvasLod): number {
+  if (semantic) {
+    return resolveSemanticStrokeWidth(style, semantic, lod)
+  }
+
   switch (style) {
     case 'bold':
-      return 3.6
+      return 2.6
     case 'medium':
-      return 2.7
+      return 1.9
     case 'dashed':
-      return 2.2
+      return 1.7
     case 'dotted':
-      return 1.8
+      return 1.5
     case 'thin':
     default:
-      return 1.7
+      return 1.35
   }
 }

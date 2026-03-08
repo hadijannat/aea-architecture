@@ -11,10 +11,9 @@ import {
 import { Handle, useViewport, type NodeProps } from '@xyflow/react'
 import clsx from 'clsx'
 
-import { resolveNodeVisual } from '@/graph/compile/nodeVisuals'
 import type { DiagramFlowNode } from '@/graph/compile/toReactFlow'
 import { nodeEntityKey } from '@/graph/spec/manifest'
-import type { NodeSpec } from '@/graph/spec/schema'
+import type { ClaimId, NodeSpec } from '@/graph/spec/schema'
 import { focusRingClassName } from '@/a11y/focus'
 import { getHandlePosition, type HandleId } from '@/layout/ports'
 
@@ -54,24 +53,93 @@ function stopNodeClick(event: ReactMouseEvent | FocusEvent) {
 function resolveStructuralNarrative(spec: NodeSpec) {
   switch (spec.id) {
     case 'LANE_A':
-      return 'Read-only CPC boundary'
+      return 'OT boundary'
     case 'LANE_B':
-      return 'Agent runtime and gateway corridor'
+      return 'AEA runtime layer'
     case 'LANE_C':
-      return 'Publish-only central consumption'
+      return 'Cloud telemetry layer'
     case 'GW':
-      return 'Gateway diode and VoR boundary'
+      return 'Boundary enforcement'
     case 'AEA':
-      return 'Sense -> Decide -> Act pipeline'
+      return 'Agent subsystem'
     case 'BAND_SENSE':
-      return 'Read-only telemetry ingress'
+      return 'Read-only ingress'
     case 'BAND_DECIDE':
-      return 'Grounding, planning, and policy gates'
+      return 'Guarded reasoning'
     case 'BAND_ACT':
-      return 'Validated write and publish split'
+      return 'Validated actuation'
     default:
       return undefined
   }
+}
+
+function structuralHeaderLabel(spec: NodeSpec) {
+  if (spec.kind === 'band' && spec.band) {
+    return spec.band
+  }
+  if (spec.id === 'GW') {
+    return 'NE177 Gateway'
+  }
+  if (spec.id === 'AEA') {
+    return 'AEA'
+  }
+  return spec.title
+}
+
+function KindGlyph({
+  path,
+  viewBox,
+  label,
+  className,
+}: {
+  path: string
+  viewBox: string
+  label: string
+  className?: string
+}) {
+  return (
+    <svg className={clsx('node-card__glyph', className)} viewBox={viewBox} aria-hidden="true" focusable="false">
+      <title>{label}</title>
+      <path d={path} />
+    </svg>
+  )
+}
+
+function ClaimDots({
+  nodeTitle,
+  claimDots,
+  claims,
+  onBadgeClaim,
+}: {
+  nodeTitle: string
+  claimDots: string[]
+  claims: NonNullable<DiagramFlowNode['data']['claims']>
+  onBadgeClaim(id: ClaimId): void
+}) {
+  if (claims.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="node-card__claim-dots" aria-label={`Claims for ${nodeTitle}`}>
+      {claims.map((claim, index) => (
+        <button
+          key={claim.id}
+          type="button"
+          className="node-card__claim-dot"
+          title={`${claim.id} · ${claim.label}`}
+          style={{ '--claim-dot': claimDots[index] } as CSSProperties}
+          onClick={(event) => {
+            event.stopPropagation()
+            onBadgeClaim(claim.id)
+          }}
+        >
+          <span className="node-card__claim-dot-core" aria-hidden="true" />
+          <span className="node-card__claim-dot-label">{claim.id}</span>
+        </button>
+      ))}
+    </div>
+  )
 }
 
 export function BaseNodeCard({
@@ -79,39 +147,23 @@ export function BaseNodeCard({
   selected,
   variant,
 }: NodeProps<DiagramFlowNode> & { variant: string }) {
-  const { spec, claims, standards, annotation } = data
-  const visual = resolveNodeVisual(spec)
+  const { spec, claims, standards, annotation, visual } = data
   const isStructural = visual.isStructural
   const { zoom } = useViewport()
-  const [compactMetaVisible, setCompactMetaVisible] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
   const menuButtonRef = useRef<HTMLButtonElement | null>(null)
   const menuId = useId()
-  const structuralZoomMode =
-    !isStructural ? undefined : zoom >= 0.96 ? 'full' : zoom >= 0.72 ? 'balanced' : 'overview'
-  const density =
-    isStructural
-      ? structuralZoomMode
-      : selected || data.selected
-        ? 'full'
-        : zoom >= 1.08
-          ? 'full'
-          : zoom >= 0.88
-            ? 'balanced'
-            : 'compact'
-  const showExpandedNotes = density === 'full'
-  const showRole = !isStructural
-  const showMetaLabels = density !== 'compact'
-  const showCompactMetaSummary = density === 'compact' && !isStructural
-  const hasCompactMeta = showCompactMetaSummary && (standards.length > 0 || claims.length > 0)
+  const renderMode = data.renderMode
+  const showDetail = renderMode === 'detail'
+  const showNavigation = renderMode === 'navigation'
+  const showIconMode = renderMode === 'icon'
+  const showCollapsed = renderMode === 'collapsed'
+  const showSubtitle = showDetail && zoom >= 1.2
+  const showIdBadge = showDetail && zoom >= 1.2
+  const showMenu = !isStructural && !showIconMode && !showCollapsed
   const structuralNarrative = isStructural ? resolveStructuralNarrative(spec) : undefined
-  const showStructuralOverview = structuralZoomMode === 'overview'
-  const showStructuralBadge = !isStructural || structuralZoomMode !== 'overview'
-  const showEyebrowId = !isStructural || structuralZoomMode !== 'overview'
-  const showLeadingBadge = visual.badgeStyle === 'pill' && !isStructural
-  const showInlineBadge = (visual.badgeStyle === 'inline' || isStructural) && showStructuralBadge
-  const showDecideBandOverlay = spec.id === 'BAND_DECIDE'
+  const expandedNotes = showDetail && (data.notesExpanded || annotation)
 
   useEffect(() => {
     if (!menuOpen) {
@@ -142,7 +194,6 @@ export function BaseNodeCard({
     if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
       return
     }
-    setCompactMetaVisible(false)
     setMenuOpen(false)
   }
 
@@ -199,37 +250,23 @@ export function BaseNodeCard({
     data.callbacks.onSelectNode(spec.id)
   }
 
-  const badge = (
-    <span
-      className={clsx(
-        'node-card__badge',
-        `node-card__badge--${visual.badgeStyle}`,
-        isStructural && 'node-card__badge--structural',
-      )}
-      aria-hidden="true"
-    >
-      {visual.badgeText}
-    </span>
-  )
-
   return (
     <div
       className={clsx(
         'node-card',
         `node-card--${variant}`,
         `node-card--kind-${spec.kind}`,
-        `node-card--${density}`,
+        `node-card--${renderMode}`,
         focusRingClassName,
         data.highlighted && 'is-highlighted',
         (selected || data.selected) && 'is-selected',
         data.dimmed && 'is-dimmed',
         isStructural && 'is-structural',
+        spec.id === 'VOI' && 'is-write-bridge',
       )}
       data-node-id={spec.id}
-      data-node-density={density}
+      data-node-density={renderMode}
       data-node-kind={spec.kind}
-      data-node-badge-style={visual.badgeStyle}
-      data-node-structural-zoom={isStructural ? structuralZoomMode : undefined}
       aria-label={data.ariaLabel}
       style={
         {
@@ -238,196 +275,132 @@ export function BaseNodeCard({
           '--node-fill': visual.fill,
           '--node-border': visual.border,
           '--node-accent': visual.accent,
+          '--node-band-accent': visual.bandAccent,
         } as CSSProperties
       }
       onClick={handleNodeClick}
-      onMouseEnter={() => {
-        setCompactMetaVisible(true)
-        data.callbacks.onHover(nodeEntityKey(spec.id))
-      }}
-      onMouseLeave={() => {
-        setCompactMetaVisible(false)
-        data.callbacks.onHover(undefined)
-      }}
-      onFocusCapture={() => setCompactMetaVisible(true)}
+      onMouseEnter={() => data.callbacks.onHover(nodeEntityKey(spec.id))}
+      onMouseLeave={() => data.callbacks.onHover(undefined)}
+      onFocusCapture={() => data.callbacks.onHover(nodeEntityKey(spec.id))}
       onBlurCapture={handleBlur}
     >
-      {!isStructural ? <NodeHandles /> : null}
-      {showDecideBandOverlay ? (
-        <div className="node-card__decide-overlay" aria-hidden="true">
-          <div className="node-card__decide-separator" style={{ top: 189 }} />
-          <div className="node-card__decide-separator" style={{ top: 389 }} />
-          <span className="node-card__decide-row-label" style={{ top: 94 }}>
-            Data Access &amp; Tool Layer
-          </span>
-          <span className="node-card__decide-row-label" style={{ top: 284 }}>
-            Guarded Context &amp; Planning
-          </span>
-          <span className="node-card__decide-row-label" style={{ top: 484 }}>
-            Validation &amp; Approval
+      {!isStructural && !showCollapsed ? <NodeHandles /> : null}
+
+      {showIconMode ? (
+        <div className="node-card__icon-tile">
+          <KindGlyph
+            path={visual.glyphPath}
+            viewBox={visual.glyphViewBox}
+            label={visual.glyphLabel}
+            className="node-card__glyph--tile"
+          />
+        </div>
+      ) : null}
+
+      {showCollapsed ? (
+        <div className="node-card__collapsed-pill">
+          <KindGlyph path={visual.glyphPath} viewBox={visual.glyphViewBox} label={visual.glyphLabel} />
+          <strong>{spec.title}</strong>
+          <span className="node-card__collapse-chevron" aria-hidden="true">
+            ▾
           </span>
         </div>
       ) : null}
-      <div className="node-card__header">
-        <div className="node-card__header-main">
-          {showLeadingBadge ? badge : null}
-          <div className="node-card__heading">
-            <div className="node-card__eyebrow-row">
-              {showEyebrowId ? <div className="node-card__eyebrow">{spec.id}</div> : null}
-              {showInlineBadge ? badge : null}
-              {structuralNarrative ? <span className="node-card__structural-tagline">{structuralNarrative}</span> : null}
+
+      {!showIconMode && !showCollapsed ? (
+        <>
+          <div className="node-card__header">
+            <div className="node-card__header-main">
+              <div className="node-card__heading">
+                {isStructural ? (
+                  <div className="node-card__structural-strip">
+                    <span className="node-card__structural-strip-label">{structuralHeaderLabel(spec)}</span>
+                  </div>
+                ) : null}
+                <div className="node-card__eyebrow-row">
+                  {showIdBadge ? <div className="node-card__id-badge">{spec.id}</div> : null}
+                  {structuralNarrative ? <span className="node-card__structural-tagline">{structuralNarrative}</span> : null}
+                </div>
+                <h3 className="node-card__title">{showNavigation || showDetail ? spec.title : structuralHeaderLabel(spec)}</h3>
+                {showSubtitle && spec.subtitle ? <p className="node-card__subtitle">{spec.subtitle}</p> : null}
+              </div>
             </div>
-            <h3 className="node-card__title">{spec.title}</h3>
-            {showStructuralOverview && spec.subtitle ? <p className="node-card__subtitle">{spec.subtitle}</p> : null}
-          </div>
-          {!showStructuralOverview && spec.subtitle ? <p className="node-card__subtitle">{spec.subtitle}</p> : null}
-        </div>
-        {!isStructural ? (
-          <div className="node-card__menu" ref={menuRef} onClick={(event) => event.stopPropagation()} onKeyDown={handleMenuKeyDown}>
-            <button
-              ref={menuButtonRef}
-              type="button"
-              className="node-card__menu-trigger"
-              aria-label={`Open actions for ${spec.title}`}
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              aria-controls={menuId}
-              data-node-action-menu-trigger
-              onClick={handleMenuToggle}
-            >
-              ⋯
-            </button>
-            {menuOpen ? (
-              <div
-                id={menuId}
-                className="node-card__menu-panel"
-                role="menu"
-                aria-label={`Actions for ${spec.title}`}
-                data-node-action-menu
-                onKeyDown={handleMenuItemKeyDown}
-              >
-                <button type="button" role="menuitem" onClick={(event) => runMenuAction(event, () => data.callbacks.onSelectNode(spec.id))}>
-                  Focus
-                </button>
+            {showMenu ? (
+              <div className="node-card__menu" ref={menuRef} onClick={(event) => event.stopPropagation()} onKeyDown={handleMenuKeyDown}>
                 <button
+                  ref={menuButtonRef}
                   type="button"
-                  role="menuitem"
-                  onClick={(event) => runMenuAction(event, () => data.callbacks.onPathAction(spec.id, 'upstream'))}
+                  className="node-card__menu-trigger"
+                  aria-label={`Open actions for ${spec.title}`}
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  aria-controls={menuId}
+                  data-node-action-menu-trigger
+                  onClick={handleMenuToggle}
                 >
-                  Show upstream
+                  ⋯
                 </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={(event) => runMenuAction(event, () => data.callbacks.onPathAction(spec.id, 'downstream'))}
-                >
-                  Show downstream
-                </button>
-                {spec.inspector.relatedStepIds[0] ? (
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={(event) => runMenuAction(event, () => data.callbacks.onSelectStep(spec.inspector.relatedStepIds[0]))}
+                {menuOpen ? (
+                  <div
+                    id={menuId}
+                    className="node-card__menu-panel"
+                    role="menu"
+                    aria-label={`Actions for ${spec.title}`}
+                    data-node-action-menu
+                    onKeyDown={handleMenuItemKeyDown}
                   >
-                    Open in sequence
-                  </button>
+                    <button type="button" role="menuitem" onClick={(event) => runMenuAction(event, () => data.callbacks.onSelectNode(spec.id))}>
+                      Focus
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={(event) => runMenuAction(event, () => data.callbacks.onPathAction(spec.id, 'upstream'))}
+                    >
+                      Show upstream
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={(event) => runMenuAction(event, () => data.callbacks.onPathAction(spec.id, 'downstream'))}
+                    >
+                      Show downstream
+                    </button>
+                    {spec.inspector.relatedStepIds[0] ? (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={(event) => runMenuAction(event, () => data.callbacks.onSelectStep(spec.inspector.relatedStepIds[0]))}
+                      >
+                        Open in sequence
+                      </button>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
-            ) : null}
+            ) : (
+              <div className="node-card__kind-badge" aria-hidden="true">
+                <KindGlyph path={visual.glyphPath} viewBox={visual.glyphViewBox} label={visual.glyphLabel} />
+              </div>
+            )}
           </div>
-        ) : null}
-      </div>
-      {showRole ? <p className="node-card__description">{spec.inspector.role}</p> : null}
-      {!isStructural ? (
-        <div className="node-card__meta">
-          {standards.length > 0 ? (
-            <div className="node-card__meta-group">
-              {showMetaLabels ? <span className="node-card__meta-label">Standards</span> : null}
-              {showCompactMetaSummary ? (
-                <button
-                  type="button"
-                  className="badge badge--standard badge--summary"
-                  data-node-meta-summary="standards"
-                  onClick={(event) => {
-                    stopNodeClick(event)
-                    setCompactMetaVisible((current) => !current)
-                  }}
-                  onFocus={() => setCompactMetaVisible(true)}
-                >
-                  {standards.length} standard{standards.length === 1 ? '' : 's'}
-                </button>
-              ) : (
-                <div className="node-card__meta-rail" aria-label={`Standards for ${spec.title}`}>
-                  {standards.map((standard: NonNullable<typeof standards[number]>) => (
-                    <button
-                      key={standard.id}
-                      type="button"
-                      className="badge badge--standard"
-                      title={`${standard.label}${standard.version ? ` ${standard.version}` : ''}`}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        data.callbacks.onBadgeStandard(standard.id)
-                      }}
-                    >
-                      {density === 'compact' ? standard.id : standard.label}
-                      {density !== 'compact' && standard.version ? ` ${standard.version}` : ''}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : null}
-          {claims.length > 0 ? (
-            <div className="node-card__meta-group">
-              {showMetaLabels ? <span className="node-card__meta-label">Claims</span> : null}
-              {showCompactMetaSummary ? (
-                <button
-                  type="button"
-                  className="badge badge--claim badge--summary"
-                  data-node-meta-summary="claims"
-                  onClick={(event) => {
-                    stopNodeClick(event)
-                    setCompactMetaVisible((current) => !current)
-                  }}
-                  onFocus={() => setCompactMetaVisible(true)}
-                >
-                  {claims.length} claim{claims.length === 1 ? '' : 's'}
-                </button>
-              ) : (
-                <div className="node-card__meta-rail" aria-label={`Claims for ${spec.title}`}>
-                  {claims.map((claim: NonNullable<typeof claims[number]>) => (
-                    <button
-                      key={claim.id}
-                      type="button"
-                      className="badge badge--claim"
-                      title={claim.label}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        data.callbacks.onBadgeClaim(claim.id)
-                      }}
-                    >
-                      {claim.id}
-                      {density === 'full' ? ` · ${claim.label}` : ''}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : null}
-          {hasCompactMeta && compactMetaVisible ? (
-            <div className="node-card__meta-popover" data-node-meta-popover>
+
+          {!isStructural && showDetail ? <p className="node-card__description">{spec.inspector.role}</p> : null}
+
+          {!isStructural && showDetail ? (
+            <div className="node-card__meta">
               {standards.length > 0 ? (
                 <div className="node-card__meta-group">
                   <span className="node-card__meta-label">Standards</span>
                   <div className="node-card__meta-rail" aria-label={`Standards for ${spec.title}`}>
-                    {standards.map((standard: NonNullable<typeof standards[number]>) => (
+                    {standards.map((standard) => (
                       <button
                         key={standard.id}
                         type="button"
                         className="badge badge--standard"
                         title={`${standard.label}${standard.version ? ` ${standard.version}` : ''}`}
                         onClick={(event) => {
-                          event.stopPropagation()
+                          stopNodeClick(event)
                           data.callbacks.onBadgeStandard(standard.id)
                         }}
                       >
@@ -438,35 +411,23 @@ export function BaseNodeCard({
                   </div>
                 </div>
               ) : null}
-              {claims.length > 0 ? (
-                <div className="node-card__meta-group">
-                  <span className="node-card__meta-label">Claims</span>
-                  <div className="node-card__meta-rail" aria-label={`Claims for ${spec.title}`}>
-                    {claims.map((claim: NonNullable<typeof claims[number]>) => (
-                      <button
-                        key={claim.id}
-                        type="button"
-                        className="badge badge--claim"
-                        title={claim.label}
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          data.callbacks.onBadgeClaim(claim.id)
-                        }}
-                      >
-                        {claim.id} · {claim.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
             </div>
           ) : null}
-        </div>
+
+          {expandedNotes && spec.inspector.notes[0] ? (
+            <div className="node-card__annotation">{spec.inspector.notes[0]}</div>
+          ) : null}
+          {annotation && showDetail ? <div className="node-card__annotation">Author note: {annotation}</div> : null}
+          {!isStructural ? (
+            <ClaimDots
+              nodeTitle={spec.title}
+              claimDots={data.claimDots}
+              claims={claims}
+              onBadgeClaim={(claimId) => data.callbacks.onBadgeClaim(claimId)}
+            />
+          ) : null}
+        </>
       ) : null}
-      {data.notesExpanded && showExpandedNotes && spec.inspector.notes[0] ? (
-        <div className="node-card__annotation">{spec.inspector.notes[0]}</div>
-      ) : null}
-      {annotation && showExpandedNotes ? <div className="node-card__annotation">Author note: {annotation}</div> : null}
     </div>
   )
 }

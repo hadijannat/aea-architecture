@@ -134,7 +134,7 @@ function buildLabel(edge: EdgeSpec, points: Point[]): RoutedBoardLabel {
     case 'F5':
       return segmentLabel(points, 2, 'bottom', 24)
     case 'F6':
-      return segmentLabel(points, 1, 'right', 20)
+      return segmentLabel(points, 1, 'left', 28)
     case 'F_VoR_ACK':
       return segmentLabel(points, 1, 'right', 28)
     case 'F7a':
@@ -166,6 +166,8 @@ const channels = {
   laneCSpineX: lanes.C.x + lanes.C.width - 28,
   cpcSpineX: lanes.A.x + 24,
 }
+
+export const boardRouteChannels = channels
 
 export function buildBoardEdgeRoute(
   edge: EdgeSpec,

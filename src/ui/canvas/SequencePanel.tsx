@@ -12,6 +12,7 @@ import {
 import { type SequenceBoardModel } from '@/graph/compile/sequenceBoard'
 import { edgeEntityKey, nodeEntityKey, stepEntityKey } from '@/graph/spec/manifest'
 import type { EntityKey, ProjectionTheme } from '@/graph/spec/schema'
+import { resolveSemanticVisual } from '@/graph/compile/visualSystem'
 
 interface SequencePanelProps {
   containerRef?: RefObject<HTMLElement | null>
@@ -70,10 +71,10 @@ export function SequencePanel({
     >
       <header className={clsx('sequence-panel__header', hasActiveHighlights && 'sequence-panel__header--active')}>
         <div>
-          <p className="eyebrow">(b)</p>
+          <p className="eyebrow">(B)</p>
           <h2>VoR Domain-Transition Sequence</h2>
         </div>
-        <p>Shared board geometry keeps runtime and export paths aligned.</p>
+        <p>Five-stage VoR validation pipeline enforcing NE178 boundary semantics before CPC actuation.</p>
       </header>
 
       <div className="sequence-board-shell">
@@ -123,7 +124,7 @@ export function SequencePanel({
             <path
               d={`M 24 ${model.ribbonY + 48} L ${model.width - 24} ${model.ribbonY + 48}`}
               fill="none"
-              stroke="rgba(211, 161, 109, 0.3)"
+              stroke="rgba(107, 114, 128, 0.2)"
               strokeWidth="1"
             />
             <text x="36" y={model.ribbonY + 42} className="sequence-board__ribbon-label">
@@ -149,7 +150,7 @@ export function SequencePanel({
                     d={edge.path}
                     fill="none"
                     stroke={presentation.stroke}
-                    strokeWidth={edgeStrokeWidth(edge.edge.style)}
+                    strokeWidth={edgeStrokeWidth(edge.edge.style, edge.edge.semantic)}
                     strokeDasharray={getSemanticStrokeDash(edge.edge.semantic, edge.edge.style)}
                     markerEnd={`url(#sequence-marker-${edge.edge.semantic})`}
                   />
@@ -164,6 +165,7 @@ export function SequencePanel({
               type="button"
               className={clsx(
                 'sequence-terminal',
+                terminal.node.id === 'PB_AEA' && 'sequence-terminal--origin',
                 terminal.node.id === 'PB_REJECT_OUT' && 'sequence-terminal--reject',
                 terminal.selected && 'is-selected',
                 terminal.highlighted && 'is-highlighted',
@@ -182,8 +184,14 @@ export function SequencePanel({
               onMouseEnter={() => onHover(nodeEntityKey(terminal.node.id))}
               onMouseLeave={() => onHover(undefined)}
             >
-              <span className="sequence-terminal__eyebrow">{terminal.node.id}</span>
+              {terminal.node.id === 'PB_AEA' ? (
+                <span className="sequence-terminal__origin">Origin context</span>
+              ) : null}
+              <span className="sequence-terminal__eyebrow">
+                {terminal.node.id === 'PB_REJECT_OUT' ? 'Reject out' : terminal.node.id}
+              </span>
               <strong>{terminal.node.title}</strong>
+              {terminal.node.id === 'PB_REJECT_OUT' ? <span className="sequence-terminal__terminator">X</span> : null}
               {terminal.node.subtitle ? <span>{terminal.node.subtitle}</span> : null}
             </button>
           ))}
@@ -211,22 +219,32 @@ export function SequencePanel({
               onMouseEnter={() => onHover(stepEntityKey(step.step.id))}
               onMouseLeave={() => onHover(undefined)}
             >
-              <span className="sequence-step__index">{step.step.id}</span>
-              <strong>{step.step.title}</strong>
-              <span>{step.step.summary}</span>
+              <div className="sequence-step__header">
+                <span className="sequence-step__index">
+                  <span className="sequence-step__ordinal">{step.step.order}</span>
+                  {step.step.id}
+                </span>
+                <strong>{step.step.title}</strong>
+                <span className="sequence-step__status" aria-hidden="true" />
+              </div>
+              <div className="sequence-step__body">
+                <span>{step.step.summary}</span>
+              </div>
             </button>
           ))}
 
           {visibleEdges.map((edge) => {
             const presentation = getSemanticPresentation(edge.edge.semantic)
+            const visual = resolveSemanticVisual(edge.edge.semantic)
             const labelY =
-              edge.edge.semantic === 'sequence'
-                ? edge.labelY - 18
+              edge.edge.id === 'PB_ACK'
+                ? edge.labelY - 10
                 : edge.edge.semantic === 'rejection'
-                  ? edge.labelY + 18
-                  : edge.labelY - 10
+                  ? edge.labelY + 22
+                  : edge.labelY - 16
             const expanded = edge.selected || edge.highlighted
-            const displayLabel = edge.edge.displayLabel ?? edge.edge.label
+            const displayLabel =
+              edge.edge.id === 'PB_ACK' ? 'ACK signal' : edge.edge.displayLabel ?? edge.edge.label
 
             return (
               <button
@@ -245,6 +263,7 @@ export function SequencePanel({
                 style={
                   {
                     '--semantic-stroke': presentation.stroke,
+                    '--semantic-chip-text': visual.chipText,
                     left: edge.labelX,
                     top: labelY,
                   } as CSSProperties
@@ -256,7 +275,7 @@ export function SequencePanel({
                 onMouseEnter={() => onHover(edgeEntityKey(edge.edge.id))}
                 onMouseLeave={() => onHover(undefined)}
               >
-                {expanded ? `${edge.edge.id} · ${displayLabel}` : edge.edge.id}
+                {expanded || edge.edge.id === 'PB_ACK' ? displayLabel : edge.edge.id}
               </button>
             )
           })}

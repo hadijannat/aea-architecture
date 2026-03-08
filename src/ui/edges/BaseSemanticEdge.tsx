@@ -15,6 +15,7 @@ import {
 import type { DiagramFlowEdge } from '@/graph/compile/toReactFlow'
 import { edgeEntityKey } from '@/graph/spec/manifest'
 import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
+import { resolveEdgeLabelMode, resolveSemanticVisual } from '@/graph/compile/visualSystem'
 
 export function BaseSemanticEdge({
   id,
@@ -40,20 +41,27 @@ export function BaseSemanticEdge({
   const edgePoints = route.points.map((point) => `${point.x},${point.y}`).join(' ')
 
   const presentation = getSemanticPresentation(data.spec.semantic)
+  const visual = resolveSemanticVisual(data.spec.semantic)
   const strokeColor = presentation.stroke
-  const strokeWidth = edgeStrokeWidth(data.spec.style)
+  const strokeWidth = edgeStrokeWidth(data.spec.style, data.spec.semantic, data.canvasLod)
   const strokeDasharray = getSemanticStrokeDash(data.spec.semantic, data.spec.style)
   const isT0Edge = data.spec.tags.includes('t0')
-  const showExpandedLabel = data.selected || data.highlighted || zoom >= 0.76
-  const showDisplayLabel = !showExpandedLabel && (zoom >= 0.62 || (isT0Edge && data.sharedTagFocused))
+  const labelMode = resolveEdgeLabelMode(
+    zoom,
+    data.selected,
+    data.highlighted || data.groupHighlighted,
+  )
   const displayLabel = data.spec.displayLabel ?? data.spec.label
-  const diodeSuffix = data.spec.markers.includes('diode') ? ' ⊘' : ''
-  const displayModeLabel = `${data.spec.id} · ${displayLabel}${diodeSuffix}`
-  const expandedLabel = `${data.spec.id} · ${displayLabel}${data.optional ? ' (optional)' : ''}${diodeSuffix}`
-  const compactLabel = `${data.spec.id}${diodeSuffix}`
-  const labelMode = showExpandedLabel ? 'expanded' : showDisplayLabel ? 'display' : 'compact'
-  const labelText = showExpandedLabel ? expandedLabel : showDisplayLabel ? displayModeLabel : compactLabel
-  const showT0Badge = isT0Edge && labelMode !== 'compact'
+  const detailText = data.spec.detail ? `${displayLabel} · ${data.spec.detail}` : displayLabel
+  const labelText =
+    labelMode === 'detail'
+      ? `${data.spec.id} · ${detailText}${data.optional ? ' (optional)' : ''}`
+      : `${data.spec.id} · ${displayLabel}`
+  const showT0Badge = isT0Edge && labelMode !== 'hidden'
+  const markerKind = data.spec.markers.includes('diode') ? 'diode' : presentation.marker
+  const writePathActive =
+    data.highlightGroup === 'write' &&
+    (data.selected || data.highlighted || data.groupHighlighted)
 
   return (
     <g
@@ -64,6 +72,8 @@ export function BaseSemanticEdge({
         data.optional && 'is-optional',
         data.selected && 'is-selected',
         data.highlighted && 'is-highlighted',
+        data.groupHighlighted && 'is-group-highlighted',
+        writePathActive && 'is-write-path-active',
         data.dimmed && 'is-dimmed',
         data.sharedTagFocused && 'is-shared-tag-focused',
       )}
@@ -86,7 +96,18 @@ export function BaseSemanticEdge({
       <path d={edgePath} data-edge-id={id} data-edge-path={edgePath} fill="none" stroke="transparent" strokeWidth={12} />
       <BaseEdge
         path={edgePath}
-        markerEnd={`url(#architecture-marker-${data.spec.semantic})`}
+        interactionWidth={12}
+        style={{
+          stroke: visual.halo,
+          strokeWidth: strokeWidth + 2.4,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          vectorEffect: 'non-scaling-stroke',
+        }}
+      />
+      <BaseEdge
+        path={edgePath}
+        markerEnd={`url(#architecture-marker-${data.spec.semantic}-${markerKind})`}
         interactionWidth={12}
         style={{
           stroke: strokeColor,
@@ -97,48 +118,52 @@ export function BaseSemanticEdge({
           vectorEffect: 'non-scaling-stroke',
         }}
       />
-      <EdgeLabelRenderer>
-        <button
-          type="button"
-          className={clsx(
-            'edge-label',
-            `edge-label--${data.spec.semantic}`,
-            data.optional && 'is-optional',
-            data.selected && 'is-selected',
-            data.highlighted && 'is-highlighted',
-            data.dimmed && 'is-dimmed',
-            data.sharedTagFocused && 'is-shared-tag-focused',
-          )}
-          aria-label={data.ariaLabel}
-          data-edge-id={id}
-          data-edge-family={presentation.family}
-          data-edge-optional={data.optional ? 'true' : 'false'}
-          data-edge-tag-t0={isT0Edge ? 'true' : 'false'}
-          data-edge-shared-tag-focus={data.sharedTagFocused ? 'true' : 'false'}
-          data-edge-label-mode={labelMode}
-          style={{
-            '--semantic-stroke': presentation.stroke,
-            transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
-          } as CSSProperties}
-          onFocus={() => data.callbacks.onHover(edgeEntityKey(id))}
-          onBlur={() => data.callbacks.onHover(undefined)}
-          onPointerDown={(event) => {
-            event.stopPropagation()
-            data.callbacks.onSelectEdge(id)
-          }}
-          onClick={(event) => {
-            event.stopPropagation()
-            data.callbacks.onSelectEdge(id)
-          }}
-        >
-          <span className="edge-label__text">{labelText}</span>
-          {showT0Badge ? (
-            <span className="edge-label__tag edge-label__tag--t0" data-edge-tag="t0" aria-hidden="true">
-              T0
-            </span>
-          ) : null}
-        </button>
-      </EdgeLabelRenderer>
+      {labelMode !== 'hidden' ? (
+        <EdgeLabelRenderer>
+          <button
+            type="button"
+            className={clsx(
+              'edge-label',
+              `edge-label--${data.spec.semantic}`,
+              data.optional && 'is-optional',
+              data.selected && 'is-selected',
+              (data.highlighted || data.groupHighlighted) && 'is-highlighted',
+              data.groupHighlighted && 'is-group-highlighted',
+              data.dimmed && 'is-dimmed',
+              data.sharedTagFocused && 'is-shared-tag-focused',
+            )}
+            aria-label={data.ariaLabel}
+            data-edge-id={id}
+            data-edge-family={presentation.family}
+            data-edge-optional={data.optional ? 'true' : 'false'}
+            data-edge-tag-t0={isT0Edge ? 'true' : 'false'}
+            data-edge-shared-tag-focus={data.sharedTagFocused ? 'true' : 'false'}
+            data-edge-label-mode={labelMode}
+            style={{
+              '--semantic-stroke': presentation.stroke,
+              '--semantic-chip-text': visual.chipText,
+              transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
+            } as CSSProperties}
+            onFocus={() => data.callbacks.onHover(edgeEntityKey(id))}
+            onBlur={() => data.callbacks.onHover(undefined)}
+            onPointerDown={(event) => {
+              event.stopPropagation()
+              data.callbacks.onSelectEdge(id)
+            }}
+            onClick={(event) => {
+              event.stopPropagation()
+              data.callbacks.onSelectEdge(id)
+            }}
+          >
+            <span className="edge-label__text">{labelText}</span>
+            {showT0Badge ? (
+              <span className="edge-label__tag edge-label__tag--t0" data-edge-tag="t0" aria-hidden="true">
+                T0
+              </span>
+            ) : null}
+          </button>
+        </EdgeLabelRenderer>
+      ) : null}
     </g>
   )
 }
