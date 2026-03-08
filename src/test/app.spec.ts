@@ -87,6 +87,13 @@ async function nodeSurfaceStyles(page: Page, nodeId: string) {
   })
 }
 
+async function computedStyleValue(locator: Locator, property: string) {
+  return locator.evaluate(
+    (element, styleProperty) => getComputedStyle(element).getPropertyValue(styleProperty),
+    property,
+  )
+}
+
 function hexToRgbString(hex: string) {
   const normalized = hex.replace('#', '')
   const value = normalized.length === 3
@@ -395,22 +402,64 @@ test('system reduced-motion preference disables animated architecture edges', as
   await expect.poll(() => architectureEdgeIsAnimated(page, 'F_T2')).toBe(false)
 })
 
-test('optional architecture edges expose reduced-emphasis state and expanded labels', async ({ page }) => {
+test('optional architecture edges only reduce emphasis while resting', async ({ page }) => {
+  await page.goto('/')
+
+  const restingEdge = page.locator('.semantic-edge[data-edge-id="F7_sub"]')
+  const restingLabel = page.locator('.edge-label[data-edge-id="F7_sub"]')
+
+  await expect(restingEdge).toHaveAttribute('data-edge-optional', 'true')
+  await expect(restingLabel).toHaveAttribute('data-edge-optional', 'true')
+  expect(await computedStyleValue(restingEdge, 'opacity')).toBe('0.6')
+  expect(await computedStyleValue(restingLabel, 'opacity')).toBe('0.6')
+
   await page.goto('/?edge=F7_sub')
+
+  const selectedEdge = page.locator('.semantic-edge[data-edge-id="F7_sub"]')
+  const selectedLabel = page.locator('.edge-label[data-edge-id="F7_sub"]')
+
+  await expect(selectedLabel).toContainText('(optional)')
+  expect(await computedStyleValue(selectedEdge, 'opacity')).toBe('1')
+  expect(await computedStyleValue(selectedLabel, 'opacity')).toBe('1')
+})
+
+test('dimmed optional labels inherit the same emphasis tier as their edge paths', async ({ page }) => {
+  await page.goto('/?edge=F5')
 
   const edge = page.locator('.semantic-edge[data-edge-id="F7_sub"]')
   const label = page.locator('.edge-label[data-edge-id="F7_sub"]')
 
   await expect(edge).toHaveAttribute('data-edge-optional', 'true')
   await expect(label).toHaveAttribute('data-edge-optional', 'true')
-  await expect(label).toContainText('(optional)')
+  await expect(label).toHaveClass(/is-dimmed/)
+  expect(await computedStyleValue(edge, 'opacity')).toBe('0.46')
+  expect(await computedStyleValue(label, 'opacity')).toBe('0.46')
+})
 
-  const styles = await Promise.all([
-    edge.evaluate((element) => getComputedStyle(element).opacity),
-    label.evaluate((element) => getComputedStyle(element).opacity),
-  ])
+test('telemetry labels and paths fade together at rest and restore when selected', async ({ page }) => {
+  await page.goto('/')
 
-  expect(styles).toEqual(['0.6', '0.6'])
+  const restingPath = page.locator('.semantic-edge[data-edge-id="F_AUDIT"] .react-flow__edge-path')
+  const restingLabel = page.locator('.edge-label[data-edge-id="F_AUDIT"]')
+
+  await expect(restingLabel).toHaveAttribute('data-edge-family', 'telemetry')
+  expect(await computedStyleValue(restingPath, 'opacity')).toBe('0.82')
+  expect(await computedStyleValue(restingLabel, 'opacity')).toBe('0.82')
+
+  await page.goto('/?edge=F_AUDIT')
+
+  const selectedPath = page.locator('.semantic-edge[data-edge-id="F_AUDIT"] .react-flow__edge-path')
+  const selectedLabel = page.locator('.edge-label[data-edge-id="F_AUDIT"]')
+
+  expect(await computedStyleValue(selectedPath, 'opacity')).toBe('1')
+  expect(await computedStyleValue(selectedLabel, 'opacity')).toBe('1')
+})
+
+test('highlighted non-writeback paths receive a visible glow', async ({ page }) => {
+  await page.goto('/?edge=F1')
+
+  const highlightedPath = page.locator('.semantic-edge[data-edge-id="F1"] .react-flow__edge-path')
+  expect(await computedStyleValue(highlightedPath, 'filter')).not.toBe('none')
 })
 
 test('architecture marker defs stay stroke-relative and the write ribbon follows zoom visibility', async ({ page }) => {

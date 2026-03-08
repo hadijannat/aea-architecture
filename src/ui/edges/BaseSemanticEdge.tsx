@@ -106,10 +106,12 @@ export function BaseSemanticEdge({
             data.optional && 'is-optional',
             data.selected && 'is-selected',
             data.highlighted && 'is-highlighted',
+            data.dimmed && 'is-dimmed',
             data.sharedTagFocused && 'is-shared-tag-focused',
           )}
           aria-label={data.ariaLabel}
           data-edge-id={id}
+          data-edge-family={presentation.family}
           data-edge-optional={data.optional ? 'true' : 'false'}
           data-edge-tag-t0={isT0Edge ? 'true' : 'false'}
           data-edge-shared-tag-focus={data.sharedTagFocused ? 'true' : 'false'}

@@ -74,6 +74,7 @@ const semanticFamilyDashMap: Record<EdgeSemanticFamily, string | undefined> = {
   context: undefined,
   policy: '12 6',
   runtime: '2 6',
+  // Styled writeback edges intentionally render solid; this family rhythm remains the fallback for unstyled write semantics.
   write: '18 5 4 5',
   feedback: '7 4',
   telemetry: '1 5',

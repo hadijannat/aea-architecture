@@ -5,6 +5,7 @@ import {
   getSemanticMarkerGeometry,
   getSemanticMarkerTokens,
   getSemanticPresentation,
+  getSemanticStrokeDash,
   semanticFamilyOrder,
   resolveSemanticFamilies,
 } from '@/graph/compile/semanticPresentation'
@@ -312,6 +313,11 @@ describe('derived projections', () => {
       stroke: '#b91c1c',
     })
     expect(getSemanticPresentation('retrieval').stroke).toBe('#15803d')
+  })
+
+  it('keeps styled writeback edges solid while retaining the family dash as a fallback rhythm', () => {
+    expect(getSemanticStrokeDash('writeback', 'medium')).toBeUndefined()
+    expect(getSemanticFamilyStrokeDash('write')).toBe('18 5 4 5')
   })
 
   it('uses surface-aware marker tokens while keeping the canonical marker coordinates shared', () => {

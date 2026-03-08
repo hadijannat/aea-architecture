@@ -1926,7 +1926,12 @@
   opacity: 0.34;
 }
 
-.semantic-edge-family--telemetry:not(.is-dimmed):not(.is-selected):not(.is-highlighted) .react-flow__edge-path {
+.edge-label.is-dimmed {
+  opacity: 0.34;
+}
+
+.semantic-edge-family--telemetry:not(.is-optional):not(.is-dimmed):not(.is-selected):not(.is-highlighted):not(.is-shared-tag-focused) .react-flow__edge-path,
+.edge-label[data-edge-family='telemetry']:not(.is-optional):not(.is-dimmed):not(.is-selected):not(.is-highlighted):not(.is-shared-tag-focused) {
   opacity: 0.82;
 }
 
@@ -1936,17 +1941,30 @@
 .semantic-edge--status-ack.is-dimmed,
 .semantic-edge--tool-call.is-dimmed,
 .semantic-edge--subscription.is-dimmed,
-.semantic-edge--audit.is-dimmed {
+.semantic-edge--audit.is-dimmed,
+.semantic-edge--sequence.is-dimmed,
+.edge-label--rejection.is-dimmed,
+.edge-label--policy-soft.is-dimmed,
+.edge-label--policy-hard.is-dimmed,
+.edge-label--status-ack.is-dimmed,
+.edge-label--tool-call.is-dimmed,
+.edge-label--subscription.is-dimmed,
+.edge-label--audit.is-dimmed,
+.edge-label--sequence.is-dimmed {
   opacity: 0.46;
 }
 
-.semantic-edge.is-optional,
-.edge-label.is-optional {
+.semantic-edge.is-optional:not(.is-dimmed):not(.is-highlighted):not(.is-selected),
+.edge-label.is-optional:not(.is-dimmed):not(.is-highlighted):not(.is-selected) {
   opacity: 0.6;
 }
 
 .semantic-edge.is-shared-tag-focused:not(.is-highlighted):not(.is-selected) .react-flow__edge-path {
   filter: drop-shadow(0 0 4px color-mix(in srgb, var(--semantic-stroke, rgba(69, 90, 117, 0.22)) 16%, transparent));
+}
+
+.semantic-edge.is-highlighted .react-flow__edge-path {
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--semantic-stroke, rgba(69, 90, 117, 0.22)) 28%, transparent));
 }
 
 .semantic-edge--writeback .react-flow__edge-path,
@@ -1977,13 +1995,13 @@
 @keyframes writeback-pulse {
   0%,
   100% {
-    opacity: 0.92;
-    filter: drop-shadow(0 0 4px rgba(211, 84, 0, 0.16));
+    opacity: 0.94;
+    filter: drop-shadow(0 0 8px rgba(211, 84, 0, 0.26));
   }
 
   50% {
     opacity: 1;
-    filter: drop-shadow(0 0 10px rgba(211, 84, 0, 0.28));
+    filter: drop-shadow(0 0 16px rgba(211, 84, 0, 0.44));
   }
 }
 
