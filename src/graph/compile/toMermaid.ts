@@ -2,6 +2,7 @@ import { graphManifest } from '@/graph/spec/manifest'
 import type { EdgeSpec, GraphManifest, NodeSpec } from '@/graph/spec/schema'
 
 import { sortSequenceEdges, sortSequenceSteps } from './sequence'
+import { edgeStrokeWidth } from './semanticPresentation'
 
 const mermaidExportNotice = '%% Canonical topology export only; schematic and not viewport/state-aware.'
 
@@ -52,18 +53,7 @@ function edgeColor(edge: EdgeSpec) {
 }
 
 function edgeWidth(edge: EdgeSpec) {
-  switch (edge.style) {
-    case 'bold':
-      return '3.2px'
-    case 'medium':
-      return '2.2px'
-    case 'thin':
-      return '1.3px'
-    case 'dashed':
-      return '1.8px'
-    case 'dotted':
-      return '1.4px'
-  }
+  return `${edgeStrokeWidth(edge.style)}px`
 }
 
 function edgeLabel(edge: EdgeSpec) {

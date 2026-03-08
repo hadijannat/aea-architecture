@@ -9,9 +9,9 @@ import { resolveNodeVisual } from './nodeVisuals'
 import {
   getSemanticMarkerGeometry,
   getSemanticMarkerRefX,
+  getSemanticMarkerTokens,
   getSemanticPresentation,
   getSemanticStrokeDash,
-  semanticMarkerDimensions,
 } from './semanticPresentation'
 import { deriveDiagramState } from './toReactFlow'
 
@@ -37,8 +37,6 @@ export interface ExportSvgDocument {
 }
 
 interface ExportTokens {
-  markerWidth: number
-  markerHeight: number
   titleSize?: string
   nodeTitleSize: string
   structuralTitleSize: string
@@ -196,15 +194,16 @@ function markerMarkup(marker: ReturnType<typeof getSemanticPresentation>['marker
   return `<path d="${geometry.d}" fill="${fill}"${stroke}${strokeWidth}${strokeLinecap} />`
 }
 
-function renderMarkerDefs(tokens: ExportTokens, manifest: GraphManifest) {
+function renderMarkerDefs(surface: 'export-viewport' | 'export-publication', manifest: GraphManifest) {
   const semantics = [...new Set(manifest.edges.map((edge) => edge.semantic))]
+  const markerTokens = getSemanticMarkerTokens(surface)
 
   return `
   <defs>
     ${semantics
       .map((semantic) => {
         const presentation = getSemanticPresentation(semantic)
-        return `<marker id="marker-${semantic}" viewBox="${semanticMarkerDimensions.viewBox}" markerWidth="${tokens.markerWidth}" markerHeight="${tokens.markerHeight}" refX="${getSemanticMarkerRefX(presentation.marker)}" refY="${semanticMarkerDimensions.refY}" orient="auto" markerUnits="userSpaceOnUse">
+        return `<marker id="marker-${semantic}" viewBox="${markerTokens.viewBox}" markerWidth="${markerTokens.width}" markerHeight="${markerTokens.height}" refX="${getSemanticMarkerRefX(presentation.marker)}" refY="${markerTokens.refY}" orient="auto" markerUnits="${markerTokens.units}">
       ${markerMarkup(presentation.marker, presentation.stroke)}
     </marker>`
       })
@@ -276,8 +275,6 @@ function buildExportState(
 
 function viewportTokens(): ExportTokens {
   return {
-    markerWidth: 10,
-    markerHeight: 8,
     nodeTitleSize: '15',
     structuralTitleSize: '18',
     subtitleSize: '12',
@@ -287,19 +284,17 @@ function viewportTokens(): ExportTokens {
     stepSummarySize: '12',
     eyebrowSize: '11',
     strokeWidths: {
-      bold: 3.2,
-      medium: 2.2,
-      thin: 1.3,
-      dashed: 1.8,
-      dotted: 1.4,
+      bold: 3.6,
+      medium: 2.7,
+      thin: 1.7,
+      dashed: 2.2,
+      dotted: 1.8,
     },
   }
 }
 
 function publicationTokens(): ExportTokens {
   return {
-    markerWidth: 7,
-    markerHeight: 5.5,
     titleSize: '9pt',
     nodeTitleSize: '6.5pt',
     structuralTitleSize: '6.5pt',
@@ -310,11 +305,11 @@ function publicationTokens(): ExportTokens {
     stepSummarySize: '5.5pt',
     eyebrowSize: '5pt',
     strokeWidths: {
-      bold: 1.5,
-      medium: 1.0,
-      thin: 0.5,
-      dashed: 1.0,
-      dotted: 0.5,
+      bold: 1.7,
+      medium: 1.2,
+      thin: 0.7,
+      dashed: 1.2,
+      dotted: 0.7,
     },
   }
 }
@@ -557,7 +552,7 @@ function buildViewportSvgDocument(
       ? 'Viewport export of the live AEA architecture canvas with the synchronized VoR sequence panel.'
       : 'Viewport export of the live AEA architecture canvas.',
   )}</desc>
-  ${renderMarkerDefs(tokens, manifest)}
+  ${renderMarkerDefs('export-viewport', manifest)}
   <svg x="0" y="0" width="${architectureMetrics.width}" height="${architectureMetrics.height}" viewBox="${cropRect.x} ${cropRect.y} ${cropRect.width} ${cropRect.height}">
     <rect x="${cropRect.x - 1000}" y="${cropRect.y - 1000}" width="${cropRect.width + 2000}" height="${cropRect.height + 2000}" fill="${palette.boardBackground}" />
     ${renderArchitectureNodes(
@@ -616,7 +611,7 @@ function buildPublicationSvgDocument(
   <desc>${esc(
     'Publication export of the AEA architecture figure including the full architecture board and the VoR domain-transition sequence.',
   )}</desc>
-  ${renderMarkerDefs(tokens, manifest)}
+  ${renderMarkerDefs('export-publication', manifest)}
   <rect x="0" y="0" width="${figureWidthPt}" height="${totalHeightPt}" fill="${palette.pageBackground}" />
   <text x="9" y="18" fill="#1f2937" font-size="${tokens.titleSize}" font-family="Arial, sans-serif" font-weight="700">(a) Architecture Across NOA Zones</text>
   ${renderArchitectureNodes(

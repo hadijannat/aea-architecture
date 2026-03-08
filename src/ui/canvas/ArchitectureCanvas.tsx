@@ -13,8 +13,8 @@ import type { DiagramFlowEdge, DiagramFlowNode } from '@/graph/compile/toReactFl
 import {
   getSemanticMarkerGeometry,
   getSemanticMarkerRefX,
+  getSemanticMarkerTokens,
   getSemanticPresentation,
-  semanticMarkerDimensions,
 } from '@/graph/compile/semanticPresentation'
 import { graphManifest, resolveGraphEdge, resolveGraphNode, resolveSequenceStep } from '@/graph/spec/manifest'
 import type { ProjectionTheme } from '@/graph/spec/schema'
@@ -63,6 +63,7 @@ const edgeTypes = {
 }
 
 const architectureMarkerSemantics = [...new Set(graphManifest.edges.map((edge) => edge.semantic))]
+const architectureMarkerTokens = getSemanticMarkerTokens('architecture')
 
 function renderMarkerShape(marker: ReturnType<typeof getSemanticPresentation>['marker'], color: string) {
   const geometry = getSemanticMarkerGeometry(marker)
@@ -92,13 +93,13 @@ function ArchitectureEdgeMarkers() {
             <marker
               key={semantic}
               id={`architecture-marker-${semantic}`}
-              viewBox={semanticMarkerDimensions.viewBox}
-              markerWidth={semanticMarkerDimensions.width}
-              markerHeight={semanticMarkerDimensions.height}
+              viewBox={architectureMarkerTokens.viewBox}
+              markerWidth={architectureMarkerTokens.width}
+              markerHeight={architectureMarkerTokens.height}
               refX={getSemanticMarkerRefX(presentation.marker)}
-              refY={semanticMarkerDimensions.refY}
+              refY={architectureMarkerTokens.refY}
               orient="auto"
-              markerUnits="strokeWidth"
+              markerUnits={architectureMarkerTokens.units}
             >
               {renderMarkerShape(presentation.marker, presentation.stroke)}
             </marker>

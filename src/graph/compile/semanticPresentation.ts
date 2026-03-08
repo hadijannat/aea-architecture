@@ -9,6 +9,19 @@ export interface SemanticMarkerDimensions {
   viewBox: string
 }
 
+export type SemanticMarkerUnits = 'strokeWidth' | 'userSpaceOnUse'
+
+export type SemanticMarkerSurface =
+  | 'architecture'
+  | 'legend'
+  | 'sequence'
+  | 'export-viewport'
+  | 'export-publication'
+
+export interface SemanticMarkerTokens extends SemanticMarkerDimensions {
+  units: SemanticMarkerUnits
+}
+
 export type SemanticMarkerGeometry =
   | {
       element: 'path'
@@ -67,11 +80,47 @@ const semanticFamilyDashMap: Record<EdgeSemanticFamily, string | undefined> = {
   sequence: '10 4 2 4',
 }
 
-export const semanticMarkerDimensions: SemanticMarkerDimensions = {
-  width: 10,
-  height: 8,
+const semanticMarkerCoordinateSystem: Pick<SemanticMarkerDimensions, 'refY' | 'viewBox'> = {
   refY: 4,
   viewBox: '0 0 10 8',
+}
+
+const semanticMarkerTokensMap: Record<SemanticMarkerSurface, SemanticMarkerTokens> = {
+  architecture: {
+    width: 14,
+    height: 11,
+    refY: semanticMarkerCoordinateSystem.refY,
+    viewBox: semanticMarkerCoordinateSystem.viewBox,
+    units: 'strokeWidth',
+  },
+  legend: {
+    width: 10,
+    height: 8,
+    refY: semanticMarkerCoordinateSystem.refY,
+    viewBox: semanticMarkerCoordinateSystem.viewBox,
+    units: 'userSpaceOnUse',
+  },
+  sequence: {
+    width: 10,
+    height: 8,
+    refY: semanticMarkerCoordinateSystem.refY,
+    viewBox: semanticMarkerCoordinateSystem.viewBox,
+    units: 'userSpaceOnUse',
+  },
+  'export-viewport': {
+    width: 10,
+    height: 8,
+    refY: semanticMarkerCoordinateSystem.refY,
+    viewBox: semanticMarkerCoordinateSystem.viewBox,
+    units: 'userSpaceOnUse',
+  },
+  'export-publication': {
+    width: 7,
+    height: 5.5,
+    refY: semanticMarkerCoordinateSystem.refY,
+    viewBox: semanticMarkerCoordinateSystem.viewBox,
+    units: 'userSpaceOnUse',
+  },
 }
 
 export const semanticFamilyMembers: Record<EdgeSemanticFamily, EdgeSemantic[]> = {
@@ -285,6 +334,10 @@ export function getSemanticPresentationsForFamily(family: EdgeSemanticFamily): S
   return semanticFamilyMembers[family].map((semantic) => semanticPresentationMap[semantic])
 }
 
+export function getSemanticMarkerTokens(surface: SemanticMarkerSurface): SemanticMarkerTokens {
+  return semanticMarkerTokensMap[surface]
+}
+
 export function normalizeSemanticFamilies(values: readonly string[]): EdgeSemanticFamily[] {
   const allowed = new Set<EdgeSemanticFamily>(semanticFamilyOrder)
 
@@ -348,10 +401,10 @@ export function getSemanticMarkerGeometry(marker: SemanticMarkerKind): SemanticM
     case 'arrow':
       return {
         element: 'path',
-        d: 'M 1 1 L 9 4 L 1 7',
+        d: 'M 0.5 0.8 L 9.5 4 L 0.5 7.2',
         fill: 'none',
         stroke: 'currentColor',
-        strokeWidth: 1.7,
+        strokeWidth: 2.2,
         strokeLinecap: 'round',
       }
     case 'circle':
@@ -368,7 +421,7 @@ export function getSemanticMarkerGeometry(marker: SemanticMarkerKind): SemanticM
         d: 'M 1 1 L 1 7 M 1 4 L 9 4',
         fill: 'none',
         stroke: 'currentColor',
-        strokeWidth: 1.8,
+        strokeWidth: 2.3,
         strokeLinecap: 'round',
       }
     case 'diamond':
@@ -390,15 +443,15 @@ export function getSemanticMarkerGeometry(marker: SemanticMarkerKind): SemanticM
 export function edgeStrokeWidth(style: EdgeStyle): number {
   switch (style) {
     case 'bold':
-      return 3.2
+      return 3.6
     case 'medium':
-      return 2.2
+      return 2.7
     case 'dashed':
-      return 1.8
+      return 2.2
     case 'dotted':
-      return 1.4
+      return 1.8
     case 'thin':
     default:
-      return 1.3
+      return 1.7
   }
 }

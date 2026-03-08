@@ -5,10 +5,10 @@ import {
   getSemanticLegendStyle,
   getSemanticMarkerGeometry,
   getSemanticMarkerRefX,
+  getSemanticMarkerTokens,
   getSemanticPresentationsForFamily,
   getSemanticStrokeDash,
   semanticFamilyOrder,
-  semanticMarkerDimensions,
 } from '@/graph/compile/semanticPresentation'
 
 const stateItems = [
@@ -17,6 +17,8 @@ const stateItems = [
   { id: 'dimmed', label: 'Dimmed context' },
   { id: 'write-overlay', label: 'Write-path overview overlay' },
 ] as const
+
+const legendMarkerTokens = getSemanticMarkerTokens('legend')
 
 function renderMarkerShape(
   marker: ReturnType<typeof getSemanticPresentationsForFamily>[number],
@@ -69,13 +71,13 @@ export function SemanticLegend() {
                     <defs>
                       <marker
                         id={`legend-marker-${presentation.semantic}`}
-                        viewBox={semanticMarkerDimensions.viewBox}
-                        markerWidth={semanticMarkerDimensions.width}
-                        markerHeight={semanticMarkerDimensions.height}
+                        viewBox={legendMarkerTokens.viewBox}
+                        markerWidth={legendMarkerTokens.width}
+                        markerHeight={legendMarkerTokens.height}
                         refX={getSemanticMarkerRefX(presentation.marker)}
-                        refY={semanticMarkerDimensions.refY}
+                        refY={legendMarkerTokens.refY}
                         orient="auto"
-                        markerUnits="strokeWidth"
+                        markerUnits={legendMarkerTokens.units}
                       >
                         {renderMarkerShape(presentation, presentation.stroke)}
                       </marker>

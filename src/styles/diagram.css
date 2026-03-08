@@ -1926,6 +1926,10 @@
   opacity: 0.34;
 }
 
+.semantic-edge-family--telemetry:not(.is-dimmed):not(.is-selected):not(.is-highlighted) .react-flow__edge-path {
+  opacity: 0.82;
+}
+
 .semantic-edge--rejection.is-dimmed,
 .semantic-edge--policy-soft.is-dimmed,
 .semantic-edge--policy-hard.is-dimmed,
@@ -1947,11 +1951,11 @@
 
 .semantic-edge--writeback .react-flow__edge-path,
 .edge-label--writeback {
-  filter: drop-shadow(0 0 6px rgba(211, 84, 0, 0.12));
+  filter: drop-shadow(0 0 8px rgba(211, 84, 0, 0.26));
 }
 
 .semantic-edge--writeback.is-highlighted .react-flow__edge-path {
-  filter: drop-shadow(0 0 10px rgba(211, 84, 0, 0.2));
+  filter: drop-shadow(0 0 10px rgba(211, 84, 0, 0.38));
 }
 
 .edge-label--writeback {

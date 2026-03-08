@@ -5,9 +5,9 @@ import {
   edgeStrokeWidth,
   getSemanticMarkerGeometry,
   getSemanticMarkerRefX,
+  getSemanticMarkerTokens,
   getSemanticPresentation,
   getSemanticStrokeDash,
-  semanticMarkerDimensions,
 } from '@/graph/compile/semanticPresentation'
 import { type SequenceBoardModel } from '@/graph/compile/sequenceBoard'
 import { edgeEntityKey, nodeEntityKey, stepEntityKey } from '@/graph/spec/manifest'
@@ -22,6 +22,8 @@ interface SequencePanelProps {
   onSelectEdge(edgeId: string): void
   onHover(key?: EntityKey): void
 }
+
+const sequenceMarkerTokens = getSemanticMarkerTokens('sequence')
 
 function renderMarkerShape(marker: ReturnType<typeof getSemanticPresentation>['marker'], color: string) {
   const geometry = getSemanticMarkerGeometry(marker)
@@ -92,13 +94,13 @@ export function SequencePanel({
                   <marker
                     key={semantic}
                     id={`sequence-marker-${semantic}`}
-                    viewBox={semanticMarkerDimensions.viewBox}
-                    markerWidth={semanticMarkerDimensions.width}
-                    markerHeight={semanticMarkerDimensions.height}
+                    viewBox={sequenceMarkerTokens.viewBox}
+                    markerWidth={sequenceMarkerTokens.width}
+                    markerHeight={sequenceMarkerTokens.height}
                     refX={getSemanticMarkerRefX(presentation.marker)}
-                    refY={semanticMarkerDimensions.refY}
+                    refY={sequenceMarkerTokens.refY}
                     orient="auto"
-                    markerUnits="userSpaceOnUse"
+                    markerUnits={sequenceMarkerTokens.units}
                   >
                     {renderMarkerShape(presentation.marker, presentation.stroke)}
                   </marker>

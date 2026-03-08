@@ -1,6 +1,9 @@
 import { buildSearchResults } from '@/graph/compile/searchIndex'
 import {
+  edgeStrokeWidth,
   getSemanticFamilyStrokeDash,
+  getSemanticMarkerGeometry,
+  getSemanticMarkerTokens,
   getSemanticPresentation,
   semanticFamilyOrder,
   resolveSemanticFamilies,
@@ -311,6 +314,62 @@ describe('derived projections', () => {
     expect(getSemanticPresentation('retrieval').stroke).toBe('#15803d')
   })
 
+  it('uses surface-aware marker tokens while keeping the canonical marker coordinates shared', () => {
+    expect(getSemanticMarkerTokens('architecture')).toMatchObject({
+      width: 14,
+      height: 11,
+      refY: 4,
+      viewBox: '0 0 10 8',
+      units: 'strokeWidth',
+    })
+    expect(getSemanticMarkerTokens('legend')).toMatchObject({
+      width: 10,
+      height: 8,
+      refY: 4,
+      viewBox: '0 0 10 8',
+      units: 'userSpaceOnUse',
+    })
+    expect(getSemanticMarkerTokens('sequence')).toMatchObject({
+      width: 10,
+      height: 8,
+      refY: 4,
+      viewBox: '0 0 10 8',
+      units: 'userSpaceOnUse',
+    })
+    expect(getSemanticMarkerTokens('export-viewport')).toMatchObject({
+      width: 10,
+      height: 8,
+      refY: 4,
+      viewBox: '0 0 10 8',
+      units: 'userSpaceOnUse',
+    })
+    expect(getSemanticMarkerTokens('export-publication')).toMatchObject({
+      width: 7,
+      height: 5.5,
+      refY: 4,
+      viewBox: '0 0 10 8',
+      units: 'userSpaceOnUse',
+    })
+  })
+
+  it('strengthens open markers and runtime stroke widths for the default zoom', () => {
+    expect(getSemanticMarkerGeometry('arrow')).toMatchObject({
+      element: 'path',
+      d: 'M 0.5 0.8 L 9.5 4 L 0.5 7.2',
+      strokeWidth: 2.2,
+    })
+    expect(getSemanticMarkerGeometry('tee')).toMatchObject({
+      element: 'path',
+      d: 'M 1 1 L 1 7 M 1 4 L 9 4',
+      strokeWidth: 2.3,
+    })
+    expect(edgeStrokeWidth('bold')).toBe(3.6)
+    expect(edgeStrokeWidth('medium')).toBe(2.7)
+    expect(edgeStrokeWidth('dashed')).toBe(2.2)
+    expect(edgeStrokeWidth('dotted')).toBe(1.8)
+    expect(edgeStrokeWidth('thin')).toBe(1.7)
+  })
+
   it('marks optional architecture edges explicitly and animates tool-call edges', async () => {
     const state = await createState()
     const derived = deriveDiagramState(state)
@@ -481,7 +540,7 @@ describe('exports', () => {
     expect(architectureMermaid).toContain('subgraph GW_NE178["NE 178 VoR interface"]')
     expect(architectureMermaid).toContain('F_GW2:')
     expect(architectureMermaid).toContain('[diode, medium]')
-    expect(architectureMermaid).toContain('stroke-width:3.2px')
+    expect(architectureMermaid).toContain('stroke-width:3.6px')
     expect(sequenceMermaid).toContain('%% Canonical topology export only; schematic and not viewport/state-aware.')
     expect(sequenceMermaid).toContain('PB_AEA')
     expect(sequenceMermaid).toContain('PB_REJECT_OUT')
@@ -690,14 +749,28 @@ describe('exports', () => {
   it('exports shared marker definitions and semantic-specific dash rhythms', async () => {
     const state = await createState()
     const viewportDocument = buildExportSvgDocument(state, { mode: 'viewport' })
+    const publicationDocument = buildExportSvgDocument(state, { mode: 'publication' })
 
     expect(viewportDocument.svg).toContain('id="marker-gateway-internal"')
     expect(viewportDocument.svg).toContain('id="marker-tool-call"')
     expect(viewportDocument.svg).toContain('id="marker-rejection"')
+    expect(viewportDocument.svg).toContain('markerWidth="10"')
+    expect(viewportDocument.svg).toContain('markerHeight="8"')
+    expect(viewportDocument.svg).toContain('refY="4"')
     expect(viewportDocument.svg).toContain('markerUnits="userSpaceOnUse"')
+    expect(viewportDocument.svg).toContain('stroke-width="3.6"')
+    expect(viewportDocument.svg).toContain('stroke-width="2.7"')
+    expect(viewportDocument.svg).toContain('stroke-width="1.7"')
     expect(viewportDocument.svg).toContain('stroke-dasharray="3.2 7.2 1.6 7.2"')
     expect(viewportDocument.svg).toContain('stroke-dasharray="5 7"')
     expect(viewportDocument.svg).toContain('stroke-dasharray="1.2 8.4"')
+    expect(publicationDocument.svg).toContain('markerWidth="7"')
+    expect(publicationDocument.svg).toContain('markerHeight="5.5"')
+    expect(publicationDocument.svg).toContain('refY="4"')
+    expect(publicationDocument.svg).toContain('markerUnits="userSpaceOnUse"')
+    expect(publicationDocument.svg).toContain('stroke-width="1.7"')
+    expect(publicationDocument.svg).toContain('stroke-width="1.2"')
+    expect(publicationDocument.svg).toContain('stroke-width="0.7"')
   })
 
   it('respects the active viewport theme while forcing publication exports to analysis mode', async () => {

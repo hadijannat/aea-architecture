@@ -418,11 +418,17 @@ test('architecture marker defs stay stroke-relative and the write ribbon follows
   await page.goto('/')
 
   await expect(page.locator('#architecture-marker-writeback')).toHaveAttribute('markerUnits', 'strokeWidth')
+  await expect(page.locator('#architecture-marker-writeback')).toHaveAttribute('markerWidth', '14')
+  await expect(page.locator('#architecture-marker-writeback')).toHaveAttribute('markerHeight', '11')
+  await expect(page.locator('#architecture-marker-writeback')).toHaveAttribute('refY', '4')
   await page.getByRole('button', { name: 'Show legend' }).click()
   await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute(
     'markerUnits',
-    'strokeWidth',
+    'userSpaceOnUse',
   )
+  await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute('markerWidth', '10')
+  await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute('markerHeight', '8')
+  await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute('refY', '4')
 
   const writePreset = page.locator('[data-focus-preset="write"]')
   await writePreset.click({ force: true })
@@ -877,6 +883,14 @@ test('visual regression: compact-node summary state', async ({ page }) => {
   await ensureCompactDensity(page, 'S2')
   await page.mouse.move(0, 0)
   await expect(page.locator('.architecture-canvas')).toHaveScreenshot('compact-node-summary.png')
+})
+
+test('visual regression: open-marker readability and legend swatches', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Show legend' }).click()
+  await page.mouse.move(0, 0)
+  await expect(page.locator('.architecture-canvas')).toHaveScreenshot('open-marker-readability.png')
 })
 
 test('visual regression: analysis theme', async ({ page }) => {
