@@ -17,34 +17,64 @@ async function assertFocusVisible(locator: Locator) {
     const computed = getComputedStyle(element)
     return {
       boxShadow: computed.boxShadow,
+      outlineColor: computed.outlineColor,
+      outlineStyle: computed.outlineStyle,
+      outlineWidth: computed.outlineWidth,
       matchesFocusVisible: element.matches(':focus-visible'),
     }
   })
 
   expect(styles.matchesFocusVisible).toBe(true)
+  expect(styles.boxShadow !== 'none' || styles.outlineStyle !== 'none').toBe(true)
+
+  if (styles.outlineStyle !== 'none') {
+    expect(styles.outlineWidth).not.toBe('0px')
+    expect(styles.outlineColor).toContain('59, 130, 246')
+    return
+  }
+
   expect(styles.boxShadow).not.toBe('none')
-  expect(styles.boxShadow).toContain('17, 24, 39')
 }
 
-async function ensureCompactDensity(page: Page, nodeId: string) {
+async function ensureNodeRenderMode(
+  page: Page,
+  nodeId: string,
+  mode: 'icon' | 'navigation' | 'detail' | 'collapsed',
+  action: 'zoom-in' | 'zoom-out' = 'zoom-out',
+  maxClicks = 8,
+) {
   const node = page.locator(`.node-card[data-node-id="${nodeId}"]`)
-  const zoomOut = page.locator('.react-flow__controls-button').nth(1)
+  const control = page.locator(
+    action === 'zoom-in'
+      ? '.architecture-canvas .react-flow__controls-zoomin:not([disabled])'
+      : '.architecture-canvas .react-flow__controls-zoomout:not([disabled])',
+  )
 
-  for (let index = 0; index < 7; index += 1) {
-    if ((await node.getAttribute('data-node-density')) === 'compact') {
-      return
+  for (let index = 0; index < maxClicks; index += 1) {
+    if ((await node.getAttribute('data-node-density')) === mode) {
+      return node
     }
-    await zoomOut.click()
+
+    await control.click()
     await page.waitForTimeout(160)
   }
 
-  throw new Error(`Node ${nodeId} did not enter compact density`)
+  throw new Error(`Node ${nodeId} did not enter ${mode} render mode`)
+}
+
+async function getArchitectureEdgeLabelMode(page: Page, edgeId: string) {
+  const edgeLabel = page.locator(`.edge-label[data-edge-id="${edgeId}"]`)
+  if ((await edgeLabel.count()) === 0) {
+    return 'hidden'
+  }
+
+  return (await edgeLabel.getAttribute('data-edge-label-mode')) ?? 'hidden'
 }
 
 async function ensureEdgeLabelMode(
   page: Page,
   edgeId: string,
-  mode: 'compact' | 'display' | 'expanded',
+  mode: 'hidden' | 'chip' | 'detail',
   action: 'zoom-in' | 'zoom-out',
   maxClicks = 8,
 ) {
@@ -56,7 +86,7 @@ async function ensureEdgeLabelMode(
   )
 
   for (let index = 0; index < maxClicks; index += 1) {
-    if ((await edgeLabel.getAttribute('data-edge-label-mode')) === mode) {
+    if ((await getArchitectureEdgeLabelMode(page, edgeId)) === mode) {
       return edgeLabel
     }
     await control.click()
@@ -64,6 +94,10 @@ async function ensureEdgeLabelMode(
   }
 
   throw new Error(`Edge ${edgeId} did not enter ${mode} label mode`)
+}
+
+function architectureMainEdgePath(page: Page, edgeId: string) {
+  return page.locator(`.semantic-edge[data-edge-id="${edgeId}"] .react-flow__edge-path`).last()
 }
 
 async function viewportTransform(page: Page) {
@@ -175,7 +209,7 @@ function boxesOverlap(
 
 test('selecting F5 highlights the VoR sequence and inspector', async ({ page }) => {
   await page.goto('/')
-  const f5Edge = page.getByRole('button', { name: /^F5:/ })
+  const f5Edge = await ensureEdgeLabelMode(page, 'F5', 'chip', 'zoom-in')
   await expect(f5Edge).toBeVisible()
   await f5Edge.dispatchEvent('click')
   await expect(page.getByRole('heading', { name: 'F5' })).toBeVisible()
@@ -185,7 +219,7 @@ test('selecting F5 highlights the VoR sequence and inspector', async ({ page }) 
 test('filtering by C4 keeps the write path visible', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'C4: Actuation is exclusive to the VoR path' }).click()
-  await expect(page.getByRole('button', { name: /^F5:/ })).toBeVisible()
+  await expect(await ensureEdgeLabelMode(page, 'F5', 'chip', 'zoom-in')).toBeVisible()
   await expect(page.getByRole('button', { name: /PB5: Mapping Verification \+ Execution/ })).toBeVisible()
 })
 
@@ -199,18 +233,22 @@ test('search results can jump directly to a sequence step', async ({ page }) => 
 
 test('selecting F_VoR_ACK highlights the Panel B acknowledgement with its action label', async ({ page }) => {
   await page.goto('/')
-  const vorAckEdge = page.getByRole('button', { name: /^F_VoR_ACK:/ })
+  const vorAckEdge = await ensureEdgeLabelMode(page, 'F_VoR_ACK', 'chip', 'zoom-in')
   await expect(vorAckEdge).toBeVisible()
   await vorAckEdge.dispatchEvent('click')
   await expect(page.getByRole('heading', { name: 'F_VoR_ACK' })).toBeVisible()
   await expect(page.getByRole('button', { name: /PB_ACK/ })).toBeVisible()
-  await expect(page.locator('.sequence-edge-label.is-highlighted')).toContainText('Return status')
+  await expect(page.locator('.sequence-edge-label.is-highlighted')).toContainText('ACK signal')
 })
 
 test('edge controls expose semantic accessible names', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('button', { name: /^F5: writeback edge from/ })).toBeVisible()
-  await expect(page.getByRole('button', { name: /^F_VoR_ACK: status-ack edge from/ })).toBeVisible()
+  await expect(await ensureEdgeLabelMode(page, 'F5', 'chip', 'zoom-in')).toHaveAccessibleName(
+    /^F5: writeback edge from/,
+  )
+  await expect(await ensureEdgeLabelMode(page, 'F_VoR_ACK', 'chip', 'zoom-in')).toHaveAccessibleName(
+    /^F_VoR_ACK: status-ack edge from/,
+  )
 })
 
 test('export controls use viewport and publication labels', async ({ page }) => {
@@ -257,7 +295,7 @@ test('desktop canvas keeps topology visible while the legend stays collapsed by 
   await expect(page.locator('[data-overview-node-id="VOI"]')).toBeVisible()
   await expect(page.locator('[data-overview-node-id="ACT1"]')).toBeVisible()
   await expect(page.locator('[data-overview-legend-panel]')).toHaveCount(0)
-  await page.getByRole('button', { name: 'Show legend' }).click()
+  await page.getByRole('button', { name: 'Expand legend' }).click()
   await expect(page.locator('[data-overview-legend-panel]')).toBeVisible()
   await expect(page.locator('[data-legend-item="status-ack"]')).toBeVisible()
   await expect(page.locator('#legend-marker-status-ack')).toHaveAttribute('markerUnits', 'userSpaceOnUse')
@@ -296,43 +334,42 @@ test('selected sequence edges expand from ids into human-readable action labels'
   const sequenceLabel = page.locator('.sequence-edge-label[data-edge-id="PB_F1"]')
 
   await expect(ackLabel).toHaveAttribute('data-edge-label-mode', 'expanded')
-  await expect(ackLabel).toContainText('Return status')
+  await expect(ackLabel).toContainText('ACK signal')
   await expect(sequenceLabel).toHaveAttribute('data-edge-label-mode', 'compact')
   await expect(sequenceLabel).toHaveText('PB_F1')
 })
 
-test('architecture edge labels retain ids in display and expanded modes', async ({ page }) => {
+test('architecture edge labels retain ids in chip and detail modes', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
   await page.waitForTimeout(700)
 
-  const edgeLabel = await ensureEdgeLabelMode(page, 'F4', 'compact', 'zoom-out')
-  await expect(edgeLabel).toHaveText('F4')
+  await ensureEdgeLabelMode(page, 'F4', 'hidden', 'zoom-out')
+  await expect(page.locator('.edge-label[data-edge-id="F4"]')).toHaveCount(0)
 
-  await ensureEdgeLabelMode(page, 'F4', 'display', 'zoom-in')
-  await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'display')
+  const edgeLabel = await ensureEdgeLabelMode(page, 'F4', 'chip', 'zoom-in')
+  await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'chip')
   await expect(edgeLabel).toHaveText('F4 · Await approval')
 
-  await ensureEdgeLabelMode(page, 'F4', 'expanded', 'zoom-in')
-  await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'expanded')
-  await expect(edgeLabel).toHaveText('F4 · Await approval')
+  await page.goto('/?edge=F4')
+  const detailedLabel = await ensureEdgeLabelMode(page, 'F4', 'detail', 'zoom-in')
+  await expect(detailedLabel).toHaveAttribute('data-edge-label-mode', 'detail')
+  await expect(detailedLabel).toContainText('F4 · Await approval')
 })
 
-test('diode edges keep the diode suffix across compact, display, and expanded label modes', async ({ page }) => {
+test('diode edges use dedicated diode markers with readable labels', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
   await page.waitForTimeout(700)
 
-  const edgeLabel = await ensureEdgeLabelMode(page, 'F_GW2', 'compact', 'zoom-out')
-  await expect(edgeLabel).toHaveText('F_GW2 ⊘')
+  const edgeLabel = await ensureEdgeLabelMode(page, 'F_GW2', 'chip', 'zoom-in')
+  await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'chip')
+  await expect(edgeLabel).toHaveText('F_GW2 · Ingress')
 
-  await ensureEdgeLabelMode(page, 'F_GW2', 'display', 'zoom-in')
-  await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'display')
-  await expect(edgeLabel).toHaveText('F_GW2 · Ingress ⊘')
-
-  await ensureEdgeLabelMode(page, 'F_GW2', 'expanded', 'zoom-in')
-  await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'expanded')
-  await expect(edgeLabel).toHaveText('F_GW2 · Ingress ⊘')
+  await expect(architectureMainEdgePath(page, 'F_GW2')).toHaveAttribute(
+    'marker-end',
+    /architecture-marker-gateway-internal-diode/,
+  )
 })
 
 test('F3e and F3g display labels stay separated at the desktop viewport', async ({ page }) => {
@@ -340,11 +377,11 @@ test('F3e and F3g display labels stay separated at the desktop viewport', async 
   await page.goto('/')
   await page.waitForTimeout(700)
 
-  const f3eLabel = await ensureEdgeLabelMode(page, 'F3e', 'display', 'zoom-in')
-  const f3gLabel = await ensureEdgeLabelMode(page, 'F3g', 'display', 'zoom-in')
+  const f3eLabel = await ensureEdgeLabelMode(page, 'F3e', 'chip', 'zoom-in')
+  const f3gLabel = await ensureEdgeLabelMode(page, 'F3g', 'chip', 'zoom-in')
 
-  await expect(f3eLabel).toHaveAttribute('data-edge-label-mode', 'display')
-  await expect(f3gLabel).toHaveAttribute('data-edge-label-mode', 'display')
+  await expect(f3eLabel).toHaveAttribute('data-edge-label-mode', 'chip')
+  await expect(f3gLabel).toHaveAttribute('data-edge-label-mode', 'chip')
 
   const [f3eBox, f3gBox] = await Promise.all([f3eLabel.boundingBox(), f3gLabel.boundingBox()])
 
@@ -353,26 +390,17 @@ test('F3e and F3g display labels stay separated at the desktop viewport', async 
   expect(boxesOverlap(f3eBox!, f3gBox!, 0)).toBe(false)
 })
 
-test('compact node cards hide subtitle and metadata at low zoom', async ({ page }) => {
+test('overview node tiles hide subtitle and metadata at low zoom', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
   await page.waitForTimeout(700)
 
-  const plannerCard = page.locator('.node-card[data-node-id="DEC_R2"]')
-  const zoomOut = page.locator('.architecture-canvas .react-flow__controls-zoomout:not([disabled])')
-
-  for (let index = 0; index < 4; index += 1) {
-    if ((await plannerCard.getAttribute('data-node-density')) === 'compact') {
-      break
-    }
-    await zoomOut.click()
-    await page.waitForTimeout(160)
-  }
-
-  await expect(plannerCard).toHaveAttribute('data-node-density', 'compact')
-  await expect(plannerCard.locator('.node-card__subtitle')).toBeHidden()
-  await expect(plannerCard.locator('.node-card__description')).toBeHidden()
-  await expect(plannerCard.locator('.node-card__meta')).toBeHidden()
+  const plannerCard = await ensureNodeRenderMode(page, 'DEC_R2', 'icon', 'zoom-out')
+  await expect(plannerCard).toHaveAttribute('data-node-density', 'icon')
+  await expect(plannerCard.locator('.node-card__icon-tile')).toBeVisible()
+  await expect(plannerCard.locator('.node-card__subtitle')).toHaveCount(0)
+  await expect(plannerCard.locator('.node-card__description')).toHaveCount(0)
+  await expect(plannerCard.locator('.node-card__meta')).toHaveCount(0)
 })
 
 test('toggle chips expose pressed state and the updated lane copy', async ({ page }) => {
@@ -390,7 +418,9 @@ test('toggle chips expose pressed state and the updated lane copy', async ({ pag
   await expect(page.getByRole('button', { name: 'Hide VoR sequence' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Write corridor focus' })).toBeVisible()
   await expect(page.locator('[data-focus-preset="guardrail"]')).toContainText('Guardrails')
-  await expect(page.locator('[data-hotspot-id="write"] .semantic-overview__hotspot-label')).toHaveText('Write')
+  await expect(page.locator('[data-hotspot-id="write"] .semantic-overview__hotspot-label')).toHaveText(
+    'Write corridor',
+  )
 
   const claimC4 = page.getByRole('button', { name: 'C4: Actuation is exclusive to the VoR path' })
   await expect(claimC4).toHaveAttribute('aria-pressed', 'false')
@@ -452,7 +482,7 @@ test('optional architecture edges only reduce emphasis while resting', async ({ 
   await page.goto('/')
 
   const restingEdge = page.locator('.semantic-edge[data-edge-id="F7_sub"]')
-  const restingLabel = page.locator('.edge-label[data-edge-id="F7_sub"]')
+  const restingLabel = await ensureEdgeLabelMode(page, 'F7_sub', 'chip', 'zoom-in')
 
   await expect(restingEdge).toHaveAttribute('data-edge-optional', 'true')
   await expect(restingLabel).toHaveAttribute('data-edge-optional', 'true')
@@ -462,7 +492,7 @@ test('optional architecture edges only reduce emphasis while resting', async ({ 
   await page.goto('/?edge=F7_sub')
 
   const selectedEdge = page.locator('.semantic-edge[data-edge-id="F7_sub"]')
-  const selectedLabel = page.locator('.edge-label[data-edge-id="F7_sub"]')
+  const selectedLabel = await ensureEdgeLabelMode(page, 'F7_sub', 'detail', 'zoom-in')
 
   await expect(selectedLabel).toContainText('(optional)')
   expect(await computedStyleValue(selectedEdge, 'opacity')).toBe('1')
@@ -473,7 +503,7 @@ test('dimmed optional labels inherit the same emphasis tier as their edge paths'
   await page.goto('/?edge=F5')
 
   const edge = page.locator('.semantic-edge[data-edge-id="F7_sub"]')
-  const label = page.locator('.edge-label[data-edge-id="F7_sub"]')
+  const label = await ensureEdgeLabelMode(page, 'F7_sub', 'chip', 'zoom-in')
 
   await expect(edge).toHaveAttribute('data-edge-optional', 'true')
   await expect(label).toHaveAttribute('data-edge-optional', 'true')
@@ -485,8 +515,8 @@ test('dimmed optional labels inherit the same emphasis tier as their edge paths'
 test('telemetry labels and paths fade together at rest and restore when selected', async ({ page }) => {
   await page.goto('/')
 
-  const restingPath = page.locator('.semantic-edge[data-edge-id="F_AUDIT"] .react-flow__edge-path')
-  const restingLabel = page.locator('.edge-label[data-edge-id="F_AUDIT"]')
+  const restingPath = architectureMainEdgePath(page, 'F_AUDIT')
+  const restingLabel = await ensureEdgeLabelMode(page, 'F_AUDIT', 'chip', 'zoom-in')
 
   await expect(restingLabel).toHaveAttribute('data-edge-family', 'telemetry')
   expect(await computedStyleValue(restingPath, 'opacity')).toBe('0.82')
@@ -494,8 +524,8 @@ test('telemetry labels and paths fade together at rest and restore when selected
 
   await page.goto('/?edge=F_AUDIT')
 
-  const selectedPath = page.locator('.semantic-edge[data-edge-id="F_AUDIT"] .react-flow__edge-path')
-  const selectedLabel = page.locator('.edge-label[data-edge-id="F_AUDIT"]')
+  const selectedPath = architectureMainEdgePath(page, 'F_AUDIT')
+  const selectedLabel = await ensureEdgeLabelMode(page, 'F_AUDIT', 'detail', 'zoom-in')
 
   expect(await computedStyleValue(selectedPath, 'opacity')).toBe('1')
   expect(await computedStyleValue(selectedLabel, 'opacity')).toBe('1')
@@ -504,7 +534,7 @@ test('telemetry labels and paths fade together at rest and restore when selected
 test('highlighted non-writeback paths receive a visible glow', async ({ page }) => {
   await page.goto('/?edge=F1')
 
-  const highlightedPath = page.locator('.semantic-edge[data-edge-id="F1"] .react-flow__edge-path')
+  const highlightedPath = architectureMainEdgePath(page, 'F1')
   expect(await computedStyleValue(highlightedPath, 'filter')).not.toBe('none')
 })
 
@@ -512,17 +542,17 @@ test('architecture marker defs stay stroke-relative and the write ribbon follows
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
 
-  await expect(page.locator('#architecture-marker-writeback')).toHaveAttribute('markerUnits', 'strokeWidth')
-  await expect(page.locator('#architecture-marker-writeback')).toHaveAttribute('markerWidth', '14')
-  await expect(page.locator('#architecture-marker-writeback')).toHaveAttribute('markerHeight', '11')
-  await expect(page.locator('#architecture-marker-writeback')).toHaveAttribute('refY', '4')
-  await page.getByRole('button', { name: 'Show legend' }).click()
+  await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('markerUnits', 'strokeWidth')
+  await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('markerWidth', '18')
+  await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('markerHeight', '14')
+  await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('refY', '4')
+  await page.getByRole('button', { name: 'Expand legend' }).click()
   await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute(
     'markerUnits',
     'userSpaceOnUse',
   )
-  await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute('markerWidth', '10')
-  await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute('markerHeight', '8')
+  await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute('markerWidth', '12')
+  await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute('markerHeight', '10')
   await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute('refY', '4')
 
   const writePreset = page.locator('[data-focus-preset="write"]')
@@ -659,22 +689,19 @@ test('edge inspector surfaces diode and optional rendering semantics', async ({ 
   await expect(optionalInspector).toContainText('Rendered with reduced emphasis because this flow is documentation-only or conditional.')
 })
 
-test('compact nodes summarize metadata and reveal the full chips on hover', async ({ page }) => {
+test('detail nodes expose claim dots and reveal claim ids on hover', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
-  await page.goto('/')
-  await ensureCompactDensity(page, 'S2')
+  await page.goto('/?node=S2')
 
   const node = page.locator('.node-card[data-node-id="S2"]')
-  await expect(node).toHaveAttribute('data-node-density', 'compact')
-  await expect(node.locator('.node-card__subtitle')).toBeVisible()
-  await expect(node.locator('[data-node-meta-summary="standards"]')).toContainText('2 standards')
-  await expect(node.locator('[data-node-meta-summary="claims"]')).toContainText('3 claims')
-  expect(await node.getAttribute('title')).toBeNull()
+  const firstClaim = node.locator('.node-card__claim-dot').first()
 
-  await node.hover()
-  await expect(node.locator('[data-node-meta-popover]')).toBeVisible()
-  await expect(node.locator('[data-node-meta-popover]')).toContainText('C3')
-  await expect(node.locator('[data-node-meta-popover]')).toContainText('PA-DIM')
+  await expect(node).toHaveAttribute('data-node-density', 'detail')
+  await expect(node.locator('.node-card__claim-dot')).toHaveCount(3)
+  await expect(firstClaim.locator('.node-card__claim-dot-label')).toHaveCSS('opacity', '0')
+
+  await firstClaim.hover()
+  await expect(firstClaim.locator('.node-card__claim-dot-label')).toHaveCSS('opacity', '1')
 })
 
 test('analysis theme persists across reloads', async ({ page }) => {
@@ -744,33 +771,42 @@ test('runtime node surfaces consume the manifest visual tokens', async ({ page }
     borderColor: hexToRgbString('#d35400'),
   })
   expect(await nodeSurfaceStyles(page, 'DEC_G1')).toEqual({
-    backgroundColor: hexToRgbString('#ffffff'),
-    borderColor: hexToRgbString('#455a75'),
+    backgroundColor: hexToRgbString('#EFF6FF'),
+    borderColor: hexToRgbString('#BFDBFE'),
   })
   expect(await nodeSurfaceStyles(page, 'DEC_G0')).toEqual({
-    backgroundColor: hexToRgbString('#ffffff'),
-    borderColor: hexToRgbString('#7c3aed'),
+    backgroundColor: hexToRgbString('#EFF6FF'),
+    borderColor: hexToRgbString('#BFDBFE'),
   })
   expect(await nodeSurfaceStyles(page, 'DEC_M1')).toEqual({
-    backgroundColor: hexToRgbString('#fffdf9'),
-    borderColor: hexToRgbString('#7c5a32'),
+    backgroundColor: hexToRgbString('#EFF6FF'),
+    borderColor: hexToRgbString('#BFDBFE'),
   })
   expect(await nodeSurfaceStyles(page, 'LANE_A')).toEqual({
-    backgroundColor: hexToRgbString('#f7f7f7'),
-    borderColor: hexToRgbString('#c9d0d8'),
+    backgroundColor: hexToRgbString('#FFF7ED'),
+    borderColor: hexToRgbString('#FED7AA'),
   })
   expect(await nodeSurfaceStyles(page, 'BAND_SENSE')).toEqual({
-    backgroundColor: hexToRgbString('#edf5ff'),
-    borderColor: hexToRgbString('#bfd4ef'),
+    backgroundColor: hexToRgbString('#EFF6FF'),
+    borderColor: hexToRgbString('#BFDBFE'),
   })
   expect(await nodeSurfaceStyles(page, 'BAND_DECIDE')).toEqual({
-    backgroundColor: hexToRgbString('#f6f8fc'),
-    borderColor: hexToRgbString('#ccd4e0'),
+    backgroundColor: hexToRgbString('#EFF6FF'),
+    borderColor: hexToRgbString('#BFDBFE'),
   })
   expect(await nodeSurfaceStyles(page, 'BAND_ACT')).toEqual({
-    backgroundColor: hexToRgbString('#fdf1e7'),
-    borderColor: hexToRgbString('#ddc8b6'),
+    backgroundColor: hexToRgbString('#EFF6FF'),
+    borderColor: hexToRgbString('#BFDBFE'),
   })
+  await expect(computedStyleValue(page.locator('.node-card[data-node-id="BAND_SENSE"]'), '--node-band-accent')).resolves.toContain(
+    '#2B7BE9',
+  )
+  await expect(
+    computedStyleValue(page.locator('.node-card[data-node-id="BAND_DECIDE"]'), '--node-band-accent'),
+  ).resolves.toContain('#6D5CE7')
+  await expect(computedStyleValue(page.locator('.node-card[data-node-id="BAND_ACT"]'), '--node-band-accent')).resolves.toContain(
+    '#F59E0B',
+  )
 
   const humanGate = page.locator('.node-card[data-node-id="DEC_H1"]')
   await expect(computedStyleValue(humanGate, '--node-accent')).resolves.toContain('#b45309')
@@ -789,7 +825,7 @@ test('overview navigator keeps corridor routes behind nodes and retains visible 
   const accentBox = await svgBox(actAccent)
   const arrowBox = await svgBox(corridorArrow)
 
-  expect(accentBox?.height ?? 0).toBeGreaterThan(40)
+  expect(accentBox?.height ?? 0).toBeGreaterThan(10)
   expect(arrowBox?.width ?? 0).toBeGreaterThan(60)
 
   const routePrecedesNode = await page.evaluate(() => {
@@ -848,6 +884,8 @@ test('hover cards stay clear of the overview panel', async ({ page }) => {
 
 test('shared t0 edges expose a linked focus cue during inspection', async ({ page }) => {
   await page.goto('/?edge=F3d')
+  await ensureEdgeLabelMode(page, 'F3d', 'chip', 'zoom-in')
+  await ensureEdgeLabelMode(page, 'F3h', 'chip', 'zoom-in')
 
   for (const edgeId of ['F3d', 'F3h']) {
     const edge = page.locator(`.semantic-edge[data-edge-id="${edgeId}"]`)
@@ -916,7 +954,7 @@ test('selecting an already visible node does not refit the architecture viewport
 
 test('node action menu is keyboard reachable and behaves like a menu button', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
-  await page.goto('/')
+  await page.goto('/?node=ACT1')
 
   const node = page.locator('.node-card[data-node-id="ACT1"]')
   const menuButton = node.locator('.node-card__menu-trigger')
@@ -959,9 +997,9 @@ test('write-corridor routes stay orthogonal and labels avoid nearby nodes', asyn
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/?edge=F_VoR_ACK')
   await page.keyboard.press('Escape')
-  await ensureEdgeLabelMode(page, 'F5', 'compact', 'zoom-out')
-  await ensureEdgeLabelMode(page, 'F6', 'compact', 'zoom-out')
-  await ensureEdgeLabelMode(page, 'F_VoR_ACK', 'compact', 'zoom-out')
+  await ensureEdgeLabelMode(page, 'F5', 'chip', 'zoom-in')
+  await ensureEdgeLabelMode(page, 'F6', 'chip', 'zoom-in')
+  await ensureEdgeLabelMode(page, 'F_VoR_ACK', 'chip', 'zoom-in')
 
   const edgePointsValue = await page.locator('.semantic-edge[data-edge-id="F4"]').getAttribute('data-edge-points')
   expect(edgePointsValue).toBeTruthy()
@@ -1006,6 +1044,7 @@ test('write-corridor routes stay orthogonal and labels avoid nearby nodes', asyn
 test('visual regression: desktop board with legend', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/?node=ACT1')
+  await page.getByRole('button', { name: 'Expand legend' }).click()
   await page.mouse.move(0, 0)
   await expect(page.locator('.workspace__panels')).toHaveScreenshot('desktop-board-with-legend.png')
 })
@@ -1020,7 +1059,7 @@ test('visual regression: selected sequence feedback states', async ({ page }) =>
 test('visual regression: compact-node summary state', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
-  await ensureCompactDensity(page, 'S2')
+  await ensureNodeRenderMode(page, 'S2', 'icon', 'zoom-out')
   await page.mouse.move(0, 0)
   await expect(page.locator('.architecture-canvas')).toHaveScreenshot('compact-node-summary.png')
 })
@@ -1028,7 +1067,7 @@ test('visual regression: compact-node summary state', async ({ page }) => {
 test('visual regression: open-marker readability and legend swatches', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
-  await page.getByRole('button', { name: 'Show legend' }).click()
+  await page.getByRole('button', { name: 'Expand legend' }).click()
   await page.mouse.move(0, 0)
   await expect(page.locator('.architecture-canvas')).toHaveScreenshot('open-marker-readability.png')
 })

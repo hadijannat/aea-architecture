@@ -55,6 +55,8 @@ export interface SequenceBoardModel {
   height: number
   ribbonY: number
   ackRouteY: number
+  contentTop: number
+  headerHeight: number
   steps: SequenceBoardStepModel[]
   edges: SequenceBoardEdgeModel[]
   terminals: SequenceBoardTerminalModel[]
@@ -109,6 +111,18 @@ function terminalSort(left: NodeSpec, right: NodeSpec) {
   return left.id.localeCompare(right.id)
 }
 
+function estimateBodyHeight(text: string) {
+  if (text.length > 90) {
+    return 82
+  }
+
+  if (text.length > 64) {
+    return 72
+  }
+
+  return 62
+}
+
 function edgeRoute(
   edge: EdgeSpec,
   stepRects: Record<string, BoardRect>,
@@ -130,7 +144,6 @@ function edgeRoute(
   const sourceBottom = point(sourceRect.x + sourceRect.width / 2, sourceRect.y + sourceRect.height)
   const targetLeft = point(targetRect.x, targetRect.y + targetRect.height / 2)
   const targetTop = point(targetRect.x + targetRect.width / 2, targetRect.y)
-  const targetRight = point(targetRect.x + targetRect.width, targetRect.y + targetRect.height / 2)
 
   let points: Point[]
 
@@ -145,16 +158,16 @@ function edgeRoute(
       points = [
         sourceBottom,
         point(sourceBottom.x, ackRouteY),
-        point(targetRight.x + 14, ackRouteY),
-        point(targetRight.x + 14, targetRight.y),
-        targetRight,
+        point(targetLeft.x + 40, ackRouteY),
+        point(targetLeft.x + 40, targetLeft.y + 10),
+        point(targetLeft.x, targetLeft.y + 10),
       ]
       break
     case 'PB_REJECT':
       points = [
         sourceBottom,
-        point(sourceBottom.x, targetTop.y - 18),
-        point(targetTop.x, targetTop.y - 18),
+        point(sourceBottom.x, sourceBottom.y + 38),
+        point(targetTop.x, sourceBottom.y + 38),
         targetTop,
       ]
       break
@@ -181,15 +194,16 @@ export function compileSequenceBoard(
     derivedState.highlightedStepIds.size > 0
 
   const boardPaddingX = 32
-  const ribbonY = 56
-  const stepWidth = 206
-  const stepHeight = 96
+  const contentTop = 48
+  const ribbonY = 36
+  const headerHeight = 56
+  const stepWidth = 210
   const stepGap = 18
   const leftTerminalRect: BoardRect = {
     x: boardPaddingX,
-    y: ribbonY + 14,
+    y: contentTop + 10,
     width: 156,
-    height: 68,
+    height: 98,
   }
   const firstStepX = leftTerminalRect.x + leftTerminalRect.width + 34
   const stepRects = Object.fromEntries(
@@ -197,26 +211,27 @@ export function compileSequenceBoard(
       step.id,
       {
         x: firstStepX + index * (stepWidth + stepGap),
-        y: ribbonY,
+        y: contentTop,
         width: stepWidth,
-        height: stepHeight,
+        height: headerHeight + estimateBodyHeight(step.summary),
       } satisfies BoardRect,
     ]),
   ) as Record<string, BoardRect>
+  const tallestStep = Math.max(...Object.values(stepRects).map((rect) => rect.height))
   const pb4Rect = stepRects.PB4
   const rejectRect: BoardRect = {
     x: (pb4Rect?.x ?? firstStepX) + 44,
-    y: ribbonY + stepHeight + 96,
+    y: contentTop + tallestStep + 112,
     width: 184,
-    height: 70,
+    height: 86,
   }
   const terminalRects: Record<string, BoardRect> = {
     PB_AEA: leftTerminalRect,
     PB_REJECT_OUT: rejectRect,
   }
-  const ackRouteY = ribbonY + stepHeight + 70
+  const ackRouteY = contentTop + tallestStep + 34
   const width = (stepRects.PB5?.x ?? firstStepX) + stepWidth + boardPaddingX
-  const height = rejectRect.y + rejectRect.height + 28
+  const height = rejectRect.y + rejectRect.height + 48
 
   const steps = sortSequenceSteps(manifest.steps).map((step) => {
     const highlighted = derivedState.highlightedStepIds.has(step.id)
@@ -271,6 +286,8 @@ export function compileSequenceBoard(
     height,
     ribbonY,
     ackRouteY,
+    contentTop,
+    headerHeight,
     steps,
     edges,
     terminals,

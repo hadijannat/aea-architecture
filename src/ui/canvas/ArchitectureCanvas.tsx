@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type RefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, type RefObject } from 'react'
 import {
   Background,
   ControlButton,
@@ -11,14 +11,18 @@ import {
 
 import type { DiagramFlowEdge, DiagramFlowNode } from '@/graph/compile/toReactFlow'
 import {
+  getSemanticFamilyLabel,
   getSemanticMarkerGeometry,
   getSemanticMarkerRefX,
   getSemanticMarkerTokens,
   getSemanticPresentation,
+  semanticFamilyOrder,
 } from '@/graph/compile/semanticPresentation'
 import { graphManifest, resolveGraphEdge, resolveGraphNode, resolveSequenceStep } from '@/graph/spec/manifest'
 import type { ProjectionTheme } from '@/graph/spec/schema'
 import type { DiagramStore } from '@/state/diagramStore'
+import { bandVisuals, laneVisuals, resolveSemanticVisual } from '@/graph/compile/visualSystem'
+import { boardRouteChannels } from '@/layout/board'
 
 import AckEdge from '@/ui/edges/AckEdge'
 import KpiEdge from '@/ui/edges/KpiEdge'
@@ -62,8 +66,15 @@ const edgeTypes = {
   WriteBackEdge,
 }
 
-const architectureMarkerSemantics = [...new Set(graphManifest.edges.map((edge) => edge.semantic))]
 const architectureMarkerTokens = getSemanticMarkerTokens('architecture')
+
+function resolveMarkerKind(edge: (typeof graphManifest.edges)[number]) {
+  if (edge.markers.includes('diode')) {
+    return 'diode'
+  }
+
+  return getSemanticPresentation(edge.semantic).marker
+}
 
 function renderMarkerShape(marker: ReturnType<typeof getSemanticPresentation>['marker'], color: string) {
   const geometry = getSemanticMarkerGeometry(marker)
@@ -84,29 +95,212 @@ function renderMarkerShape(marker: ReturnType<typeof getSemanticPresentation>['m
 }
 
 function ArchitectureEdgeMarkers() {
+  const markerIds = [
+    ...new Map(
+      graphManifest.edges
+        .filter((edge) => edge.panel.includes('architecture'))
+        .map((edge) => {
+          const marker = resolveMarkerKind(edge)
+          return [`${edge.semantic}:${marker}`, { semantic: edge.semantic, marker }]
+        }),
+    ).values(),
+  ]
+
   return (
     <svg className="architecture-edge-markers" width="0" height="0" aria-hidden="true" focusable="false">
       <defs>
-        {architectureMarkerSemantics.map((semantic) => {
+        {markerIds.map(({ semantic, marker }) => {
           const presentation = getSemanticPresentation(semantic)
           return (
             <marker
-              key={semantic}
-              id={`architecture-marker-${semantic}`}
+              key={`${semantic}-${marker}`}
+              id={`architecture-marker-${semantic}-${marker}`}
               viewBox={architectureMarkerTokens.viewBox}
               markerWidth={architectureMarkerTokens.width}
               markerHeight={architectureMarkerTokens.height}
-              refX={getSemanticMarkerRefX(presentation.marker)}
+              refX={getSemanticMarkerRefX(marker)}
               refY={architectureMarkerTokens.refY}
               orient="auto"
               markerUnits={architectureMarkerTokens.units}
             >
-              {renderMarkerShape(presentation.marker, presentation.stroke)}
+              {renderMarkerShape(marker, presentation.stroke)}
             </marker>
           )
         })}
       </defs>
     </svg>
+  )
+}
+
+function ArchitectureStructureOverlay({
+  nodes,
+  viewport,
+}: {
+  nodes: DiagramFlowNode[]
+  viewport: DiagramStore['ui']['viewport']
+}) {
+  const visibleNodes = useMemo(() => new Map(nodes.filter((node) => !node.hidden).map((node) => [node.id, node])), [nodes])
+
+  const overlayGeometry = useMemo(() => {
+    const laneRects = ['LANE_A', 'LANE_B', 'LANE_C']
+      .map((id) => getNodeRect(visibleNodes.get(id)))
+      .filter((rect): rect is NonNullable<ReturnType<typeof getNodeRect>> => Boolean(rect))
+    const aea = getNodeRect(visibleNodes.get('AEA'))
+    const bandSense = getNodeRect(visibleNodes.get('BAND_SENSE'))
+    const bandDecide = getNodeRect(visibleNodes.get('BAND_DECIDE'))
+    const bandAct = getNodeRect(visibleNodes.get('BAND_ACT'))
+    const gateway = getNodeRect(visibleNodes.get('GW'))
+
+    if (!aea || !bandSense || !bandDecide || !bandAct || !gateway) {
+      return null
+    }
+
+    return {
+      laneRects,
+      aea,
+      bandSense,
+      bandDecide,
+      bandAct,
+      gateway,
+      horizontalLines: [bandDecide.y - 14, bandAct.y - 14],
+      channelYs: [
+        boardRouteChannels.telemetryY,
+        boardRouteChannels.policyY,
+        boardRouteChannels.rejectionY,
+        boardRouteChannels.validationY,
+        boardRouteChannels.writeY,
+      ],
+      verticalChannels: [
+        boardRouteChannels.cpcSpineX,
+        boardRouteChannels.monitorSpineX,
+        boardRouteChannels.laneCSpineX,
+      ],
+    }
+  }, [visibleNodes])
+
+  if (!overlayGeometry) {
+    return null
+  }
+
+  const { laneRects, aea, bandSense, bandDecide, bandAct, gateway, horizontalLines, channelYs, verticalChannels } = overlayGeometry
+
+  return (
+    <div
+      className="architecture-structure-overlay"
+      aria-hidden="true"
+      style={{
+        transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+      }}
+    >
+      {laneRects.map((rect, index) => {
+        const laneId = (['A', 'B', 'C'] as const)[index]
+        return (
+          <div
+            key={`lane-strip-${laneId}`}
+            className={`architecture-structure-overlay__lane-strip architecture-structure-overlay__lane-strip--${laneId}`}
+            style={{
+              left: `${rect.x}px`,
+              top: `${rect.y}px`,
+              width: `${rect.width}px`,
+              height: `${rect.height}px`,
+              '--lane-strip': laneVisuals[laneId].outerStrip,
+            } as React.CSSProperties}
+          />
+        )
+      })}
+      <div
+        className="architecture-structure-overlay__aea-moat"
+        style={{
+          left: `${aea.x}px`,
+          top: `${aea.y}px`,
+          width: `${aea.width}px`,
+          height: `${aea.height}px`,
+        }}
+      />
+      <div
+        className="architecture-structure-overlay__gateway-column"
+        style={{
+          left: `${gateway.x}px`,
+          top: `${gateway.y}px`,
+          width: `${gateway.width}px`,
+          height: `${gateway.height}px`,
+        }}
+      />
+      {horizontalLines.map((y) => (
+        <div key={`line-${y}`} className="architecture-structure-overlay__divider" style={{ top: `${y}px` }} />
+      ))}
+      {channelYs.map((y) => (
+        <div
+          key={`channel-y-${y}`}
+          className="architecture-structure-overlay__route-guide architecture-structure-overlay__route-guide--horizontal"
+          style={{
+            left: `${aea.x + 16}px`,
+            top: `${y}px`,
+            width: `${aea.width - 32}px`,
+          }}
+        />
+      ))}
+      {verticalChannels.map((x) => (
+        <div
+          key={`channel-x-${x}`}
+          className="architecture-structure-overlay__route-guide architecture-structure-overlay__route-guide--vertical"
+          style={{
+            left: `${x}px`,
+            top: `${bandSense.y + 24}px`,
+            height: `${bandAct.y + bandAct.height - bandSense.y - 48}px`,
+          }}
+        />
+      ))}
+      {[
+        { rect: bandSense, label: bandVisuals.Sense.label, accent: bandVisuals.Sense.accent },
+        { rect: bandDecide, label: bandVisuals.Decide.label, accent: bandVisuals.Decide.accent },
+        { rect: bandAct, label: bandVisuals.Act.label, accent: bandVisuals.Act.accent },
+      ].map(({ rect, label, accent }) => (
+        <div
+          key={label}
+          className="architecture-structure-overlay__band-strip"
+          style={{
+            left: `${rect.x + 16}px`,
+            top: `${rect.y + 12}px`,
+            width: `${rect.width - 32}px`,
+            '--band-strip': accent,
+          } as React.CSSProperties}
+        >
+          <span>{label}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function CanvasLegendStrip() {
+  const familyToSemantic = {
+    context: 'read-only',
+    policy: 'policy-hard',
+    runtime: 'tool-call',
+    write: 'writeback',
+    feedback: 'rejection',
+    telemetry: 'kpi',
+    sequence: 'sequence',
+  } as const
+
+  return (
+    <div className="architecture-canvas__legend-strip" aria-label="Compact semantic legend">
+      {semanticFamilyOrder.map((family) => {
+        const semantic = familyToSemantic[family]
+        const visual = resolveSemanticVisual(semantic)
+        return (
+          <div key={family} className="architecture-canvas__legend-item" data-legend-family={family}>
+            <span
+              className="architecture-canvas__legend-swatch"
+              style={{ '--legend-swatch': visual.stroke } as React.CSSProperties}
+              aria-hidden="true"
+            />
+            <span>{getSemanticFamilyLabel(family)}</span>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -345,6 +539,10 @@ export function ArchitectureCanvas({
     return undefined
   }, [ui.selectedEdgeId, ui.selectedNodeId, ui.selectedStepId])
 
+  const handleMoveEnd = useCallback((_event: unknown, viewport: DiagramStore['ui']['viewport']) => {
+    onViewport(viewport)
+  }, [onViewport])
+
   return (
     <div
       ref={containerRef}
@@ -352,7 +550,9 @@ export function ArchitectureCanvas({
       data-theme={theme}
       aria-label="Panel A architecture canvas"
     >
+      <span className="architecture-canvas__panel-label">(A)</span>
       <ArchitectureEdgeMarkers />
+      <ArchitectureStructureOverlay nodes={nodes} viewport={ui.viewport} />
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -370,7 +570,7 @@ export function ArchitectureCanvas({
         zoomOnPinch={!ui.viewportLocked}
         zoomOnDoubleClick={!ui.viewportLocked}
         onPaneClick={onClearSelection}
-        onMoveEnd={(_, viewport) => onViewport(viewport)}
+        onMoveEnd={handleMoveEnd}
         onNodeDragStop={onNodeDragStop}
       >
         <ViewportCoordinator
@@ -396,6 +596,7 @@ export function ArchitectureCanvas({
         </FlowPanel>
         <OverviewWriteRibbon nodes={nodes} viewport={ui.viewport} />
       </ReactFlow>
+      <CanvasLegendStrip />
     </div>
   )
 }

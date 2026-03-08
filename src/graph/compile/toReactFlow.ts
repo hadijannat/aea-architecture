@@ -5,6 +5,7 @@ import {
   getSemanticShouldAnimate,
   matchesSemanticFamilies,
 } from '@/graph/compile/semanticPresentation'
+import { resolveNodeVisual } from '@/graph/compile/nodeVisuals'
 import {
   edgeEntityKey,
   graphManifest,
@@ -16,6 +17,12 @@ import {
 import type { ClaimId, EdgeSpec, EntityKey, GraphManifest, NodeSpec } from '@/graph/spec/schema'
 import { resolveEdgeHandles } from '@/layout/ports'
 import type { DiagramStore } from '@/state/diagramStore'
+import {
+  resolveClaimDotColor,
+  resolveEdgeLabelMode,
+  resolveNodeRenderMode,
+  resolveCanvasLod,
+} from './visualSystem'
 
 export interface BreadcrumbItem {
   id: string
@@ -34,15 +41,18 @@ export interface CompileCallbacks {
 
 export interface CompiledNodeData extends Record<string, unknown> {
   spec: NodeSpec
+  visual: ReturnType<typeof resolveNodeVisual>
   ariaLabel: string
   standards: ReturnType<typeof getStandardsForSpec>
   claims: ReturnType<typeof getClaimsForSpec>
+  claimDots: string[]
   annotation?: string
   selected: boolean
   highlighted: boolean
   dimmed: boolean
   authorMode: boolean
   collapsed: boolean
+  renderMode: ReturnType<typeof resolveNodeRenderMode>
   notesExpanded: boolean
   callbacks: CompileCallbacks
 }
@@ -57,8 +67,12 @@ export interface CompiledEdgeData extends Record<string, unknown> {
   optional: boolean
   selected: boolean
   highlighted: boolean
+  groupHighlighted: boolean
   dimmed: boolean
   sharedTagFocused: boolean
+  highlightGroup?: string
+  canvasLod: ReturnType<typeof resolveCanvasLod>
+  labelMode: ReturnType<typeof resolveEdgeLabelMode>
   callbacks: CompileCallbacks
 }
 
@@ -498,11 +512,14 @@ export function compileArchitectureNodes(
     .filter((node) => node.panel.includes('architecture'))
     .map((node) => {
       const position = state.layout.positions[node.id] ?? { x: 0, y: 0 }
+      const visual = resolveNodeVisual(node)
       const highlighted = derivedState.highlightedNodeIds.has(node.id)
       const hasHighlights =
         derivedState.highlightedNodeIds.size > 0 ||
         derivedState.highlightedEdgeIds.size > 0 ||
         derivedState.highlightedStepIds.size > 0
+      const selected = state.ui.selectedNodeId === node.id
+      const collapsed = state.projection.collapsedNodeIds.includes(node.id)
 
       return {
         id: node.id,
@@ -518,15 +535,18 @@ export function compileArchitectureNodes(
         ariaLabel: buildNodeAriaLabel(node, manifest),
         data: {
           spec: node,
+          visual,
           ariaLabel: buildNodeAriaLabel(node, manifest),
           standards: getStandardsForSpec(node.standardIds, manifest),
           claims: getClaimsForSpec(node.claimIds, manifest),
+          claimDots: node.claimIds.map((_, index) => resolveClaimDotColor(index)),
           annotation: state.projection.annotations[node.id],
-          selected: state.ui.selectedNodeId === node.id,
+          selected,
           highlighted,
           dimmed: hasHighlights && !highlighted,
           authorMode: state.ui.mode === 'author',
-          collapsed: state.projection.collapsedNodeIds.includes(node.id),
+          collapsed,
+          renderMode: resolveNodeRenderMode(node, state.ui.viewport.zoom, selected, collapsed),
           notesExpanded: state.projection.expandedNoteIds.includes(node.id),
           callbacks,
         },
@@ -548,16 +568,28 @@ export function compileArchitectureEdges(
     const highlightedEdge = resolveGraphEdge(edgeId)
     return highlightedEdge?.panel.includes('architecture') && highlightedEdge.tags.includes('t0')
   })
+  const canvasLod = resolveCanvasLod(state.ui.viewport.zoom)
+  const activeHighlightGroups = new Set(
+    [...derivedState.highlightedEdgeIds]
+      .map((edgeId) => resolveGraphEdge(edgeId)?.interactive.highlightGroup)
+      .filter((group): group is string => Boolean(group)),
+  )
 
   return manifest.edges
     .filter((edge) => edge.panel.includes('architecture'))
     .map((edge) => {
       const { sourceHandle, targetHandle } = resolveEdgeHandles(edge, state.projection.edgeHandles)
       const highlighted = derivedState.highlightedEdgeIds.has(edge.id)
+      const groupHighlighted =
+        !highlighted &&
+        typeof edge.interactive.highlightGroup === 'string' &&
+        activeHighlightGroups.has(edge.interactive.highlightGroup)
       const hasHighlights =
         derivedState.highlightedNodeIds.size > 0 ||
         derivedState.highlightedEdgeIds.size > 0 ||
         derivedState.highlightedStepIds.size > 0
+      const selected = state.ui.selectedEdgeId === edge.id
+      const labelMode = resolveEdgeLabelMode(state.ui.viewport.zoom, selected, highlighted || groupHighlighted)
 
       return {
         id: edge.id,
@@ -583,10 +615,14 @@ export function compileArchitectureEdges(
           standards: getStandardsForSpec(edge.standardIds, manifest),
           claims: getClaimsForSpec(edge.claimIds, manifest),
           optional: edge.interactive.optional,
-          selected: state.ui.selectedEdgeId === edge.id,
+          selected,
           highlighted,
-          dimmed: hasHighlights && !highlighted,
+          groupHighlighted,
+          dimmed: hasHighlights && !highlighted && !groupHighlighted,
           sharedTagFocused: sharedT0FocusActive && edge.tags.includes('t0'),
+          highlightGroup: edge.interactive.highlightGroup,
+          canvasLod,
+          labelMode,
           callbacks,
         },
       }

@@ -168,7 +168,8 @@ function edgeDash(edge: EdgeSpec) {
 }
 
 function edgeMarker(edge: EdgeSpec) {
-  return `marker-${edge.semantic}`
+  const markerKind = edge.markers.includes('diode') ? 'diode' : getSemanticPresentation(edge.semantic).marker
+  return `marker-${edge.semantic}-${markerKind}`
 }
 
 function edgeOpacity(edge: EdgeSpec) {
@@ -195,16 +196,30 @@ function markerMarkup(marker: ReturnType<typeof getSemanticPresentation>['marker
 }
 
 function renderMarkerDefs(surface: 'export-viewport' | 'export-publication', manifest: GraphManifest) {
-  const semantics = [...new Set(manifest.edges.map((edge) => edge.semantic))]
+  const markerDefinitions = [
+    ...new Map(
+      manifest.edges.map((edge) => {
+        const presentation = getSemanticPresentation(edge.semantic)
+        const markerKind = edge.markers.includes('diode') ? 'diode' : presentation.marker
+        return [
+          `${edge.semantic}-${markerKind}`,
+          {
+            id: `marker-${edge.semantic}-${markerKind}`,
+            marker: markerKind,
+            stroke: presentation.stroke,
+          },
+        ] as const
+      }),
+    ).values(),
+  ]
   const markerTokens = getSemanticMarkerTokens(surface)
 
   return `
   <defs>
-    ${semantics
-      .map((semantic) => {
-        const presentation = getSemanticPresentation(semantic)
-        return `<marker id="marker-${semantic}" viewBox="${markerTokens.viewBox}" markerWidth="${markerTokens.width}" markerHeight="${markerTokens.height}" refX="${getSemanticMarkerRefX(presentation.marker)}" refY="${markerTokens.refY}" orient="auto" markerUnits="${markerTokens.units}">
-      ${markerMarkup(presentation.marker, presentation.stroke)}
+    ${markerDefinitions
+      .map((definition) => {
+        return `<marker id="${definition.id}" viewBox="${markerTokens.viewBox}" markerWidth="${markerTokens.width}" markerHeight="${markerTokens.height}" refX="${getSemanticMarkerRefX(definition.marker)}" refY="${markerTokens.refY}" orient="auto" markerUnits="${markerTokens.units}">
+      ${markerMarkup(definition.marker, definition.stroke)}
     </marker>`
       })
       .join('\n')}

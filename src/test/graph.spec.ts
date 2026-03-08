@@ -505,9 +505,9 @@ describe('graph manifest', () => {
 
 describe('derived projections', () => {
   it('maps raw semantics into the grouped semantic families', () => {
-    expect(resolveSemanticFamilies(['validation', 'writeback', 'status-ack'])).toEqual(['policy', 'write', 'feedback'])
+    expect(resolveSemanticFamilies(['validation', 'writeback', 'status-ack'])).toEqual(['policy', 'write'])
     expect(getSemanticPresentation('status-ack')).toMatchObject({
-      family: 'feedback',
+      family: 'write',
       label: 'Status acknowledgement',
     })
     expect(getSemanticPresentation('rejection').stroke).not.toBe(getSemanticPresentation('status-ack').stroke)
@@ -519,13 +519,13 @@ describe('derived projections', () => {
     expect(new Set(dashes).size).toBe(semanticFamilyOrder.length)
     expect(getSemanticPresentation('tool-call')).toMatchObject({
       marker: 'circle',
-      stroke: '#0f9ba8',
+      stroke: '#F59E0B',
     })
     expect(getSemanticPresentation('rejection')).toMatchObject({
       marker: 'tee',
-      stroke: '#b91c1c',
+      stroke: '#DC2626',
     })
-    expect(getSemanticPresentation('retrieval').stroke).toBe('#15803d')
+    expect(getSemanticPresentation('retrieval').stroke).toBe('#2B7BE9')
   })
 
   it('keeps styled writeback edges solid while retaining the family dash as a fallback rhythm', () => {
@@ -535,36 +535,36 @@ describe('derived projections', () => {
 
   it('uses surface-aware marker tokens while keeping the canonical marker coordinates shared', () => {
     expect(getSemanticMarkerTokens('architecture')).toMatchObject({
-      width: 14,
-      height: 11,
+      width: 18,
+      height: 14,
       refY: 4,
       viewBox: '0 0 10 8',
       units: 'strokeWidth',
     })
     expect(getSemanticMarkerTokens('legend')).toMatchObject({
-      width: 10,
-      height: 8,
+      width: 12,
+      height: 10,
       refY: 4,
       viewBox: '0 0 10 8',
       units: 'userSpaceOnUse',
     })
     expect(getSemanticMarkerTokens('sequence')).toMatchObject({
-      width: 10,
-      height: 8,
+      width: 12,
+      height: 10,
       refY: 4,
       viewBox: '0 0 10 8',
       units: 'userSpaceOnUse',
     })
     expect(getSemanticMarkerTokens('export-viewport')).toMatchObject({
-      width: 10,
-      height: 8,
+      width: 12,
+      height: 10,
       refY: 4,
       viewBox: '0 0 10 8',
       units: 'userSpaceOnUse',
     })
     expect(getSemanticMarkerTokens('export-publication')).toMatchObject({
-      width: 7,
-      height: 5.5,
+      width: 10,
+      height: 8,
       refY: 4,
       viewBox: '0 0 10 8',
       units: 'userSpaceOnUse',
@@ -582,11 +582,11 @@ describe('derived projections', () => {
       d: 'M 1 1 L 1 7 M 1 4 L 9 4',
       strokeWidth: 2.3,
     })
-    expect(edgeStrokeWidth('bold')).toBe(3.6)
-    expect(edgeStrokeWidth('medium')).toBe(2.7)
-    expect(edgeStrokeWidth('dashed')).toBe(2.2)
-    expect(edgeStrokeWidth('dotted')).toBe(1.8)
-    expect(edgeStrokeWidth('thin')).toBe(1.7)
+    expect(edgeStrokeWidth('bold', 'writeback')).toBe(2.8)
+    expect(edgeStrokeWidth('medium', 'validation')).toBe(2.2)
+    expect(edgeStrokeWidth('dashed', 'rejection')).toBe(1.6)
+    expect(edgeStrokeWidth('dotted', 'tool-call')).toBe(1.9)
+    expect(edgeStrokeWidth('thin', 'retrieval')).toBe(1.4)
   })
 
   it('marks optional architecture edges explicitly and animates tool-call edges', async () => {
@@ -668,7 +668,7 @@ describe('derived projections', () => {
       filters: {
         claims: [],
         standards: [],
-        semanticFamilies: ['feedback'],
+        semanticFamilies: ['write'],
         lanes: [],
         search: '',
         pathPreset: 'all',
@@ -677,16 +677,16 @@ describe('derived projections', () => {
 
     const derived = deriveDiagramState(state)
     expect(derived.visibleEdgeIds.has('F_VoR_ACK')).toBe(true)
-    expect(derived.visibleEdgeIds.has('F3f_reject')).toBe(true)
+    expect(derived.visibleEdgeIds.has('F3f_reject')).toBe(false)
     expect(derived.visibleEdgeIds.has('PB_ACK')).toBe(true)
     expect(derived.visibleEdgeIds.has('PB_REJECT')).toBe(true)
-    expect(derived.visibleEdgeIds.has('F5')).toBe(false)
+    expect(derived.visibleEdgeIds.has('F5')).toBe(true)
   })
 
   it('translates legacy semantics query params into grouped families and writes families back out', () => {
     const parsed = parseUiSearchParams(new URLSearchParams('semantics=validation,status-ack&node=VOI'))
     expect(parsed.selectedNodeId).toBe('VOI')
-    expect(parsed.filters.semanticFamilies).toEqual(['policy', 'feedback'])
+    expect(parsed.filters.semanticFamilies).toEqual(['policy', 'write'])
 
     const serialized = buildUiSearchParams({
       selectedNodeId: 'VOI',
@@ -694,7 +694,7 @@ describe('derived projections', () => {
       selectedStepId: undefined,
       filters: parsed.filters,
     })
-    expect(serialized.get('families')).toBe('policy,feedback')
+    expect(serialized.get('families')).toBe('policy,write')
     expect(serialized.has('semantics')).toBe(false)
   })
 
@@ -759,7 +759,7 @@ describe('exports', () => {
     expect(architectureMermaid).toContain('subgraph GW_NE178["NE 178 VoR interface"]')
     expect(architectureMermaid).toContain('F_GW2:')
     expect(architectureMermaid).toContain('[diode, medium]')
-    expect(architectureMermaid).toContain('stroke-width:3.6px')
+    expect(architectureMermaid).toContain('stroke:#EF4444,stroke-width:2.8px')
     expect(sequenceMermaid).toContain('%% Canonical topology export only; schematic and not viewport/state-aware.')
     expect(sequenceMermaid).toContain('PB_AEA')
     expect(sequenceMermaid).toContain('PB_REJECT_OUT')
@@ -818,88 +818,88 @@ describe('exports', () => {
     const state = await createState()
     const expectedRoutes = {
       F3e: {
-        path: 'M 1315 786 L 1378 786 Q 1392 786 1392 772 L 1392 734 Q 1392 720 1406 720 L 1468 720',
-        labelPoint: { x: 1353.5, y: 766 },
+        path: 'M 1315 798 L 1378 798 Q 1392 798 1392 784 L 1392 746 Q 1392 732 1406 732 L 1468 732',
+        labelPoint: { x: 1353.5, y: 778 },
       },
       F_G1A_pass: {
-        path: 'M 1583 784 L 1583 841 Q 1583 855 1569 855 L 1315.5 855 Q 1315 855 1315 855.5 L 1315 856',
-        labelPoint: { x: 1467, y: 855 },
+        path: 'M 1583 796 L 1583 823 Q 1583 837 1569 837 L 1329 837 Q 1315 837 1315 851 L 1315 888',
+        labelPoint: { x: 1467, y: 837 },
       },
       F_G1A_reject: {
-        path: 'M 1468 720 L 1468 785 Q 1468 799 1454 799 L 1444 799 Q 1430 799 1430 785 L 1430 721',
-        labelPoint: { x: 1449, y: 817 },
+        path: 'M 1468 732 L 1468 767 Q 1468 781 1454 781 L 1444 781 Q 1430 781 1430 767 L 1430 733',
+        labelPoint: { x: 1449, y: 799 },
       },
       F3f_reject: {
-        path: 'M 1315 976 L 1315 835 Q 1315 821 1301 821 L 1244 821 Q 1230 821 1230 807 L 1230 735 Q 1230 721 1216 721 L 1200 721',
-        labelPoint: { x: 1272.5, y: 839 },
+        path: 'M 1315 1008 L 1315 817 Q 1315 803 1301 803 L 1244 803 Q 1230 803 1230 789 L 1230 747 Q 1230 733 1216 733 L 1200 733',
+        labelPoint: { x: 1272.5, y: 821 },
       },
       F3g: {
-        path: 'M 779 586 L 779 970 Q 779 984 793 984 L 1574 984 Q 1588 984 1588 970 L 1588 856',
-        labelPoint: { x: 1183.5, y: 956 },
+        path: 'M 779 568 L 779 952 Q 779 966 793 966 L 1574 966 Q 1588 966 1588 952 L 1588 888',
+        labelPoint: { x: 1183.5, y: 938 },
       },
       F3h: {
-        path: 'M 1230 310 L 1230 830 Q 1230 844 1244 844 L 1546 844 Q 1552 844 1552 850 L 1552 850 Q 1552 856 1558 856 L 1588 856',
-        labelPoint: { x: 1534, y: 850 },
+        path: 'M 1230 292 L 1230 862 Q 1230 876 1244 876 L 1546 876 Q 1552 876 1552 882 L 1552 882 Q 1552 888 1558 888 L 1588 888',
+        labelPoint: { x: 1534, y: 882 },
       },
       F3i: {
-        path: 'M 534 973 L 534 990 Q 534 1004 548 1004 L 1454 1004 Q 1468 1004 1468 990 L 1468 920',
-        labelPoint: { x: 1001, y: 990 },
+        path: 'M 534 1109 L 534 1000 Q 534 986 548 986 L 1454 986 Q 1468 986 1468 972 L 1468 952',
+        labelPoint: { x: 1001, y: 972 },
       },
       F_T0_req: {
-        path: 'M 1315 656 L 1315 635 Q 1315 621 1329 621 L 1569 621 Q 1583 621 1583 607 L 1583 586',
-        labelPoint: { x: 1315, y: 624.5 },
+        path: 'M 1315 668 L 1315 632 Q 1315 618 1329 618 L 1569 618 Q 1583 618 1583 604 L 1583 568',
+        labelPoint: { x: 1315, y: 629 },
       },
       F_T1: {
-        path: 'M 1468 526 L 1468 459 Q 1468 445 1454 445 L 654 445 Q 640 445 640 431 L 640 242 Q 640 228 654 228 L 744 228 Q 758 228 758 242 L 758 256',
-        labelPoint: { x: 640, y: 354.5 },
+        path: 'M 1468 508 L 1468 441 Q 1468 427 1454 427 L 654 427 Q 640 427 640 413 L 640 224 Q 640 210 654 210 L 744 210 Q 758 210 758 224 L 758 238',
+        labelPoint: { x: 640, y: 336.5 },
       },
       F_T2: {
-        path: 'M 1468 526 L 894 526',
-        labelPoint: { x: 1181, y: 512 },
+        path: 'M 1468 508 L 894 508',
+        labelPoint: { x: 1181, y: 494 },
       },
       F_T0_obs: {
-        path: 'M 1583 466 L 1583 616 Q 1583 630 1569 630 L 1061 630 Q 1047 630 1047 644 L 1047 784',
-        labelPoint: { x: 1315, y: 574 },
+        path: 'M 1583 448 L 1583 598 Q 1583 612 1569 612 L 1061 612 Q 1047 612 1047 626 L 1047 796',
+        labelPoint: { x: 1315, y: 556 },
       },
       F4: {
-        path: 'M 1588 984 L 1198 984 Q 1184 984 1184 970 L 1184 870 Q 1184 856 1170 856 L 779 856',
-        labelPoint: { x: 1386, y: 970 },
+        path: 'M 1588 1016 L 1198 1016 Q 1184 1016 1184 1002 L 1184 902 Q 1184 888 1170 888 L 779 888',
+        labelPoint: { x: 1386, y: 1002 },
       },
       F_H1_revalidate: {
-        path: 'M 894 916 L 1179 916 Q 1181 916 1181 918 L 1181 918 Q 1181 920 1183 920 L 1468 920',
-        labelPoint: { x: 1037.5, y: 902 },
+        path: 'M 894 948 L 1179 948 Q 1181 948 1181 950 L 1181 950 Q 1181 952 1183 952 L 1468 952',
+        labelPoint: { x: 1037.5, y: 934 },
       },
       F_H1_reject: {
-        path: 'M 779 856 L 779 849.5 Q 779 843 785.5 843 L 1301 843 Q 1315 843 1315 829 L 1315 786',
-        labelPoint: { x: 1047, y: 825 },
+        path: 'M 779 888 L 779 839 Q 779 825 793 825 L 1301.5 825 Q 1315 825 1315 811.5 L 1315 798',
+        labelPoint: { x: 1047, y: 807 },
       },
       F_H1_pass: {
-        path: 'M 779 976 L 779 1015.5 Q 779 1018 781.5 1018 L 781.5 1018 Q 784 1018 784 1020.5 L 784 1140',
-        labelPoint: { x: 799, y: 997 },
+        path: 'M 779 1008 L 779 1047.5 Q 779 1050 781.5 1050 L 781.5 1050 Q 784 1050 784 1052.5 L 784 1212',
+        labelPoint: { x: 799, y: 1029 },
       },
       F5: {
-        path: 'M 664 1200 L 634.5 1200 Q 628 1200 628 1206.5 L 628 1206.5 Q 628 1213 621.5 1213 L 576 1213 Q 562 1213 562 1199 L 562 987 Q 562 973 548 973 L 534 973',
-        labelPoint: { x: 595, y: 1237 },
+        path: 'M 664 1272 L 642 1272 Q 628 1272 628 1258 L 628 1209 Q 628 1195 614 1195 L 576 1195 Q 562 1195 562 1181 L 562 1123 Q 562 1109 548 1109 L 534 1109',
+        labelPoint: { x: 595, y: 1219 },
       },
       F6: {
-        path: 'M 424 973 L 374 973 Q 360 973 360 987 L 360 1201 Q 360 1213 348 1213 L 348 1213 Q 336 1213 336 1201 L 336 1157 Q 336 1143 322 1143 L 308 1143',
-        labelPoint: { x: 380, y: 1093 },
+        path: 'M 424 1109 L 374 1109 Q 360 1109 360 1123 L 360 1183 Q 360 1195 348 1195 L 348 1195 Q 336 1195 336 1207 L 336 1253 Q 336 1267 322 1267 L 308 1267',
+        labelPoint: { x: 332, y: 1152 },
       },
       F_VoR_ACK: {
-        path: 'M 534 973 L 548 973 Q 562 973 562 987 L 562 1159 Q 562 1173 576 1173 L 620.5 1173 Q 634 1173 634 1186.5 L 634 1186.5 Q 634 1200 647.5 1200 L 664 1200',
-        labelPoint: { x: 590, y: 1073 },
+        path: 'M 534 1109 L 548 1109 Q 562 1109 562 1123 L 562 1141 Q 562 1155 576 1155 L 620 1155 Q 634 1155 634 1169 L 634 1258 Q 634 1272 648 1272 L 664 1272',
+        labelPoint: { x: 590, y: 1132 },
       },
       F_CPC_INT: {
-        path: 'M 80 1143 L 62 1143 Q 48 1143 48 1129 L 48 279 Q 48 265 62 265 L 80 265',
-        labelPoint: { x: 64, y: 704 },
+        path: 'M 80 1267 L 62 1267 Q 48 1267 48 1253 L 48 269 Q 48 255 62 255 L 80 255',
+        labelPoint: { x: 64, y: 761 },
       },
       F7a: {
-        path: 'M 1670 1193 L 1700 1193 Q 1704 1193 1704 1197 L 1704 1197 Q 1704 1201 1708 1201 L 1818 1201 Q 1832 1201 1832 1187 L 1832 1147 Q 1832 1134 1845 1134 L 1858 1134',
-        labelPoint: { x: 1768, y: 1221 },
+        path: 'M 1670 1265 L 1690 1265 Q 1704 1265 1704 1251 L 1704 1197 Q 1704 1183 1718 1183 L 1818 1183 Q 1832 1183 1832 1197 L 1832 1261 Q 1832 1274 1845 1274 L 1858 1274',
+        labelPoint: { x: 1768, y: 1203 },
       },
       F7_sub: {
-        path: 'M 1958 1250 L 2102 1250 Q 2116 1250 2116 1236 L 2116 1202 Q 2116 1188 2102 1188 L 1958 1188',
-        labelPoint: { x: 2037, y: 1232 },
+        path: 'M 1958 1390 L 2102 1390 Q 2116 1390 2116 1376 L 2116 1342 Q 2116 1328 2102 1328 L 1958 1328',
+        labelPoint: { x: 2037, y: 1372 },
       },
     } as const
 
@@ -992,9 +992,9 @@ describe('exports', () => {
   it('keeps rejection and monitor reroutes on distinct local channels', async () => {
     const state = await createState()
     const rejectionRoutes = {
-      F_G1A_reject: 799,
-      F3f_reject: 821,
-      F_H1_reject: 843,
+      F_G1A_reject: 781,
+      F3f_reject: 803,
+      F_H1_reject: 825,
     } as const
 
     for (const [edgeId, expectedY] of Object.entries(rejectionRoutes)) {
@@ -1004,14 +1004,14 @@ describe('exports', () => {
     }
 
     expect(buildArchitectureRoute(state, 'F_M1_G0').points).toEqual([
-      { x: 1162, y: 720 },
-      { x: 1162, y: 818 },
-      { x: 932, y: 818 },
-      { x: 932, y: 916 },
+      { x: 1162, y: 732 },
+      { x: 1162, y: 840 },
+      { x: 932, y: 840 },
+      { x: 932, y: 948 },
     ])
     expect(buildArchitectureRoute(state, 'F_M1_H1').points).toEqual([
-      { x: 894, y: 916 },
-      { x: 932, y: 916 },
+      { x: 894, y: 948 },
+      { x: 932, y: 948 },
     ])
   })
 
@@ -1022,18 +1022,18 @@ describe('exports', () => {
     const ackEdge = board.edges.find((edge) => edge.edge.id === 'PB_ACK')
     const rejectEdge = board.edges.find((edge) => edge.edge.id === 'PB_REJECT')
 
-    expect(board.ackRouteY).toBe(222)
+    expect(board.ackRouteY).toBe(220)
     expect(ackEdge?.path).toContain('Q')
     expect(ackEdge).toMatchObject({
-      labelX: 711.5,
-      labelY: 222,
+      labelX: 655.5,
+      labelY: 220,
     })
     expect(rejectEdge?.path).toContain('Q')
     expect(rejectEdge).toMatchObject({
-      labelX: 997,
-      labelY: 191,
+      labelX: 1042,
+      labelY: 261,
     })
-    expect(board.height).toBe(346)
+    expect(board.height).toBe(432)
   })
 
   it('reuses the shared sequence geometry in viewport export', async () => {
@@ -1087,7 +1087,8 @@ describe('exports', () => {
     expect(publicationDocument.svg).toContain('font-size="9pt"')
     expect(publicationDocument.svg).toContain('font-size="6.5pt"')
     expect(publicationDocument.svg).toContain('font-size="5pt"')
-    expect(publicationDocument.svg).toContain('stroke-dasharray="11 7"')
+    expect(publicationDocument.svg).toContain('stroke-dasharray="7 4"')
+    expect(publicationDocument.svg).toContain('id="marker-gateway-internal-diode"')
     expect(publicationDocument.svg).toContain('id="sequence-edge-PB_ACK"')
     expect(publicationDocument.svg).toContain('VoR Domain-Transition Sequence')
     expect(publicationF5Path).toContain('Q')
@@ -1101,21 +1102,21 @@ describe('exports', () => {
     const viewportDocument = buildExportSvgDocument(state, { mode: 'viewport' })
     const publicationDocument = buildExportSvgDocument(state, { mode: 'publication' })
 
-    expect(viewportDocument.svg).toContain('id="marker-gateway-internal"')
-    expect(viewportDocument.svg).toContain('id="marker-tool-call"')
-    expect(viewportDocument.svg).toContain('id="marker-rejection"')
-    expect(viewportDocument.svg).toContain('markerWidth="10"')
-    expect(viewportDocument.svg).toContain('markerHeight="8"')
+    expect(viewportDocument.svg).toContain('id="marker-gateway-internal-diamond"')
+    expect(viewportDocument.svg).toContain('id="marker-tool-call-circle"')
+    expect(viewportDocument.svg).toContain('id="marker-rejection-tee"')
+    expect(viewportDocument.svg).toContain('markerWidth="12"')
+    expect(viewportDocument.svg).toContain('markerHeight="10"')
     expect(viewportDocument.svg).toContain('refY="4"')
     expect(viewportDocument.svg).toContain('markerUnits="userSpaceOnUse"')
     expect(viewportDocument.svg).toContain('stroke-width="3.6"')
     expect(viewportDocument.svg).toContain('stroke-width="2.7"')
     expect(viewportDocument.svg).toContain('stroke-width="1.7"')
-    expect(viewportDocument.svg).toContain('stroke-dasharray="3.2 7.2 1.6 7.2"')
-    expect(viewportDocument.svg).toContain('stroke-dasharray="5 7"')
-    expect(viewportDocument.svg).toContain('stroke-dasharray="1.2 8.4"')
-    expect(publicationDocument.svg).toContain('markerWidth="7"')
-    expect(publicationDocument.svg).toContain('markerHeight="5.5"')
+    expect(viewportDocument.svg).toContain('stroke-dasharray="7 4"')
+    expect(viewportDocument.svg).toContain('stroke-dasharray="2 5"')
+    expect(viewportDocument.svg).toContain('stroke-dasharray="1 5"')
+    expect(publicationDocument.svg).toContain('markerWidth="10"')
+    expect(publicationDocument.svg).toContain('markerHeight="8"')
     expect(publicationDocument.svg).toContain('refY="4"')
     expect(publicationDocument.svg).toContain('markerUnits="userSpaceOnUse"')
     expect(publicationDocument.svg).toContain('stroke-width="1.7"')

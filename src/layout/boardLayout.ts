@@ -38,19 +38,19 @@ export async function computeBoardNodePositions(
   const decideBandX = positions.BAND_DECIDE.x
   const decideBandY = positions.BAND_DECIDE.y
   const decideColumnOffsets = [24, 292, 560, 828] as const
-  const decideRowOffsets = [34, 224, 424] as const
+  const decideRowOffsets = [34, 254, 474] as const
 
   Object.assign(positions, {
-    A1: { x: lanes.A.x + 56, y: lanes.A.y + 186 },
-    A2: { x: lanes.A.x + 56, y: lanes.A.y + 412 },
-    A3: { x: lanes.A.x + 56, y: lanes.A.y + 1060 },
+    A1: { x: lanes.A.x + 56, y: lanes.A.y + 176 },
+    A2: { x: lanes.A.x + 56, y: lanes.A.y + 442 },
+    A3: { x: lanes.A.x + 56, y: lanes.A.y + 1184 },
   })
 
   Object.assign(positions, {
-    G1: { x: gateway.x + 26, y: gateway.y + 64 },
-    G2: { x: gateway.x + 26, y: gateway.y + 174 },
-    G3: { x: gateway.x + 26, y: gateway.y + 288 },
-    VOI: { x: gateway.x + 20, y: gateway.y + gateway.ne177Height + 322 },
+    G1: { x: gateway.x + 26, y: gateway.y + 80 },
+    G2: { x: gateway.x + 26, y: gateway.y + 204 },
+    G3: { x: gateway.x + 26, y: gateway.y + 328 },
+    VOI: { x: gateway.x + 20, y: gateway.y + gateway.height - 250 },
   })
 
   Object.assign(positions, {
@@ -80,8 +80,8 @@ export async function computeBoardNodePositions(
   })
 
   Object.assign(positions, {
-    C1: { x: lanes.C.x + 58, y: lanes.C.y + 1056 },
-    C2: { x: lanes.C.x + 38, y: lanes.C.y + 1226 },
+    C1: { x: lanes.C.x + 58, y: lanes.C.y + 1196 },
+    C2: { x: lanes.C.x + 38, y: lanes.C.y + 1366 },
   })
 
   for (const [nodeId, position] of Object.entries(overrides?.nodePositions ?? {})) {

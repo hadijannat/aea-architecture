@@ -77,6 +77,9 @@ describe('BaseSemanticEdge', () => {
     expect(hitPath).not.toBeNull()
     expect(hitPath?.getAttribute('stroke-width')).toBe('12')
 
-    expect(screen.getByTestId('base-edge')).toHaveAttribute('data-interaction-width', '12')
+    expect(screen.getAllByTestId('base-edge')).toHaveLength(2)
+    expect(screen.getAllByTestId('base-edge').every((edge) => edge.getAttribute('data-interaction-width') === '12')).toBe(
+      true,
+    )
   })
 })
