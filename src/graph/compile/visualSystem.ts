@@ -427,9 +427,10 @@ export function resolveKindGlyph(kind: NodeKind): KindGlyph {
   return kindGlyphs[kind]
 }
 
+const claimDotPalette = ['#2B7BE9', '#8B5CF6', '#F59E0B', '#EF4444', '#10B981', '#6B7280']
+
 export function resolveClaimDotColor(index: number): string {
-  const palette = ['#2B7BE9', '#8B5CF6', '#F59E0B', '#EF4444', '#10B981', '#6B7280']
-  return palette[index % palette.length]
+  return claimDotPalette[index % claimDotPalette.length]
 }
 
 export function hexToRgba(hex: string, alpha: number): string {

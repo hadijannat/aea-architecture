@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type RefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, type RefObject } from 'react'
 import {
   Background,
   ControlButton,
@@ -140,32 +140,49 @@ function ArchitectureStructureOverlay({
   viewport: DiagramStore['ui']['viewport']
 }) {
   const visibleNodes = useMemo(() => new Map(nodes.filter((node) => !node.hidden).map((node) => [node.id, node])), [nodes])
-  const laneRects = ['LANE_A', 'LANE_B', 'LANE_C']
-    .map((id) => getNodeRect(visibleNodes.get(id)))
-    .filter((rect): rect is NonNullable<ReturnType<typeof getNodeRect>> => Boolean(rect))
-  const aea = getNodeRect(visibleNodes.get('AEA'))
-  const bandSense = getNodeRect(visibleNodes.get('BAND_SENSE'))
-  const bandDecide = getNodeRect(visibleNodes.get('BAND_DECIDE'))
-  const bandAct = getNodeRect(visibleNodes.get('BAND_ACT'))
-  const gateway = getNodeRect(visibleNodes.get('GW'))
 
-  if (!aea || !bandSense || !bandDecide || !bandAct || !gateway) {
+  const overlayGeometry = useMemo(() => {
+    const laneRects = ['LANE_A', 'LANE_B', 'LANE_C']
+      .map((id) => getNodeRect(visibleNodes.get(id)))
+      .filter((rect): rect is NonNullable<ReturnType<typeof getNodeRect>> => Boolean(rect))
+    const aea = getNodeRect(visibleNodes.get('AEA'))
+    const bandSense = getNodeRect(visibleNodes.get('BAND_SENSE'))
+    const bandDecide = getNodeRect(visibleNodes.get('BAND_DECIDE'))
+    const bandAct = getNodeRect(visibleNodes.get('BAND_ACT'))
+    const gateway = getNodeRect(visibleNodes.get('GW'))
+
+    if (!aea || !bandSense || !bandDecide || !bandAct || !gateway) {
+      return null
+    }
+
+    return {
+      laneRects,
+      aea,
+      bandSense,
+      bandDecide,
+      bandAct,
+      gateway,
+      horizontalLines: [bandDecide.y - 14, bandAct.y - 14],
+      channelYs: [
+        boardRouteChannels.telemetryY,
+        boardRouteChannels.policyY,
+        boardRouteChannels.rejectionY,
+        boardRouteChannels.validationY,
+        boardRouteChannels.writeY,
+      ],
+      verticalChannels: [
+        boardRouteChannels.cpcSpineX,
+        boardRouteChannels.monitorSpineX,
+        boardRouteChannels.laneCSpineX,
+      ],
+    }
+  }, [visibleNodes])
+
+  if (!overlayGeometry) {
     return null
   }
 
-  const horizontalLines = [bandDecide.y - 14, bandAct.y - 14]
-  const channelYs = [
-    boardRouteChannels.telemetryY,
-    boardRouteChannels.policyY,
-    boardRouteChannels.rejectionY,
-    boardRouteChannels.validationY,
-    boardRouteChannels.writeY,
-  ]
-  const verticalChannels = [
-    boardRouteChannels.cpcSpineX,
-    boardRouteChannels.monitorSpineX,
-    boardRouteChannels.laneCSpineX,
-  ]
+  const { laneRects, aea, bandSense, bandDecide, bandAct, gateway, horizontalLines, channelYs, verticalChannels } = overlayGeometry
 
   return (
     <div
@@ -522,6 +539,10 @@ export function ArchitectureCanvas({
     return undefined
   }, [ui.selectedEdgeId, ui.selectedNodeId, ui.selectedStepId])
 
+  const handleMoveEnd = useCallback((_event: unknown, viewport: DiagramStore['ui']['viewport']) => {
+    onViewport(viewport)
+  }, [onViewport])
+
   return (
     <div
       ref={containerRef}
@@ -549,7 +570,7 @@ export function ArchitectureCanvas({
         zoomOnPinch={!ui.viewportLocked}
         zoomOnDoubleClick={!ui.viewportLocked}
         onPaneClick={onClearSelection}
-        onMoveEnd={(_, viewport) => onViewport(viewport)}
+        onMoveEnd={handleMoveEnd}
         onNodeDragStop={onNodeDragStop}
       >
         <ViewportCoordinator

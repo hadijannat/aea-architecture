@@ -1,4 +1,6 @@
 import {
+  memo,
+  useCallback,
   useEffect,
   useId,
   useRef,
@@ -142,7 +144,7 @@ function ClaimDots({
   )
 }
 
-export function BaseNodeCard({
+export const BaseNodeCard = memo(function BaseNodeCard({
   data,
   selected,
   variant,
@@ -189,15 +191,15 @@ export function BaseNodeCard({
     menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
   }, [menuOpen])
 
-  function handleBlur(event: FocusEvent<HTMLDivElement>) {
+  const handleBlur = useCallback((event: FocusEvent<HTMLDivElement>) => {
     const nextTarget = event.relatedTarget
     if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) {
       return
     }
     setMenuOpen(false)
-  }
+  }, [])
 
-  function handleMenuKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+  const handleMenuKeyDown = useCallback((event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.key !== 'Escape') {
       return
     }
@@ -205,9 +207,9 @@ export function BaseNodeCard({
     event.stopPropagation()
     setMenuOpen(false)
     menuButtonRef.current?.focus()
-  }
+  }, [])
 
-  function handleMenuItemKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+  const handleMenuItemKeyDown = useCallback((event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
       return
     }
@@ -231,24 +233,32 @@ export function BaseNodeCard({
           : (currentIndex - 1 + items.length) % items.length
 
     items[nextIndex]?.focus()
-  }
+  }, [])
 
-  function handleMenuToggle(event: ReactMouseEvent<HTMLButtonElement>) {
+  const handleMouseEnter = useCallback(() => {
+    data.callbacks.onHover(nodeEntityKey(spec.id))
+  }, [data.callbacks, spec.id])
+
+  const handleMouseLeave = useCallback(() => {
+    data.callbacks.onHover(undefined)
+  }, [data.callbacks])
+
+  const handleMenuToggle = useCallback((event: ReactMouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
     data.callbacks.onSelectNode(spec.id)
     setMenuOpen((current) => !current)
-  }
+  }, [data.callbacks, spec.id])
 
-  function runMenuAction(event: ReactMouseEvent<HTMLButtonElement>, action: () => void) {
+  const runMenuAction = useCallback((event: ReactMouseEvent<HTMLButtonElement>, action: () => void) => {
     event.stopPropagation()
     setMenuOpen(false)
     action()
-  }
+  }, [])
 
-  function handleNodeClick() {
+  const handleNodeClick = useCallback(() => {
     setMenuOpen(false)
     data.callbacks.onSelectNode(spec.id)
-  }
+  }, [data.callbacks, spec.id])
 
   return (
     <div
@@ -279,9 +289,9 @@ export function BaseNodeCard({
         } as CSSProperties
       }
       onClick={handleNodeClick}
-      onMouseEnter={() => data.callbacks.onHover(nodeEntityKey(spec.id))}
-      onMouseLeave={() => data.callbacks.onHover(undefined)}
-      onFocusCapture={() => data.callbacks.onHover(nodeEntityKey(spec.id))}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onFocusCapture={handleMouseEnter}
       onBlurCapture={handleBlur}
     >
       {!isStructural && !showCollapsed ? <NodeHandles /> : null}
@@ -423,11 +433,11 @@ export function BaseNodeCard({
               nodeTitle={spec.title}
               claimDots={data.claimDots}
               claims={claims}
-              onBadgeClaim={(claimId) => data.callbacks.onBadgeClaim(claimId)}
+              onBadgeClaim={data.callbacks.onBadgeClaim}
             />
           ) : null}
         </>
       ) : null}
     </div>
   )
-}
+})

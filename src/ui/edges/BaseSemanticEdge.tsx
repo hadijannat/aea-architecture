@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import React, { memo, useCallback, useMemo, type CSSProperties } from 'react'
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -17,7 +17,7 @@ import { edgeEntityKey } from '@/graph/spec/manifest'
 import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
 import { resolveEdgeLabelMode, resolveSemanticVisual } from '@/graph/compile/visualSystem'
 
-export function BaseSemanticEdge({
+export const BaseSemanticEdge = memo(function BaseSemanticEdge({
   id,
   data,
   sourceX,
@@ -27,24 +27,80 @@ export function BaseSemanticEdge({
 }: EdgeProps<DiagramFlowEdge>) {
   const { zoom } = useViewport()
 
-  if (!data) {
+  const route = useMemo(
+    () => data ? buildBoardEdgeRoute(data.spec, { x: sourceX, y: sourceY }, { x: targetX, y: targetY }) : null,
+    [data, sourceX, sourceY, targetX, targetY],
+  )
+  const edgePath = route?.path ?? ''
+  const labelPosition = useMemo(() => route ? resolveBoardLabelPosition(route.label) : { x: 0, y: 0 }, [route])
+  const edgePoints = useMemo(
+    () => route?.points.map((point) => `${point.x},${point.y}`).join(' ') ?? '',
+    [route],
+  )
+
+  const presentation = useMemo(() => data ? getSemanticPresentation(data.spec.semantic) : null, [data])
+  const visual = useMemo(() => data ? resolveSemanticVisual(data.spec.semantic) : null, [data])
+
+  const strokeWidth = useMemo(
+    () => data && presentation ? edgeStrokeWidth(data.spec.style, data.spec.semantic, data.canvasLod) : 0,
+    [data, presentation],
+  )
+  const strokeDasharray = useMemo(
+    () => data ? getSemanticStrokeDash(data.spec.semantic, data.spec.style) : undefined,
+    [data],
+  )
+
+  const haloStyle = useMemo<CSSProperties>(() => ({
+    stroke: visual?.halo,
+    strokeWidth: strokeWidth + 2.4,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    vectorEffect: 'non-scaling-stroke',
+  }), [visual?.halo, strokeWidth])
+
+  const strokeStyle = useMemo<CSSProperties>(() => ({
+    stroke: presentation?.stroke,
+    strokeWidth,
+    strokeDasharray,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    vectorEffect: 'non-scaling-stroke',
+  }), [presentation?.stroke, strokeWidth, strokeDasharray])
+
+  const groupStyle = useMemo(() => ({ '--semantic-stroke': presentation?.stroke } as CSSProperties), [presentation?.stroke])
+
+  const labelStyle = useMemo(() => ({
+    '--semantic-stroke': presentation?.stroke,
+    '--semantic-chip-text': visual?.chipText,
+    transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
+  } as CSSProperties), [presentation?.stroke, visual?.chipText, labelPosition.x, labelPosition.y])
+
+  const handleMouseEnter = useCallback(() => {
+    data?.callbacks.onHover(edgeEntityKey(id))
+  }, [data, id])
+
+  const handleMouseLeave = useCallback(() => {
+    data?.callbacks.onHover(undefined)
+  }, [data])
+
+  const handleClick = useCallback(() => {
+    data?.callbacks.onSelectEdge(id)
+  }, [data, id])
+
+  const handleLabelPointerDown = useCallback((event: React.PointerEvent) => {
+    event.stopPropagation()
+    data?.callbacks.onSelectEdge(id)
+  }, [data, id])
+
+  const handleLabelClick = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation()
+    data?.callbacks.onSelectEdge(id)
+  }, [data, id])
+
+  if (!data || !route || !presentation || !visual) {
     return null
   }
 
-  const route = buildBoardEdgeRoute(
-    data.spec,
-    { x: sourceX, y: sourceY },
-    { x: targetX, y: targetY },
-  )
-  const edgePath = route.path
-  const labelPosition = resolveBoardLabelPosition(route.label)
-  const edgePoints = route.points.map((point) => `${point.x},${point.y}`).join(' ')
-
-  const presentation = getSemanticPresentation(data.spec.semantic)
-  const visual = resolveSemanticVisual(data.spec.semantic)
-  const strokeColor = presentation.stroke
-  const strokeWidth = edgeStrokeWidth(data.spec.style, data.spec.semantic, data.canvasLod)
-  const strokeDasharray = getSemanticStrokeDash(data.spec.semantic, data.spec.style)
   const isT0Edge = data.spec.tags.includes('t0')
   const labelMode = resolveEdgeLabelMode(
     zoom,
@@ -86,10 +142,10 @@ export function BaseSemanticEdge({
       data-edge-shared-tag-focus={data.sharedTagFocused ? 'true' : 'false'}
       data-edge-points={edgePoints}
       data-label-position={`${labelPosition.x},${labelPosition.y}`}
-      style={{ '--semantic-stroke': presentation.stroke } as CSSProperties}
-      onMouseEnter={() => data.callbacks.onHover(edgeEntityKey(id))}
-      onMouseLeave={() => data.callbacks.onHover(undefined)}
-      onClick={() => data.callbacks.onSelectEdge(id)}
+      style={groupStyle}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
     >
       <title>{data.ariaLabel}</title>
       <desc>{data.spec.inspector.rationale}</desc>
@@ -97,26 +153,13 @@ export function BaseSemanticEdge({
       <BaseEdge
         path={edgePath}
         interactionWidth={12}
-        style={{
-          stroke: visual.halo,
-          strokeWidth: strokeWidth + 2.4,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-          vectorEffect: 'non-scaling-stroke',
-        }}
+        style={haloStyle}
       />
       <BaseEdge
         path={edgePath}
         markerEnd={`url(#architecture-marker-${data.spec.semantic}-${markerKind})`}
         interactionWidth={12}
-        style={{
-          stroke: strokeColor,
-          strokeWidth,
-          strokeDasharray,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-          vectorEffect: 'non-scaling-stroke',
-        }}
+        style={strokeStyle}
       />
       {labelMode !== 'hidden' ? (
         <EdgeLabelRenderer>
@@ -139,21 +182,11 @@ export function BaseSemanticEdge({
             data-edge-tag-t0={isT0Edge ? 'true' : 'false'}
             data-edge-shared-tag-focus={data.sharedTagFocused ? 'true' : 'false'}
             data-edge-label-mode={labelMode}
-            style={{
-              '--semantic-stroke': presentation.stroke,
-              '--semantic-chip-text': visual.chipText,
-              transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
-            } as CSSProperties}
-            onFocus={() => data.callbacks.onHover(edgeEntityKey(id))}
-            onBlur={() => data.callbacks.onHover(undefined)}
-            onPointerDown={(event) => {
-              event.stopPropagation()
-              data.callbacks.onSelectEdge(id)
-            }}
-            onClick={(event) => {
-              event.stopPropagation()
-              data.callbacks.onSelectEdge(id)
-            }}
+            style={labelStyle}
+            onFocus={handleMouseEnter}
+            onBlur={handleMouseLeave}
+            onPointerDown={handleLabelPointerDown}
+            onClick={handleLabelClick}
           >
             <span className="edge-label__text">{labelText}</span>
             {showT0Badge ? (
@@ -166,4 +199,4 @@ export function BaseSemanticEdge({
       ) : null}
     </g>
   )
-}
+})
