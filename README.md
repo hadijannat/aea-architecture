@@ -6,7 +6,7 @@ This project is optimized for two audiences at once. External readers can use it
 
 ![AEA architecture overview](docs/assets/readme-overview.png)
 
-*Panel A overview with the navigator and legend visible. The canvas renders the canonical architecture board, not an ad hoc diagram authored directly in React Flow.*
+*Panel A overview with the navigator, legend, and synchronized sequence panel visible. The canvas renders the canonical architecture board, not an ad hoc diagram authored directly in React Flow.*
 
 ## What This App Does
 
@@ -78,7 +78,7 @@ In practical terms: the spec defines what the architecture means, the graph JSON
 
 ![AEA writeback state with linked sequence mapping](docs/assets/readme-vor-sync.png)
 
-*Selected `F_VoR_ACK` acknowledgement state. The workspace view shows the architecture selection, the focused navigator region, and the linked sequence mapping surfaced in the inspector.*
+*Selected `F_VoR_ACK` acknowledgement state. The workspace view shows the architecture selection, the focused navigator region, the linked sequence mapping in the inspector, and the revealed VoR sequence panel below.*
 
 ### Snapshots And Exports
 
