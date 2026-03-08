@@ -214,6 +214,51 @@ describe('graph manifest', () => {
     }
   })
 
+  it('assigns short display labels to every architecture edge', () => {
+    const expectedArchitectureDisplayLabels = {
+      F_GW1: 'Subscribe',
+      F_GW2: 'Ingress',
+      F_GW3: 'No return',
+      F1: 'Read PA-DIM',
+      F2: 'Normalise',
+      F3a: 'Get AAS',
+      F3b: 'Guide plan',
+      "F3b'": 'Enforce rules',
+      F3c: 'Get context',
+      F3d: 'Load t0 state',
+      F3e: 'Submit plan',
+      F3f: 'Pass plan',
+      F3f_reject: 'Reject',
+      F3g: 'Provide bounds',
+      F3h: 'Load t0 vals',
+      F3i: 'Limit writes',
+      F_T1: 'Run read',
+      F_T2: 'Query AAS',
+      F4: 'Validate plan',
+      F_KPI: 'Feed KPI',
+      F_AUDIT: 'Record VoR',
+      F5: 'Send request',
+      F6: 'Send change',
+      F_VoR_ACK: 'Status',
+      F_CPC_INT: 'Execute',
+      F7a: 'Publish MQTT',
+      F7b: 'Consume',
+      F7_sub: 'Subscribe',
+    } as const
+
+    for (const [id, displayLabel] of Object.entries(expectedArchitectureDisplayLabels)) {
+      const edge = graphManifest.edges.find((candidate) => candidate.id === id)
+      expect(edge, `Missing edge ${id}`).toBeDefined()
+      expect(edge?.displayLabel).toBe(displayLabel)
+    }
+
+    expect(
+      graphManifest.edges
+        .filter((edge) => edge.panel.includes('architecture'))
+        .every((edge) => typeof edge.displayLabel === 'string' && edge.displayLabel.length > 0),
+    ).toBe(true)
+  })
+
   it('keeps diode, write-back, and sequence terminals explicit', () => {
     const fGw2 = graphManifest.edges.find((edge) => edge.id === 'F_GW2')
     const fGw3 = graphManifest.edges.find((edge) => edge.id === 'F_GW3')

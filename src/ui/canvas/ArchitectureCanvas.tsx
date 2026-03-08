@@ -187,7 +187,7 @@ function OverviewWriteRibbon({
   )
 }
 
-function AutoFocusSelection({
+export function AutoFocusSelection({
   containerRef,
   nodes,
   selectedNodeId,
@@ -208,8 +208,6 @@ function AutoFocusSelection({
     if (selectedNodeId === previousSelectedNodeIdRef.current) {
       return
     }
-
-    previousSelectedNodeIdRef.current = selectedNodeId
 
     const targetNode = nodes.find((node) => node.id === selectedNodeId)
     if (!targetNode) {

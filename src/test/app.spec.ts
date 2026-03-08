@@ -285,11 +285,46 @@ test('architecture edge labels retain ids in display and expanded modes', async 
 
   await ensureEdgeLabelMode(page, 'F4', 'display', 'zoom-in')
   await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'display')
-  await expect(edgeLabel).toHaveText('F4 · validated candidate plan')
+  await expect(edgeLabel).toHaveText('F4 · Validate plan')
 
   await ensureEdgeLabelMode(page, 'F4', 'expanded', 'zoom-in')
   await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'expanded')
-  await expect(edgeLabel).toHaveText('F4 · validated candidate plan')
+  await expect(edgeLabel).toHaveText('F4 · Validate plan')
+})
+
+test('diode edges keep the diode suffix across compact, display, and expanded label modes', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+  await page.waitForTimeout(700)
+
+  const edgeLabel = await ensureEdgeLabelMode(page, 'F_GW2', 'compact', 'zoom-out')
+  await expect(edgeLabel).toHaveText('F_GW2 ⊘')
+
+  await ensureEdgeLabelMode(page, 'F_GW2', 'display', 'zoom-in')
+  await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'display')
+  await expect(edgeLabel).toHaveText('F_GW2 · Ingress ⊘')
+
+  await ensureEdgeLabelMode(page, 'F_GW2', 'expanded', 'zoom-in')
+  await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'expanded')
+  await expect(edgeLabel).toHaveText('F_GW2 · Ingress ⊘')
+})
+
+test('F3e and F3g display labels stay separated at the desktop viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+  await page.waitForTimeout(700)
+
+  const f3eLabel = await ensureEdgeLabelMode(page, 'F3e', 'display', 'zoom-in')
+  const f3gLabel = await ensureEdgeLabelMode(page, 'F3g', 'display', 'zoom-in')
+
+  await expect(f3eLabel).toHaveAttribute('data-edge-label-mode', 'display')
+  await expect(f3gLabel).toHaveAttribute('data-edge-label-mode', 'display')
+
+  const [f3eBox, f3gBox] = await Promise.all([f3eLabel.boundingBox(), f3gLabel.boundingBox()])
+
+  expect(f3eBox).not.toBeNull()
+  expect(f3gBox).not.toBeNull()
+  expect(boxesOverlap(f3eBox!, f3gBox!, 0)).toBe(false)
 })
 
 test('toggle chips expose pressed state and the updated lane copy', async ({ page }) => {

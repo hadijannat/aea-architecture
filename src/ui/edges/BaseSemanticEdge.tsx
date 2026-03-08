@@ -47,9 +47,10 @@ export function BaseSemanticEdge({
   const showExpandedLabel = data.selected || data.highlighted || zoom >= 0.76
   const showDisplayLabel = !showExpandedLabel && (zoom >= 0.62 || (isT0Edge && data.sharedTagFocused))
   const displayLabel = data.spec.displayLabel ?? data.spec.label
-  const displayModeLabel = `${data.spec.id} · ${displayLabel}`
-  const expandedLabel = `${data.spec.id} · ${displayLabel}${data.optional ? ' (optional)' : ''}`
-  const compactLabel = `${data.spec.id}${data.spec.markers.includes('diode') ? ' ⊘' : ''}`
+  const diodeSuffix = data.spec.markers.includes('diode') ? ' ⊘' : ''
+  const displayModeLabel = `${data.spec.id} · ${displayLabel}${diodeSuffix}`
+  const expandedLabel = `${data.spec.id} · ${displayLabel}${data.optional ? ' (optional)' : ''}${diodeSuffix}`
+  const compactLabel = `${data.spec.id}${diodeSuffix}`
   const labelMode = showExpandedLabel ? 'expanded' : showDisplayLabel ? 'display' : 'compact'
   const labelText = showExpandedLabel ? expandedLabel : showDisplayLabel ? displayModeLabel : compactLabel
   const showT0Badge = isT0Edge && labelMode !== 'compact'
