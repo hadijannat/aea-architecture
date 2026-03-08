@@ -636,7 +636,7 @@
       "claimIds": ["C2", "C3", "C5"],
       "tags": ["sense", "telemetry-path", "policy-path"],
       "parentId": "BAND_SENSE",
-      "width": 250,
+      "width": 230,
       "height": 120,
       "visual": {
         "fill": "#ffffff",
@@ -2596,38 +2596,38 @@
   "layoutDefaults": {
     "canvas": {
       "width": 2176,
-      "height": 1320
+      "height": 1480
     },
     "viewport": {
       "x": 18,
       "y": 18,
-      "zoom": 0.56
+      "zoom": 0.60
     },
     "lanes": {
       "A": {
         "x": 24,
         "y": 24,
         "width": 360,
-        "height": 1260
+        "height": 1420
       },
       "B": {
         "x": 584,
         "y": 24,
         "width": 1180,
-        "height": 1260
+        "height": 1420
       },
       "C": {
         "x": 1800,
         "y": 24,
         "width": 344,
-        "height": 1260
+        "height": 1420
       }
     },
     "gateway": {
       "x": 404,
       "y": 172,
       "width": 152,
-      "height": 834,
+      "height": 984,
       "ne177Height": 404,
       "ne178Height": 250
     },
@@ -2635,10 +2635,10 @@
       "x": 620,
       "y": 150,
       "width": 1100,
-      "height": 1040,
+      "height": 1190,
       "bandHeights": {
         "Sense": 190,
-        "Decide": 490,
+        "Decide": 640,
         "Act": 190
       }
     }

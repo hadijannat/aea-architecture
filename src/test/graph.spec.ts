@@ -662,88 +662,88 @@ describe('exports', () => {
     const state = await createState()
     const expectedRoutes = {
       F3e: {
-        path: 'M 1325 743 L 1383 743 Q 1397 743 1397 729 L 1397 692 Q 1397 678 1411 678 L 1468 678',
-        labelPoint: { x: 1361, y: 729 },
+        path: 'M 1325 786 L 1383 786 Q 1397 786 1397 772 L 1397 734 Q 1397 720 1411 720 L 1468 720',
+        labelPoint: { x: 1361, y: 766 },
       },
       F_G1A_pass: {
-        path: 'M 1583 742 L 1583 784 Q 1583 798 1569 798 L 1324 798 Q 1310 798 1310 784 L 1310 770',
-        labelPoint: { x: 1464.5, y: 798 },
+        path: 'M 1583 784 L 1583 841 Q 1583 855 1569 855 L 1310.5 855 Q 1310 855 1310 855.5 L 1310 856',
+        labelPoint: { x: 1464.5, y: 855 },
       },
       F_G1A_reject: {
-        path: 'M 1468 678 L 1468 755 Q 1468 764 1459 764 L 1459 764 Q 1450 764 1450 755 L 1450 678',
-        labelPoint: { x: 1459, y: 782 },
+        path: 'M 1468 720 L 1468 790 Q 1468 799 1459 799 L 1459 799 Q 1450 799 1450 790 L 1450 721',
+        labelPoint: { x: 1459, y: 817 },
       },
       F3f_reject: {
-        path: 'M 1310 890 L 1310 778 Q 1310 764 1296 764 L 1244 764 Q 1230 764 1230 750 L 1230 692 Q 1230 678 1216 678 L 1200 678',
-        labelPoint: { x: 1270, y: 782 },
+        path: 'M 1310 976 L 1310 835 Q 1310 821 1296 821 L 1244 821 Q 1230 821 1230 807 L 1230 735 Q 1230 721 1216 721 L 1200 721',
+        labelPoint: { x: 1270, y: 839 },
       },
       F3g: {
-        path: 'M 774 586 L 774 882 Q 774 896 788 896 L 1574 896 Q 1588 896 1588 882 L 1588 766',
-        labelPoint: { x: 1181, y: 880 },
+        path: 'M 774 586 L 774 970 Q 774 984 788 984 L 1574 984 Q 1588 984 1588 970 L 1588 856',
+        labelPoint: { x: 1181, y: 956 },
       },
       F3h: {
-        path: 'M 1250 310 L 1250 740 Q 1250 754 1264 754 L 1546 754 Q 1552 754 1552 760 L 1552 760 Q 1552 766 1558 766 L 1588 766',
-        labelPoint: { x: 1534, y: 760 },
+        path: 'M 1230 310 L 1230 830 Q 1230 844 1244 844 L 1546 844 Q 1552 844 1552 850 L 1552 850 Q 1552 856 1558 856 L 1588 856',
+        labelPoint: { x: 1534, y: 850 },
       },
       F3i: {
-        path: 'M 534 823 L 534 902 Q 534 916 548 916 L 1454 916 Q 1468 916 1468 902 L 1468 830',
-        labelPoint: { x: 1001, y: 900 },
+        path: 'M 534 973 L 534 990 Q 534 1004 548 1004 L 1454 1004 Q 1468 1004 1468 990 L 1468 920',
+        labelPoint: { x: 1001, y: 990 },
       },
       F_T0_req: {
-        path: 'M 1325 613 L 1325 606.5 Q 1325 600 1331.5 600 L 1576 600 Q 1583 600 1583 593 L 1583 586',
-        labelPoint: { x: 1325, y: 592.5 },
+        path: 'M 1325 656 L 1325 635 Q 1325 621 1339 621 L 1569 621 Q 1583 621 1583 607 L 1583 586',
+        labelPoint: { x: 1325, y: 624.5 },
       },
       F_T1: {
-        path: 'M 1468 526 L 1468 420 Q 1468 406 1454 406 L 654 406 Q 640 406 640 392 L 640 242 Q 640 228 654 228 L 744 228 Q 758 228 758 242 L 758 256',
-        labelPoint: { x: 640, y: 335 },
+        path: 'M 1468 526 L 1468 459 Q 1468 445 1454 445 L 654 445 Q 640 445 640 431 L 640 242 Q 640 228 654 228 L 744 228 Q 758 228 758 242 L 758 256',
+        labelPoint: { x: 640, y: 354.5 },
       },
       F_T2: {
         path: 'M 1468 526 L 884 526',
         labelPoint: { x: 1176, y: 512 },
       },
       F_T0_obs: {
-        path: 'M 1583 466 L 1583 632 Q 1583 646 1569 646 L 1061 646 Q 1047 646 1047 660 L 1047 742',
-        labelPoint: { x: 1315, y: 590 },
+        path: 'M 1583 466 L 1583 616 Q 1583 630 1569 630 L 1061 630 Q 1047 630 1047 644 L 1047 784',
+        labelPoint: { x: 1315, y: 574 },
       },
       F4: {
-        path: 'M 1588 894 L 1198 894 Q 1184 894 1184 880 L 1184 784 Q 1184 770 1170 770 L 779 770',
-        labelPoint: { x: 1386, y: 880 },
+        path: 'M 1588 984 L 1198 984 Q 1184 984 1184 970 L 1184 870 Q 1184 856 1170 856 L 779 856',
+        labelPoint: { x: 1386, y: 970 },
       },
       F_H1_revalidate: {
-        path: 'M 894 830 L 1468 830',
-        labelPoint: { x: 1181, y: 816 },
+        path: 'M 894 916 L 1179 916 Q 1181 916 1181 918 L 1181 918 Q 1181 920 1183 920 L 1468 920',
+        labelPoint: { x: 1037.5, y: 902 },
       },
       F_H1_reject: {
-        path: 'M 779 770 L 779 760 Q 779 750 789 750 L 1321.5 750 Q 1325 750 1325 746.5 L 1325 743',
-        labelPoint: { x: 1052, y: 768 },
+        path: 'M 779 856 L 779 849.5 Q 779 843 785.5 843 L 1311 843 Q 1325 843 1325 829 L 1325 786',
+        labelPoint: { x: 1052, y: 825 },
       },
       F_H1_pass: {
-        path: 'M 779 890 L 779 929.5 Q 779 932 781.5 932 L 781.5 932 Q 784 932 784 934.5 L 784 990',
-        labelPoint: { x: 799, y: 911 },
+        path: 'M 779 976 L 779 1015.5 Q 779 1018 781.5 1018 L 781.5 1018 Q 784 1018 784 1020.5 L 784 1140',
+        labelPoint: { x: 799, y: 997 },
       },
       F5: {
-        path: 'M 664 1050 L 642 1050 Q 628 1050 628 1064 L 628 1124 Q 628 1138 614 1138 L 576 1138 Q 562 1138 562 1124 L 562 837 Q 562 823 548 823 L 534 823',
-        labelPoint: { x: 595, y: 1162 },
+        path: 'M 664 1200 L 634.5 1200 Q 628 1200 628 1206.5 L 628 1206.5 Q 628 1213 621.5 1213 L 576 1213 Q 562 1213 562 1199 L 562 987 Q 562 973 548 973 L 534 973',
+        labelPoint: { x: 595, y: 1237 },
       },
       F6: {
-        path: 'M 424 823 L 374 823 Q 360 823 360 837 L 360 1126 Q 360 1138 348 1138 L 348 1138 Q 336 1138 336 1126 L 336 1007 Q 336 993 322 993 L 308 993',
-        labelPoint: { x: 380, y: 980.5 },
+        path: 'M 424 973 L 374 973 Q 360 973 360 987 L 360 1201 Q 360 1213 348 1213 L 348 1213 Q 336 1213 336 1201 L 336 1157 Q 336 1143 322 1143 L 308 1143',
+        labelPoint: { x: 380, y: 1093 },
       },
       F_VoR_ACK: {
-        path: 'M 534 823 L 548 823 Q 562 823 562 837 L 562 1040 Q 562 1054 576 1054 L 632 1054 Q 634 1054 634 1052 L 634 1052 Q 634 1050 636 1050 L 664 1050',
-        labelPoint: { x: 590, y: 938.5 },
+        path: 'M 534 973 L 548 973 Q 562 973 562 987 L 562 1159 Q 562 1173 576 1173 L 620.5 1173 Q 634 1173 634 1186.5 L 634 1186.5 Q 634 1200 647.5 1200 L 664 1200',
+        labelPoint: { x: 590, y: 1073 },
       },
       F_CPC_INT: {
-        path: 'M 80 993 L 62 993 Q 48 993 48 979 L 48 279 Q 48 265 62 265 L 80 265',
-        labelPoint: { x: 64, y: 629 },
+        path: 'M 80 1143 L 62 1143 Q 48 1143 48 1129 L 48 279 Q 48 265 62 265 L 80 265',
+        labelPoint: { x: 64, y: 704 },
       },
       F7a: {
-        path: 'M 1670 1043 L 1690 1043 Q 1704 1043 1704 1057 L 1704 1104 Q 1704 1118 1718 1118 L 1818 1118 Q 1832 1118 1832 1104 L 1832 997 Q 1832 984 1845 984 L 1858 984',
-        labelPoint: { x: 1768, y: 1138 },
+        path: 'M 1670 1193 L 1700 1193 Q 1704 1193 1704 1197 L 1704 1197 Q 1704 1201 1708 1201 L 1818 1201 Q 1832 1201 1832 1187 L 1832 1147 Q 1832 1134 1845 1134 L 1858 1134',
+        labelPoint: { x: 1768, y: 1221 },
       },
       F7_sub: {
-        path: 'M 1958 1100 L 2102 1100 Q 2116 1100 2116 1086 L 2116 1052 Q 2116 1038 2102 1038 L 1958 1038',
-        labelPoint: { x: 2037, y: 1082 },
+        path: 'M 1958 1250 L 2102 1250 Q 2116 1250 2116 1236 L 2116 1202 Q 2116 1188 2102 1188 L 1958 1188',
+        labelPoint: { x: 2037, y: 1232 },
       },
     } as const
 
@@ -833,6 +833,32 @@ describe('exports', () => {
     }
   })
 
+  it('keeps rejection and monitor reroutes on distinct local channels', async () => {
+    const state = await createState()
+    const rejectionRoutes = {
+      F_G1A_reject: 799,
+      F3f_reject: 821,
+      F_H1_reject: 843,
+    } as const
+
+    for (const [edgeId, expectedY] of Object.entries(rejectionRoutes)) {
+      const route = buildArchitectureRoute(state, edgeId)
+      expect(route.points[1]?.y).toBe(expectedY)
+      expect(route.points[2]?.y).toBe(expectedY)
+    }
+
+    expect(buildArchitectureRoute(state, 'F_M1_G0').points).toEqual([
+      { x: 1162, y: 720 },
+      { x: 1162, y: 818 },
+      { x: 932, y: 818 },
+      { x: 932, y: 916 },
+    ])
+    expect(buildArchitectureRoute(state, 'F_M1_H1').points).toEqual([
+      { x: 894, y: 916 },
+      { x: 932, y: 916 },
+    ])
+  })
+
   it('keeps Panel B acknowledgement and rejection routes on the shared sequence geometry', async () => {
     const state = await createState()
     const derived = deriveDiagramState(state)
@@ -840,17 +866,18 @@ describe('exports', () => {
     const ackEdge = board.edges.find((edge) => edge.edge.id === 'PB_ACK')
     const rejectEdge = board.edges.find((edge) => edge.edge.id === 'PB_REJECT')
 
-    expect(board.ackRouteY).toBe(206)
+    expect(board.ackRouteY).toBe(222)
     expect(ackEdge?.path).toContain('Q')
     expect(ackEdge).toMatchObject({
       labelX: 711.5,
-      labelY: 206,
+      labelY: 222,
     })
     expect(rejectEdge?.path).toContain('Q')
     expect(rejectEdge).toMatchObject({
       labelX: 997,
-      labelY: 180,
+      labelY: 191,
     })
+    expect(board.height).toBe(346)
   })
 
   it('reuses the shared sequence geometry in viewport export', async () => {

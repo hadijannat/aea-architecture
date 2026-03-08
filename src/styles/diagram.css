@@ -1784,23 +1784,15 @@
 }
 
 .node-card--compact .node-card__subtitle {
-  display: -webkit-box;
-  overflow: hidden;
-  font-size: 0.72rem;
-  line-height: 1.3;
-  color: var(--text-faint);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
+  display: none;
 }
 
 .node-card--compact .node-card__description {
-  -webkit-line-clamp: 2;
-  font-size: 0.76rem;
+  display: none;
 }
 
 .node-card--compact .node-card__meta {
-  grid-template-columns: 1fr;
-  gap: 6px;
+  display: none;
 }
 
 .node-card--compact .node-card__header {
@@ -1814,6 +1806,34 @@
 .node-card--compact .badge {
   font-size: 0.64rem;
   padding: 0.26rem 0.52rem;
+}
+
+.node-card[data-node-id='BAND_DECIDE'] .node-card__decide-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.node-card[data-node-id='BAND_DECIDE'] .node-card__decide-separator {
+  position: absolute;
+  left: 30px;
+  right: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(69, 90, 117, 0.22), rgba(69, 90, 117, 0.06));
+}
+
+.node-card[data-node-id='BAND_DECIDE'] .node-card__decide-row-label {
+  position: absolute;
+  left: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(69, 90, 117, 0.52);
+  writing-mode: vertical-rl;
+  transform: translateY(-50%) rotate(180deg);
 }
 
 .node-card__meta-popover {

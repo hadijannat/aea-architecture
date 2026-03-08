@@ -206,7 +206,7 @@ export function compileSequenceBoard(
   const pb4Rect = stepRects.PB4
   const rejectRect: BoardRect = {
     x: (pb4Rect?.x ?? firstStepX) + 44,
-    y: ribbonY + stepHeight + 74,
+    y: ribbonY + stepHeight + 96,
     width: 184,
     height: 70,
   }
@@ -214,7 +214,7 @@ export function compileSequenceBoard(
     PB_AEA: leftTerminalRect,
     PB_REJECT_OUT: rejectRect,
   }
-  const ackRouteY = ribbonY + stepHeight + 54
+  const ackRouteY = ribbonY + stepHeight + 70
   const width = (stepRects.PB5?.x ?? firstStepX) + stepWidth + boardPaddingX
   const height = rejectRect.y + rejectRect.height + 28
 

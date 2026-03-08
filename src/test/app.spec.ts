@@ -353,6 +353,28 @@ test('F3e and F3g display labels stay separated at the desktop viewport', async 
   expect(boxesOverlap(f3eBox!, f3gBox!, 0)).toBe(false)
 })
 
+test('compact node cards hide subtitle and metadata at low zoom', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+  await page.waitForTimeout(700)
+
+  const plannerCard = page.locator('.node-card[data-node-id="DEC_R2"]')
+  const zoomOut = page.locator('.architecture-canvas .react-flow__controls-zoomout:not([disabled])')
+
+  for (let index = 0; index < 4; index += 1) {
+    if ((await plannerCard.getAttribute('data-node-density')) === 'compact') {
+      break
+    }
+    await zoomOut.click()
+    await page.waitForTimeout(160)
+  }
+
+  await expect(plannerCard).toHaveAttribute('data-node-density', 'compact')
+  await expect(plannerCard.locator('.node-card__subtitle')).toBeHidden()
+  await expect(plannerCard.locator('.node-card__description')).toBeHidden()
+  await expect(plannerCard.locator('.node-card__meta')).toBeHidden()
+})
+
 test('toggle chips expose pressed state and the updated lane copy', async ({ page }) => {
   await page.goto('/')
 

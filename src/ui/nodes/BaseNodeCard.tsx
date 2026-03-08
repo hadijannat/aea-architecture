@@ -111,6 +111,7 @@ export function BaseNodeCard({
   const showEyebrowId = !isStructural || structuralZoomMode !== 'overview'
   const showLeadingBadge = visual.badgeStyle === 'pill' && !isStructural
   const showInlineBadge = (visual.badgeStyle === 'inline' || isStructural) && showStructuralBadge
+  const showDecideBandOverlay = spec.id === 'BAND_DECIDE'
 
   useEffect(() => {
     if (!menuOpen) {
@@ -252,6 +253,21 @@ export function BaseNodeCard({
       onBlurCapture={handleBlur}
     >
       {!isStructural ? <NodeHandles /> : null}
+      {showDecideBandOverlay ? (
+        <div className="node-card__decide-overlay" aria-hidden="true">
+          <div className="node-card__decide-separator" style={{ top: 189 }} />
+          <div className="node-card__decide-separator" style={{ top: 389 }} />
+          <span className="node-card__decide-row-label" style={{ top: 94 }}>
+            Data Access &amp; Tool Layer
+          </span>
+          <span className="node-card__decide-row-label" style={{ top: 284 }}>
+            Guarded Context &amp; Planning
+          </span>
+          <span className="node-card__decide-row-label" style={{ top: 484 }}>
+            Validation &amp; Approval
+          </span>
+        </div>
+      ) : null}
       <div className="node-card__header">
         <div className="node-card__header-main">
           {showLeadingBadge ? badge : null}
