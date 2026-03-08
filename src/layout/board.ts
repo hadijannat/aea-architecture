@@ -84,6 +84,7 @@ function buildLabel(edge: EdgeSpec, points: Point[]): RoutedBoardLabel {
     case 'F_G0_out':
     case 'F3e':
     case 'F3f':
+    case 'F_H1_revalidate':
     case 'F_T0_req':
     case 'F_T2':
     case 'F4':
@@ -118,6 +119,8 @@ function buildLabel(edge: EdgeSpec, points: Point[]): RoutedBoardLabel {
     case 'F3h':
       return segmentLabel(points, 2, 'left', 18)
     case 'F3f_reject':
+      return segmentLabel(points, 1, 'bottom', 18)
+    case 'F_H1_reject':
       return segmentLabel(points, 1, 'bottom', 18)
     case 'F_T1':
       return segmentLabel(points, 2, 'bottom', 18)
@@ -202,6 +205,7 @@ export function buildBoardEdgeRoute(
     case 'F_G0_out':
     case 'F3e':
     case 'F3f':
+    case 'F_H1_revalidate':
     case 'F_T2':
     case 'F4':
       points = source.y === target.y || source.x === target.x ? [source, target] : doglegX(source, target)
@@ -262,6 +266,14 @@ export function buildBoardEdgeRoute(
         target,
       ]
       break
+    case 'F_H1_reject':
+      points = [
+        source,
+        point(source.x, channels.rejectionY - 14),
+        point(target.x, channels.rejectionY - 14),
+        target,
+      ]
+      break
     case 'F3g':
       points = [
         source,
@@ -288,12 +300,7 @@ export function buildBoardEdgeRoute(
       ]
       break
     case 'F_T0_req':
-      points = [
-        source,
-        point(source.x, channels.policyY - 22),
-        point(target.x, channels.policyY - 22),
-        target,
-      ]
+      points = doglegY(source, target)
       break
     case 'F_T1':
       points = [

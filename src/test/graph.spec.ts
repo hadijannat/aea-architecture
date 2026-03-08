@@ -180,7 +180,7 @@ describe('graph manifest', () => {
       F_GW2: { source: 'G1', target: 'G2', semantic: 'gateway-internal', style: 'medium', direction: 'ttb' },
       F_GW3: { source: 'G2', target: 'G3', semantic: 'gateway-internal', style: 'medium', direction: 'ttb' },
       F1: { source: 'G3', target: 'S1', semantic: 'read-only', style: 'medium', direction: 'ltr' },
-      F2: { source: 'S1', target: 'S2', semantic: 'normalization', style: 'thin', direction: 'ttb' },
+      F2: { source: 'S1', target: 'S2', semantic: 'normalization', style: 'thin', direction: 'ltr' },
       F3a: { source: 'DEC_K1', target: 'DEC_R0', semantic: 'retrieval', style: 'thin', direction: 'ltr' },
       F3b: { source: 'DEC_K2', target: 'DEC_R0', semantic: 'policy-soft', style: 'thin', direction: 'ltr' },
       F_R0_out: { source: 'DEC_R0', target: 'DEC_R1', semantic: 'retrieval', style: 'medium', direction: 'ltr' },
@@ -202,6 +202,8 @@ describe('graph manifest', () => {
       F_T0_req: { source: 'DEC_R2', target: 'DEC_T0', semantic: 'tool-call', style: 'dotted', direction: 'btt' },
       F_T0_obs: { source: 'DEC_T0', target: 'DEC_G0', semantic: 'retrieval', style: 'medium', direction: 'rtl' },
       F4: { source: 'DEC_G2', target: 'DEC_H1', semantic: 'validation', style: 'medium', direction: 'rtl' },
+      F_H1_revalidate: { source: 'DEC_H1', target: 'DEC_G2', semantic: 'validation', style: 'dashed', direction: 'ltr' },
+      F_H1_reject: { source: 'DEC_H1', target: 'DEC_R2', semantic: 'rejection', style: 'dashed', direction: 'btt' },
       F_H1_pass: { source: 'DEC_H1', target: 'ACT1', semantic: 'validation', style: 'medium', direction: 'ttb' },
       F_M1_G0: { source: 'DEC_G0', target: 'DEC_M1', semantic: 'audit', style: 'thin', direction: 'ltr' },
       F_M1_R0: { source: 'DEC_R0', target: 'DEC_M1', semantic: 'audit', style: 'thin', direction: 'ltr' },
@@ -260,6 +262,8 @@ describe('graph manifest', () => {
       F_T0_req: 'Broker tools',
       F_T0_obs: 'Guard obs',
       F4: 'Await approval',
+      F_H1_revalidate: 'Revalidate',
+      F_H1_reject: 'Reject plan',
       F_H1_pass: 'Approve plan',
       F_M1_G0: 'Log input',
       F_M1_R0: 'Log retrieval',
@@ -344,6 +348,20 @@ describe('graph manifest', () => {
     expect(edgeMap.F_T1?.source).toBe('DEC_T0')
     expect(edgeMap.F_T2?.source).toBe('DEC_T0')
     expect(edgeMap.F4?.target).toBe('DEC_H1')
+    expect(edgeMap.F_H1_revalidate?.source).toBe('DEC_H1')
+    expect(edgeMap.F_H1_revalidate?.target).toBe('DEC_G2')
+    expect(edgeMap.F_H1_reject?.source).toBe('DEC_H1')
+    expect(edgeMap.F_H1_reject?.target).toBe('DEC_R2')
+  })
+
+  it('keeps deterministic external-control claims on policy feedback and approval-loop edges', () => {
+    const requiredC6Edges = ["F3b'", 'F3f_reject', 'F_H1_revalidate', 'F_H1_reject'] as const
+
+    for (const edgeId of requiredC6Edges) {
+      const edge = graphManifest.edges.find((candidate) => candidate.id === edgeId)
+      expect(edge, `Missing edge ${edgeId}`).toBeDefined()
+      expect(edge?.claimIds).toContain('C6')
+    }
   })
 
   it('keeps ACT1 validation ingress exclusive to the approval gate while preserving VoR feedback', () => {
@@ -672,8 +690,8 @@ describe('exports', () => {
         labelPoint: { x: 1001, y: 900 },
       },
       F_T0_req: {
-        path: 'M 1325 743 L 1325 574 Q 1325 560 1339 560 L 1569 560 Q 1583 560 1583 546 L 1583 466',
-        labelPoint: { x: 1325, y: 637.5 },
+        path: 'M 1325 613 L 1325 606.5 Q 1325 600 1331.5 600 L 1576 600 Q 1583 600 1583 593 L 1583 586',
+        labelPoint: { x: 1325, y: 592.5 },
       },
       F_T1: {
         path: 'M 1468 526 L 1468 420 Q 1468 406 1454 406 L 654 406 Q 640 406 640 392 L 640 242 Q 640 228 654 228 L 744 228 Q 758 228 758 242 L 758 256',
@@ -690,6 +708,14 @@ describe('exports', () => {
       F4: {
         path: 'M 1588 894 L 1198 894 Q 1184 894 1184 880 L 1184 784 Q 1184 770 1170 770 L 779 770',
         labelPoint: { x: 1386, y: 880 },
+      },
+      F_H1_revalidate: {
+        path: 'M 894 830 L 1468 830',
+        labelPoint: { x: 1181, y: 816 },
+      },
+      F_H1_reject: {
+        path: 'M 779 770 L 779 760 Q 779 750 789 750 L 1321.5 750 Q 1325 750 1325 746.5 L 1325 743',
+        labelPoint: { x: 1052, y: 768 },
       },
       F_H1_pass: {
         path: 'M 779 890 L 779 929.5 Q 779 932 781.5 932 L 781.5 932 Q 784 932 784 934.5 L 784 990',
@@ -743,6 +769,8 @@ describe('exports', () => {
       'F_T2',
       'F_T0_obs',
       'F4',
+      'F_H1_revalidate',
+      'F_H1_reject',
       'F_H1_pass',
       'F5',
       'F6',
@@ -789,6 +817,8 @@ describe('exports', () => {
       { edgeId: 'F_G1A_pass', nodes: ['DEC_G1A', 'DEC_G1', 'DEC_M1'] },
       { edgeId: 'F_T1', nodes: ['S1', 'S2', 'DEC_T0'] },
       { edgeId: 'F_T0_obs', nodes: ['DEC_T0', 'DEC_G0', 'DEC_R2'] },
+      { edgeId: 'F_H1_revalidate', nodes: ['DEC_H1', 'DEC_G2', 'DEC_G1'] },
+      { edgeId: 'F_H1_reject', nodes: ['DEC_H1', 'DEC_R2', 'DEC_M1'] },
       { edgeId: 'F_H1_pass', nodes: ['DEC_H1', 'ACT1', 'ACT3'] },
       { edgeId: 'F_CPC_INT', nodes: ['A1', 'A2', 'A3'] },
     ] as const
@@ -842,7 +872,7 @@ describe('exports', () => {
     expect(viewportDocument.svg).toContain('<title>AEA Architecture Viewport Export</title>')
     expect(viewportDocument.svg).toContain('data-export-theme="default"')
     expect(viewportDocument.svg).toContain('viewBox="60 40 320 180"')
-    for (const edgeId of ['F_G1A_pass', 'F_T1', 'F_T0_obs', 'F4', 'F_H1_pass', 'F5', 'F6', 'F_VoR_ACK', 'F_CPC_INT', 'F7a', 'F7_sub']) {
+    for (const edgeId of ['F_G1A_pass', 'F_T1', 'F_T0_obs', 'F4', 'F_H1_revalidate', 'F_H1_reject', 'F_H1_pass', 'F5', 'F6', 'F_VoR_ACK', 'F_CPC_INT', 'F7a', 'F7_sub']) {
       const route = buildArchitectureRoute(state, edgeId)
       const label = resolveBoardLabelPosition(route.label)
       expect(viewportDocument.svg).toContain(`d="${route.path}"`)

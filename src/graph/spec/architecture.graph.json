@@ -842,7 +842,7 @@
           "Local tools: anomaly.detect, kpi.compute, sim.check.",
           "External arrows only exist for brokered opcua.read and aas.query."
         ],
-        "relatedEdgeIds": ["F_G0_out", "F3e", "F_G1A_reject", "F3f_reject", "F_T0_req"],
+        "relatedEdgeIds": ["F_G0_out", "F3e", "F_G1A_reject", "F3f_reject", "F_H1_reject", "F_T0_req"],
         "relatedStepIds": ["PB1", "PB2"]
       }
     },
@@ -971,7 +971,7 @@
           "The spec alias DEC3 resolves here for traceability.",
           "Approval freshness is bound to plan_hash + snapshot_id + expires_at."
         ],
-        "relatedEdgeIds": ["F3f", "F3g", "F3h", "F3i", "F4"],
+        "relatedEdgeIds": ["F3f", "F3g", "F3h", "F3i", "F4", "F_H1_revalidate"],
         "relatedStepIds": ["PB1", "PB2", "PB5"]
       }
     },
@@ -1001,10 +1001,11 @@
         "role": "Pre-VoR approval gate",
         "rationale": "DEC_H1 makes human approval mandatory for all VoR-bound plans and binds approval to the validated plan hash, snapshot, and expiry window.",
         "notes": [
-          "If approval expires or t0 changes before ACT1, the plan must return to deterministic validation.",
+          "If an operator rejects the plan, it returns to DEC_R2 for replanning.",
+          "If approval expires or t0 changes before ACT1, the plan returns to DEC_G2 for deterministic revalidation.",
           "Panel B remains an NE 178 protocol view and does not absorb this AEA-side gate."
         ],
-        "relatedEdgeIds": ["F4", "F_H1_pass", "F_M1_H1"],
+        "relatedEdgeIds": ["F4", "F_H1_revalidate", "F_H1_reject", "F_H1_pass", "F_M1_H1"],
         "relatedStepIds": []
       }
     },
@@ -1356,7 +1357,7 @@
       "style": "thin",
       "label": "normalise signals; apply IEC 61987 IRDIs",
       "displayLabel": "Normalise",
-      "direction": "ttb",
+      "direction": "ltr",
       "standardIds": ["PADIM102", "IEC61987"],
       "claimIds": ["C2", "C3"],
       "tags": ["telemetry-path"],
@@ -1459,7 +1460,7 @@
       "displayLabel": "Enforce rules",
       "direction": "ltr",
       "standardIds": ["NISTAIRMF10"],
-      "claimIds": ["C3", "C4"],
+      "claimIds": ["C3", "C4", "C6"],
       "tags": ["policy-path"],
       "interactive": {
         "relatedStepIds": ["PB4"],
@@ -1683,7 +1684,7 @@
       "displayLabel": "Reject",
       "direction": "rtl",
       "standardIds": ["NISTAIRMF10"],
-      "claimIds": ["C3"],
+      "claimIds": ["C3", "C6"],
       "tags": ["policy-path"],
       "interactive": {
         "relatedStepIds": ["PB4"],
@@ -1842,8 +1843,8 @@
       "tags": ["policy-path", "tool-call", "guardrail"],
       "interactive": {
         "relatedStepIds": [],
-        "sourceHandle": "bottom",
-        "targetHandle": "top",
+        "sourceHandle": "top",
+        "targetHandle": "bottom",
         "highlightGroup": "policy"
       },
       "inspector": {
@@ -1898,6 +1899,56 @@
       },
       "inspector": {
         "rationale": "F4 now terminates at the Human Approval Gate so validator-passed plans still require explicit operator approval before VoR composition."
+      }
+    },
+    {
+      "id": "F_H1_revalidate",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_H1",
+      "target": "DEC_G2",
+      "semantic": "validation",
+      "style": "dashed",
+      "label": "expired approval / stale snapshot -> revalidate",
+      "displayLabel": "Revalidate",
+      "direction": "ltr",
+      "standardIds": ["OWASPLMM25", "NISTAI6001", "OPC1000018"],
+      "claimIds": ["C4", "C6"],
+      "tags": ["write-path", "guardrail"],
+      "interactive": {
+        "relatedStepIds": [],
+        "sourceHandle": "right",
+        "targetHandle": "left",
+        "highlightGroup": "write"
+      },
+      "inspector": {
+        "rationale": "F_H1_revalidate returns an approval-window failure to the deterministic validators so freshness and snapshot constraints are re-checked before any writeback can proceed.",
+        "constraints": ["Applies only to expired-approval or stale-snapshot outcomes."]
+      }
+    },
+    {
+      "id": "F_H1_reject",
+      "panel": ["architecture"],
+      "band": "Decide",
+      "source": "DEC_H1",
+      "target": "DEC_R2",
+      "semantic": "rejection",
+      "style": "dashed",
+      "label": "operator rejected -> revise plan",
+      "displayLabel": "Reject plan",
+      "direction": "btt",
+      "standardIds": ["OWASPLMM25", "NISTAI6001"],
+      "claimIds": ["C4", "C6"],
+      "tags": ["write-path", "guardrail"],
+      "interactive": {
+        "relatedStepIds": [],
+        "sourceHandle": "top",
+        "targetHandle": "bottom",
+        "highlightGroup": "write"
+      },
+      "inspector": {
+        "rationale": "F_H1_reject routes an explicit human rejection back to the planner so the proposal can be revised without implying any execution path.",
+        "constraints": ["Operator rejection must not bypass the replanning loop."]
       }
     },
     {
@@ -2467,7 +2518,7 @@
       "title": "VoR request chain",
       "triggerIds": ["edge:F5", "node:ACT1", "node:VOI"],
       "relatedNodeIds": ["node:DEC_H1", "node:ACT1", "node:VOI", "node:A3", "node:ACT3"],
-      "relatedEdgeIds": ["edge:F4", "edge:F_H1_pass", "edge:F5", "edge:F6", "edge:F_VoR_ACK", "edge:F_AUDIT"],
+      "relatedEdgeIds": ["edge:F4", "edge:F_H1_revalidate", "edge:F_H1_reject", "edge:F_H1_pass", "edge:F5", "edge:F6", "edge:F_VoR_ACK", "edge:F_AUDIT"],
       "relatedStepIds": ["step:PB1", "step:PB2", "step:PB3", "step:PB4", "step:PB5"],
       "focusPath": "write"
     },
@@ -2528,6 +2579,8 @@
         "edge:F_T0_obs",
         "edge:F_G1A_pass",
         "edge:F_G1A_reject",
+        "edge:F_H1_revalidate",
+        "edge:F_H1_reject",
         "edge:F_H1_pass",
         "edge:F_M1_G0",
         "edge:F_M1_R0",

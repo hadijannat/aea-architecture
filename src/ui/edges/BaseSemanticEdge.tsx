@@ -83,11 +83,11 @@ export function BaseSemanticEdge({
     >
       <title>{data.ariaLabel}</title>
       <desc>{data.spec.inspector.rationale}</desc>
-      <path d={edgePath} data-edge-id={id} data-edge-path={edgePath} fill="none" stroke="transparent" strokeWidth={18} />
+      <path d={edgePath} data-edge-id={id} data-edge-path={edgePath} fill="none" stroke="transparent" strokeWidth={12} />
       <BaseEdge
         path={edgePath}
         markerEnd={`url(#architecture-marker-${data.spec.semantic})`}
-        interactionWidth={18}
+        interactionWidth={12}
         style={{
           stroke: strokeColor,
           strokeWidth,
