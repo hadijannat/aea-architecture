@@ -954,13 +954,18 @@ describe('exports', () => {
 
   it('routes gateway diode edges vertically with dedicated gutter labels', async () => {
     const state = await createState()
+    const fGw1 = resolveGraphEdge('F_GW1')
     const fGw2 = resolveGraphEdge('F_GW2')
     const fGw3 = resolveGraphEdge('F_GW3')
 
-    if (!fGw2 || !fGw3) {
-      throw new Error('Expected gateway diode edges to exist')
+    if (!fGw1 || !fGw2 || !fGw3) {
+      throw new Error('Expected gateway edges F_GW1, F_GW2, F_GW3 to exist')
     }
 
+    expect(resolveEdgeHandles(fGw1, state.projection.edgeHandles)).toEqual({
+      sourceHandle: 'right',
+      targetHandle: 'left',
+    })
     expect(resolveEdgeHandles(fGw2, state.projection.edgeHandles)).toEqual({
       sourceHandle: 'bottom',
       targetHandle: 'top',

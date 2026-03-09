@@ -81,7 +81,7 @@ function gatewayGutterLabel(points: Point[]): RoutedBoardLabel {
 function buildLabel(edge: EdgeSpec, points: Point[]): RoutedBoardLabel {
   switch (edge.id) {
     case 'F_GW1':
-      return anchoredLabel(channels.gatewayApproachX - 6, points.at(-1)?.y ?? 0, 'top', 14)
+      return anchoredLabel(channels.gatewayApproachX - 6, points.at(-2)?.y ?? 0, 'top', 14)
     case 'F_GW2':
     case 'F_GW3':
       return gatewayGutterLabel(points)

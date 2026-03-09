@@ -377,6 +377,14 @@ test('diode edges use dedicated diode markers with readable labels', async ({ pa
     'M 1 1 L 7 4 L 1 7 z M 7.5 1 L 7.5 7',
   )
   await expect(page.locator('#architecture-marker-writeback-arrowclosed path')).toHaveAttribute('d', 'M 0 0 L 10 4 L 0 8 z')
+
+  // F_GW2 must route vertically (bottom→top), not horizontally (right→left).
+  // A vertical path shares the same canvas x at start and end; a horizontal path does not.
+  const edgePath = await architectureMainEdgePath(page, 'F_GW2').getAttribute('d')
+  expect(edgePath).not.toBeNull()
+  const xCoords = [...edgePath!.matchAll(/([\d.]+)\s+([\d.]+)/g)].map((m) => parseFloat(m[1]))
+  expect(xCoords.length).toBeGreaterThanOrEqual(2)
+  expect(Math.abs(xCoords[0] - xCoords[xCoords.length - 1])).toBeLessThan(5)
 })
 
 test('gateway labels stay clear of the gateway stack in a gateway-focused view', async ({ page }) => {
