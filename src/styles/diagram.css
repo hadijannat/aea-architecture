@@ -489,6 +489,10 @@
   z-index: 1;
 }
 
+.architecture-canvas .react-flow__viewport-portal {
+  pointer-events: none;
+}
+
 .architecture-edge-markers {
   position: absolute;
   width: 0;
@@ -528,7 +532,7 @@
 
 .architecture-canvas__write-ribbon {
   position: absolute;
-  z-index: 2;
+  z-index: 1;
   pointer-events: none;
   display: grid;
   gap: 4px;
@@ -2292,10 +2296,8 @@
 
 .architecture-structure-overlay {
   position: absolute;
-  inset: 0;
-  z-index: 1;
+  z-index: -1;
   pointer-events: none;
-  transform-origin: 0 0;
 }
 
 .architecture-structure-overlay__lane-strip,

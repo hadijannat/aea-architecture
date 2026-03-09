@@ -1,4 +1,3 @@
-import { graphManifest } from '@/graph/spec/manifest'
 import type { EdgeSpec } from '@/graph/spec/schema'
 import { compactOrthogonalPoints, smoothOrthogonalPath } from '@/layout/pathGeometry'
 
@@ -20,6 +19,25 @@ export interface RoutedBoardEdge {
   path: string
   points: Point[]
   label: RoutedBoardLabel
+}
+
+export interface BoardRouteChannels {
+  gatewayApproachX: number
+  gatewayLabelX: number
+  laneReturnX: number
+  telemetryY: number
+  policyY: number
+  contextY: number
+  rejectionY: number
+  validationY: number
+  toolCrossY: number
+  toolEntryY: number
+  actTelemetryY: number
+  writeY: number
+  ackY: number
+  monitorSpineX: number
+  laneCSpineX: number
+  cpcSpineX: number
 }
 
 function point(x: number, y: number): Point {
@@ -71,20 +89,20 @@ function anchoredLabel(x: number, y: number, side: RoutedLabelSide, offset: numb
   return { x, y, side, offset }
 }
 
-function gatewayGutterLabel(points: Point[]): RoutedBoardLabel {
+function gatewayGutterLabel(points: Point[], channels: BoardRouteChannels): RoutedBoardLabel {
   const start = points[0] ?? point(0, 0)
   const end = points[points.length - 1] ?? start
 
   return anchoredLabel(channels.gatewayLabelX, midpoint(start, end).y, 'right', 0)
 }
 
-function buildLabel(edge: EdgeSpec, points: Point[]): RoutedBoardLabel {
+function buildLabel(edge: EdgeSpec, points: Point[], channels: BoardRouteChannels): RoutedBoardLabel {
   switch (edge.id) {
     case 'F_GW1':
       return anchoredLabel(channels.gatewayApproachX - 6, points.at(-2)?.y ?? 0, 'top', 14)
     case 'F_GW2':
     case 'F_GW3':
-      return gatewayGutterLabel(points)
+      return gatewayGutterLabel(points, channels)
     case 'F1':
       return segmentLabel(points, 3, 'top', 18)
     case 'F2':
@@ -159,32 +177,11 @@ function buildLabel(edge: EdgeSpec, points: Point[]): RoutedBoardLabel {
   }
 }
 
-const { lanes, gateway, aea } = graphManifest.layoutDefaults
-const channels = {
-  gatewayApproachX: gateway.x - 28,
-  gatewayLabelX: gateway.x + gateway.width + 28,
-  laneReturnX: gateway.x - 44,
-  telemetryY: aea.y + 160,
-  policyY: aea.y + 471,
-  contextY: aea.y + 480,
-  rejectionY: aea.y + 671,
-  validationY: aea.y + 854,
-  toolCrossY: aea.y + 295,
-  toolEntryY: aea.y + 78,
-  actTelemetryY: aea.y + 1043,
-  writeY: aea.y + 1063,
-  ackY: aea.y + 1023,
-  monitorSpineX: lanes.B.x + lanes.B.width - 68,
-  laneCSpineX: lanes.C.x + lanes.C.width - 28,
-  cpcSpineX: lanes.A.x + 24,
-}
-
-export const boardRouteChannels = channels
-
 export function buildBoardEdgeRoute(
   edge: EdgeSpec,
   source: Point,
   target: Point,
+  channels: BoardRouteChannels,
 ): RoutedBoardEdge {
   let points: Point[]
 
@@ -436,6 +433,6 @@ export function buildBoardEdgeRoute(
   return {
     path: smoothOrthogonalPath(compactedPoints, 14),
     points: compactedPoints,
-    label: buildLabel(edge, compactedPoints),
+    label: buildLabel(edge, compactedPoints, channels),
   }
 }

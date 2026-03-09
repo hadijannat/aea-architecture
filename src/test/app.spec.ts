@@ -104,6 +104,19 @@ async function viewportTransform(page: Page) {
   return page.locator('.react-flow__viewport').evaluate((element) => getComputedStyle(element).transform)
 }
 
+function parseViewportMatrix(transform: string) {
+  const match = /matrix\(([^)]+)\)/.exec(transform)
+  if (!match) {
+    return { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }
+  }
+
+  const [a = 1, b = 0, c = 0, d = 1, e = 0, f = 0] = match[1]
+    .split(',')
+    .map((value) => Number.parseFloat(value.trim()))
+
+  return { a, b, c, d, e, f }
+}
+
 async function boxHeight(locator: Locator) {
   return locator.evaluate((element) => element.getBoundingClientRect().height)
 }
@@ -205,6 +218,59 @@ function boxesOverlap(
     first.y + first.height + clearance <= second.y ||
     second.y + second.height + clearance <= first.y
   )
+}
+
+async function screenRect(locator: Locator) {
+  return locator.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) {
+      return null
+    }
+
+    return {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    }
+  })
+}
+
+async function writeCorridorScreenBox(page: Page) {
+  const matrix = parseViewportMatrix(await viewportTransform(page))
+  const rendererBox = await screenRect(page.locator('.architecture-canvas .react-flow__renderer'))
+  const pointSets = await Promise.all(
+    ['F5', 'F6', 'F_VoR_ACK'].map((edgeId) =>
+      page.locator(`.semantic-edge[data-edge-id="${edgeId}"]`).getAttribute('data-edge-points'),
+    ),
+  )
+
+  const points = pointSets.flatMap((serializedPoints) =>
+    (serializedPoints ?? '')
+      .split(' ')
+      .map((pair) => pair.split(',').map((value) => Number.parseFloat(value)))
+      .filter((pair): pair is [number, number] => pair.length === 2 && pair.every((value) => Number.isFinite(value)))
+      .map(([x, y]) => ({
+        x: (rendererBox?.x ?? 0) + matrix.a * x + matrix.c * y + matrix.e,
+        y: (rendererBox?.y ?? 0) + matrix.b * x + matrix.d * y + matrix.f,
+      })),
+  )
+
+  if (points.length === 0) {
+    return null
+  }
+
+  const left = Math.min(...points.map((point) => point.x))
+  const top = Math.min(...points.map((point) => point.y))
+  const right = Math.max(...points.map((point) => point.x))
+  const bottom = Math.max(...points.map((point) => point.y))
+
+  return {
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  }
 }
 
 test('selecting F5 highlights the VoR sequence and inspector', async ({ page }) => {
@@ -626,6 +692,33 @@ test('architecture marker defs stay fixed-size and the write ribbon follows zoom
   await expect(ribbon).toHaveAttribute('data-write-ribbon-visible', 'false')
 })
 
+test('write ribbon stays attached to the live corridor after preset focus and zoom changes', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+
+  const ribbon = page.locator('[data-write-ribbon]')
+  await page.locator('[data-focus-preset="write"]').click({ force: true })
+  await expect(ribbon).toHaveAttribute('data-write-ribbon-visible', 'true')
+
+  for (let index = 0; index < 3; index += 1) {
+    const corridorBox = await writeCorridorScreenBox(page)
+    const ribbonBox = await screenRect(ribbon)
+
+    expect(corridorBox).not.toBeNull()
+    expect(ribbonBox).not.toBeNull()
+    expect(Math.abs((ribbonBox!.x + ribbonBox!.width / 2) - (corridorBox!.x + corridorBox!.width / 2))).toBeLessThanOrEqual(72)
+    expect(Math.abs(ribbonBox!.y - (corridorBox!.y + corridorBox!.height + 18))).toBeLessThanOrEqual(72)
+
+    const zoomButton = page.locator(
+      index % 2 === 0
+        ? '.architecture-canvas .react-flow__controls-zoomin:not([disabled])'
+        : '.architecture-canvas .react-flow__controls-zoomout:not([disabled])',
+    )
+    await zoomButton.click()
+    await page.waitForTimeout(180)
+  }
+})
+
 test('page scroll can reach the sequence while pinch-style zoom still works over the write ribbon', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
@@ -919,6 +1012,61 @@ test('overview navigator regions follow persisted structural overrides', async (
 
   await expect.poll(() => page.locator('[data-overview-region-id="lane-a"]').getAttribute('x')).toBe('96')
   await expect.poll(() => page.locator('[data-overview-region-id="lane-a"]').getAttribute('y')).toBe('72')
+})
+
+test('viewport-bound overlay tracks persisted viewport and structural overrides', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'aea-architecture-ui',
+      JSON.stringify({
+        state: {
+          ui: {
+            viewport: {
+              x: 140,
+              y: -180,
+              zoom: 0.52,
+            },
+          },
+          projection: {
+            nodePositions: {
+              LANE_A: { x: 96, y: 72 },
+              GW: { x: 440, y: 160 },
+            },
+          },
+        },
+        version: 0,
+      }),
+    )
+  })
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+
+  const laneStrip = page.locator('[data-structure-lane="A"]')
+  const laneNode = page.locator('.react-flow__node[data-id="LANE_A"]')
+  const gatewayStrip = page.locator('.architecture-structure-overlay__gateway-column')
+  const gatewayNode = page.locator('.react-flow__node[data-id="GW"]')
+
+  const [laneStripBox, laneNodeBox, gatewayStripBox, gatewayNodeBox] = await Promise.all([
+    laneStrip.boundingBox(),
+    laneNode.boundingBox(),
+    gatewayStrip.boundingBox(),
+    gatewayNode.boundingBox(),
+  ])
+
+  expect(laneStripBox).not.toBeNull()
+  expect(laneNodeBox).not.toBeNull()
+  expect(gatewayStripBox).not.toBeNull()
+  expect(gatewayNodeBox).not.toBeNull()
+
+  expect(Math.abs(laneStripBox!.x - laneNodeBox!.x)).toBeLessThanOrEqual(2)
+  expect(Math.abs(laneStripBox!.y - laneNodeBox!.y)).toBeLessThanOrEqual(2)
+  expect(Math.abs(laneStripBox!.width - laneNodeBox!.width)).toBeLessThanOrEqual(2)
+  expect(Math.abs(laneStripBox!.height - laneNodeBox!.height)).toBeLessThanOrEqual(2)
+
+  expect(Math.abs(gatewayStripBox!.x - gatewayNodeBox!.x)).toBeLessThanOrEqual(2)
+  expect(Math.abs(gatewayStripBox!.y - gatewayNodeBox!.y)).toBeLessThanOrEqual(2)
+  expect(Math.abs(gatewayStripBox!.width - gatewayNodeBox!.width)).toBeLessThanOrEqual(2)
+  expect(Math.abs(gatewayStripBox!.height - gatewayNodeBox!.height)).toBeLessThanOrEqual(2)
 })
 
 test('hover cards stay clear of the overview panel', async ({ page }) => {

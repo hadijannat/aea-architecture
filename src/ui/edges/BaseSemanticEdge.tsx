@@ -28,7 +28,15 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
   const { zoom } = useViewport()
 
   const route = useMemo(
-    () => data ? buildBoardEdgeRoute(data.spec, { x: sourceX, y: sourceY }, { x: targetX, y: targetY }) : null,
+    () =>
+      data
+        ? buildBoardEdgeRoute(
+            data.spec,
+            { x: sourceX, y: sourceY },
+            { x: targetX, y: targetY },
+            data.routeChannels,
+          )
+        : null,
     [data, sourceX, sourceY, targetX, targetY],
   )
   const edgePath = route?.path ?? ''

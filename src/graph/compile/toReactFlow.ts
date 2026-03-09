@@ -16,6 +16,7 @@ import {
 } from '@/graph/spec/manifest'
 import type { ClaimId, EdgeSpec, EntityKey, GraphManifest, NodeSpec } from '@/graph/spec/schema'
 import { resolveEdgeHandles } from '@/layout/ports'
+import { buildBoardGeometryFromPositions } from '@/layout/boardGeometry'
 import type { DiagramStore } from '@/state/diagramStore'
 import {
   resolveClaimDotColor,
@@ -59,6 +60,7 @@ export interface CompiledNodeData extends Record<string, unknown> {
 
 export interface CompiledEdgeData extends Record<string, unknown> {
   spec: EdgeSpec
+  routeChannels: ReturnType<typeof buildBoardGeometryFromPositions>['routeChannels']
   ariaLabel: string
   sourceTitle: string
   targetTitle: string
@@ -564,6 +566,7 @@ export function compileArchitectureEdges(
   derivedState: DerivedDiagramState,
   manifest: GraphManifest = graphManifest,
 ): DiagramFlowEdge[] {
+  const routeChannels = buildBoardGeometryFromPositions(state.layout.positions, manifest).routeChannels
   const sharedT0FocusActive = [...derivedState.highlightedEdgeIds].some((edgeId) => {
     const highlightedEdge = resolveGraphEdge(edgeId)
     return highlightedEdge?.panel.includes('architecture') && highlightedEdge.tags.includes('t0')
@@ -609,6 +612,7 @@ export function compileArchitectureEdges(
           getSemanticShouldAnimate(edge.semantic),
         data: {
           spec: edge,
+          routeChannels,
           ariaLabel: buildEdgeAriaLabel(edge, manifest),
           sourceTitle: resolveGraphNode(edge.source)?.title ?? edge.source,
           targetTitle: resolveGraphNode(edge.target)?.title ?? edge.target,

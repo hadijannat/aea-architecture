@@ -18,10 +18,11 @@ import { compileArchitectureEdges, deriveDiagramState, type CompileCallbacks } f
 import { toMermaid } from '@/graph/compile/toMermaid'
 import { defaultProjectionOverrides, graphManifest, resolveGraphEdge, resolveGraphNode } from '@/graph/spec/manifest'
 import { projectionOverridesSchema } from '@/graph/spec/schema'
-import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
+import { resolveBoardLabelPosition } from '@/layout/board'
 import { validateGraphManifest } from '@/graph/spec/validators'
 import { computeBoardNodePositions } from '@/layout/boardLayout'
-import { resolveEdgeHandles, type HandleId } from '@/layout/ports'
+import { buildBoardEdgeRouteFromPositions, buildBoardGeometryFromPositions } from '@/layout/boardGeometry'
+import { resolveEdgeHandles } from '@/layout/ports'
 import { useDiagramStore, type DiagramStore } from '@/state/diagramStore'
 import { buildUiSearchParams, parseUiSearchParams } from '@/state/urlState'
 
@@ -58,30 +59,6 @@ async function createState(overrides?: Partial<DiagramStore['ui']>): Promise<Dia
   }
 }
 
-function anchorPoint(
-  state: DiagramStore,
-  nodeId: string,
-  handleId: HandleId,
-) {
-  const node = resolveGraphNode(nodeId)
-  const position = state.layout.positions[nodeId]
-
-  if (!node || !position) {
-    throw new Error(`Missing anchor state for ${nodeId}`)
-  }
-
-  switch (handleId) {
-    case 'left':
-      return { x: position.x, y: position.y + node.height / 2 }
-    case 'right':
-      return { x: position.x + node.width, y: position.y + node.height / 2 }
-    case 'top':
-      return { x: position.x + node.width / 2, y: position.y }
-    case 'bottom':
-      return { x: position.x + node.width / 2, y: position.y + node.height }
-  }
-}
-
 function buildArchitectureRoute(state: DiagramStore, edgeId: string) {
   const edge = resolveGraphEdge(edgeId)
   if (!edge) {
@@ -89,11 +66,7 @@ function buildArchitectureRoute(state: DiagramStore, edgeId: string) {
   }
 
   const handles = resolveEdgeHandles(edge, state.projection.edgeHandles)
-  return buildBoardEdgeRoute(
-    edge,
-    anchorPoint(state, edge.source, handles.sourceHandle),
-    anchorPoint(state, edge.target, handles.targetHandle),
-  )
+  return buildBoardEdgeRouteFromPositions(edge, state.layout.positions, graphManifest, handles)
 }
 
 function routeIsAxisAligned(points: Array<{ x: number; y: number }>) {
@@ -473,6 +446,35 @@ describe('graph manifest', () => {
     }
   })
 
+  it('derives board support geometry from live positions rather than static manifest channels', async () => {
+    const state = await createState()
+    const geometry = buildBoardGeometryFromPositions(state.layout.positions, graphManifest)
+
+    expect(geometry.routeChannels.gatewayApproachX).toBe(geometry.gateway.x - 28)
+    expect(geometry.routeChannels.writeY).toBe(geometry.bands.Act.y + 25)
+    expect(geometry.routeGuideYs).toContain(geometry.routeChannels.writeY)
+    expect(geometry.verticalGuideXs).toContain(geometry.routeChannels.monitorSpineX)
+  })
+
+  it('board support geometry follows persisted structural overrides', async () => {
+    const positions = await computeBoardNodePositions(graphManifest, {
+      ...defaultProjectionOverrides,
+      nodePositions: {
+        LANE_A: { x: 96, y: 72 },
+        GW: { x: 440, y: 160 },
+      },
+    })
+
+    const geometry = buildBoardGeometryFromPositions(positions, graphManifest)
+
+    expect(geometry.lanes.A.x).toBe(96)
+    expect(geometry.lanes.A.y).toBe(72)
+    expect(geometry.gateway.x).toBe(440)
+    expect(geometry.gateway.y).toBe(160)
+    expect(geometry.routeChannels.cpcSpineX).toBe(120)
+    expect(geometry.routeChannels.gatewayApproachX).toBe(412)
+  })
+
   it('keeps standards provenance populated and exposes the new NAMUR references to search', () => {
     for (const standard of Object.values(graphManifest.standards)) {
       expect(standard.sourceUrl, `${standard.id} is missing a provenance source URL`).toBeDefined()
@@ -822,16 +824,16 @@ describe('exports', () => {
         labelPoint: { x: 1353.5, y: 778 },
       },
       F_G1A_pass: {
-        path: 'M 1583 796 L 1583 823 Q 1583 837 1569 837 L 1329 837 Q 1315 837 1315 851 L 1315 888',
-        labelPoint: { x: 1467, y: 837 },
+        path: 'M 1583 796 L 1583 833 Q 1583 847 1569 847 L 1329 847 Q 1315 847 1315 861 L 1315 888',
+        labelPoint: { x: 1467, y: 847 },
       },
       F_G1A_reject: {
-        path: 'M 1468 732 L 1468 767 Q 1468 781 1454 781 L 1444 781 Q 1430 781 1430 767 L 1430 733',
-        labelPoint: { x: 1449, y: 799 },
+        path: 'M 1468 732 L 1468 777 Q 1468 791 1454 791 L 1444 791 Q 1430 791 1430 777 L 1430 733',
+        labelPoint: { x: 1449, y: 809 },
       },
       F3f_reject: {
-        path: 'M 1315 1008 L 1315 817 Q 1315 803 1301 803 L 1244 803 Q 1230 803 1230 789 L 1230 747 Q 1230 733 1216 733 L 1200 733',
-        labelPoint: { x: 1272.5, y: 821 },
+        path: 'M 1315 1008 L 1315 827 Q 1315 813 1301 813 L 1244 813 Q 1230 813 1230 799 L 1230 747 Q 1230 733 1216 733 L 1200 733',
+        labelPoint: { x: 1272.5, y: 831 },
       },
       F3g: {
         path: 'M 779 568 L 779 952 Q 779 966 793 966 L 1574 966 Q 1588 966 1588 952 L 1588 888',
@@ -870,8 +872,8 @@ describe('exports', () => {
         labelPoint: { x: 1037.5, y: 934 },
       },
       F_H1_reject: {
-        path: 'M 779 888 L 779 839 Q 779 825 793 825 L 1301.5 825 Q 1315 825 1315 811.5 L 1315 798',
-        labelPoint: { x: 1047, y: 807 },
+        path: 'M 779 888 L 779 849 Q 779 835 793 835 L 1301 835 Q 1315 835 1315 821 L 1315 798',
+        labelPoint: { x: 1047, y: 817 },
       },
       F_H1_pass: {
         path: 'M 779 1008 L 779 1047.5 Q 779 1050 781.5 1050 L 781.5 1050 Q 784 1050 784 1052.5 L 784 1212',
@@ -1032,9 +1034,9 @@ describe('exports', () => {
   it('keeps rejection and monitor reroutes on distinct local channels', async () => {
     const state = await createState()
     const rejectionRoutes = {
-      F_G1A_reject: 781,
-      F3f_reject: 803,
-      F_H1_reject: 825,
+      F_G1A_reject: 791,
+      F3f_reject: 813,
+      F_H1_reject: 835,
     } as const
 
     for (const [edgeId, expectedY] of Object.entries(rejectionRoutes)) {
