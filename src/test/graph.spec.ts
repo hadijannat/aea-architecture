@@ -115,6 +115,52 @@ function containsPoint(bounds: ReturnType<typeof nodeBounds>, point: { x: number
   return point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom
 }
 
+function containsBounds(outer: ReturnType<typeof nodeBounds>, inner: ReturnType<typeof nodeBounds>) {
+  return (
+    inner.left >= outer.left &&
+    inner.top >= outer.top &&
+    inner.right <= outer.right &&
+    inner.bottom <= outer.bottom
+  )
+}
+
+function expectedStructuralSizes() {
+  return {
+    LANE_A: {
+      width: graphManifest.layoutDefaults.lanes.A.width,
+      height: graphManifest.layoutDefaults.lanes.A.height,
+    },
+    LANE_B: {
+      width: graphManifest.layoutDefaults.lanes.B.width,
+      height: graphManifest.layoutDefaults.lanes.B.height,
+    },
+    LANE_C: {
+      width: graphManifest.layoutDefaults.lanes.C.width,
+      height: graphManifest.layoutDefaults.lanes.C.height,
+    },
+    GW: {
+      width: graphManifest.layoutDefaults.gateway.width,
+      height: graphManifest.layoutDefaults.gateway.height,
+    },
+    AEA: {
+      width: graphManifest.layoutDefaults.aea.width,
+      height: graphManifest.layoutDefaults.aea.height,
+    },
+    BAND_SENSE: {
+      width: graphManifest.layoutDefaults.aea.width - 40,
+      height: graphManifest.layoutDefaults.aea.bandHeights.Sense,
+    },
+    BAND_DECIDE: {
+      width: graphManifest.layoutDefaults.aea.width - 40,
+      height: graphManifest.layoutDefaults.aea.bandHeights.Decide,
+    },
+    BAND_ACT: {
+      width: graphManifest.layoutDefaults.aea.width - 40,
+      height: graphManifest.layoutDefaults.aea.bandHeights.Act,
+    },
+  } as const
+}
+
 describe('graph manifest', () => {
   it('passes integrity and semantic validation', () => {
     const issues = validateGraphManifest(graphManifest)
@@ -145,6 +191,47 @@ describe('graph manifest', () => {
         'invalid-interaction-edge',
       ]),
     )
+  })
+
+  it('rejects structural container drift from layout defaults', () => {
+    const mutated = structuredClone(graphManifest)
+    const gateway = mutated.nodes.find((node) => node.id === 'GW')
+    const laneB = mutated.nodes.find((node) => node.id === 'LANE_B')
+    const decideBand = mutated.nodes.find((node) => node.id === 'BAND_DECIDE')
+
+    if (!gateway || !laneB || !decideBand) {
+      throw new Error('Expected GW, LANE_B, and BAND_DECIDE objects to exist')
+    }
+
+    gateway.height -= 12
+    laneB.width -= 24
+    decideBand.height -= 18
+
+    const issues = validateGraphManifest(mutated)
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-structural-node-height',
+          message: expect.stringContaining('GW'),
+        }),
+        expect.objectContaining({
+          code: 'invalid-structural-node-width',
+          message: expect.stringContaining('LANE_B'),
+        }),
+        expect.objectContaining({
+          code: 'invalid-structural-node-height',
+          message: expect.stringContaining('BAND_DECIDE'),
+        }),
+      ]),
+    )
+  })
+
+  it('keeps structural container dimensions synchronized with layout defaults', () => {
+    for (const [nodeId, expected] of Object.entries(expectedStructuralSizes())) {
+      const node = resolveGraphNode(nodeId)
+      expect(node, `Missing structural node ${nodeId}`).toBeDefined()
+      expect(node).toMatchObject(expected)
+    }
   })
 
   it('keeps the canonical connection inventory aligned with the spec', () => {
@@ -473,6 +560,25 @@ describe('graph manifest', () => {
     expect(geometry.gateway.y).toBe(160)
     expect(geometry.routeChannels.cpcSpineX).toBe(120)
     expect(geometry.routeChannels.gatewayApproachX).toBe(412)
+  })
+
+  it('keeps architecture children inside their parent bounds with the computed board layout', async () => {
+    const state = await createState()
+    const containmentPairs = [
+      { childId: 'AEA', parentId: 'LANE_B' },
+      ...graphManifest.nodes
+        .filter((node) => node.panel.includes('architecture') && typeof node.parentId === 'string')
+        .map((node) => ({ childId: node.id, parentId: node.parentId })),
+    ]
+
+    for (const { childId, parentId } of containmentPairs) {
+      const childBounds = nodeBounds(state, childId)
+      const parentBounds = nodeBounds(state, parentId)
+      expect(
+        containsBounds(parentBounds, childBounds),
+        `${childId} should remain inside ${parentId} after applying layoutDefaults`,
+      ).toBe(true)
+    }
   })
 
   it('keeps standards provenance populated and exposes the new NAMUR references to search', () => {
@@ -836,12 +942,12 @@ describe('exports', () => {
         labelPoint: { x: 1272.5, y: 831 },
       },
       F3g: {
-        path: 'M 779 568 L 779 952 Q 779 966 793 966 L 1574 966 Q 1588 966 1588 952 L 1588 888',
-        labelPoint: { x: 1183.5, y: 938 },
+        path: 'M 779 568 L 779 952 Q 779 966 793 966 L 1569 966 Q 1583 966 1583 952 L 1583 888',
+        labelPoint: { x: 1181, y: 938 },
       },
       F3h: {
-        path: 'M 1230 292 L 1230 862 Q 1230 876 1244 876 L 1546 876 Q 1552 876 1552 882 L 1552 882 Q 1552 888 1558 888 L 1588 888',
-        labelPoint: { x: 1534, y: 882 },
+        path: 'M 1230 292 L 1230 862 Q 1230 876 1244 876 L 1541 876 Q 1547 876 1547 882 L 1547 882 Q 1547 888 1553 888 L 1583 888',
+        labelPoint: { x: 1529, y: 882 },
       },
       F3i: {
         path: 'M 534 1109 L 534 1000 Q 534 986 548 986 L 1454 986 Q 1468 986 1468 972 L 1468 952',
@@ -864,8 +970,8 @@ describe('exports', () => {
         labelPoint: { x: 1315, y: 556 },
       },
       F4: {
-        path: 'M 1588 1016 L 1198 1016 Q 1184 1016 1184 1002 L 1184 902 Q 1184 888 1170 888 L 779 888',
-        labelPoint: { x: 1386, y: 1002 },
+        path: 'M 1583 1016 L 1195 1016 Q 1181 1016 1181 1002 L 1181 902 Q 1181 888 1167 888 L 779 888',
+        labelPoint: { x: 1382, y: 1002 },
       },
       F_H1_revalidate: {
         path: 'M 894 948 L 1179 948 Q 1181 948 1181 950 L 1181 950 Q 1181 952 1183 952 L 1468 952',

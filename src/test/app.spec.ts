@@ -220,6 +220,19 @@ function boxesOverlap(
   )
 }
 
+function boxContains(
+  parent: { x: number; y: number; width: number; height: number },
+  child: { x: number; y: number; width: number; height: number },
+  tolerance = 4,
+) {
+  return (
+    child.x >= parent.x - tolerance &&
+    child.y >= parent.y - tolerance &&
+    child.x + child.width <= parent.x + parent.width + tolerance &&
+    child.y + child.height <= parent.y + parent.height + tolerance
+  )
+}
+
 async function screenRect(locator: Locator) {
   return locator.evaluate((element) => {
     const rect = element.getBoundingClientRect()
@@ -1067,6 +1080,33 @@ test('viewport-bound overlay tracks persisted viewport and structural overrides'
   expect(Math.abs(gatewayStripBox!.y - gatewayNodeBox!.y)).toBeLessThanOrEqual(2)
   expect(Math.abs(gatewayStripBox!.width - gatewayNodeBox!.width)).toBeLessThanOrEqual(2)
   expect(Math.abs(gatewayStripBox!.height - gatewayNodeBox!.height)).toBeLessThanOrEqual(2)
+})
+
+test('structural containers visually contain their representative child nodes', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+
+  const relationships = [
+    { parentId: 'GW', childId: 'VOI' },
+    { parentId: 'AEA', childId: 'BAND_DECIDE' },
+    { parentId: 'BAND_DECIDE', childId: 'DEC_H1' },
+    { parentId: 'LANE_B', childId: 'AEA' },
+    { parentId: 'LANE_A', childId: 'A3' },
+    { parentId: 'LANE_C', childId: 'C2' },
+  ] as const
+
+  for (const { parentId, childId } of relationships) {
+    const parent = page.locator(`.react-flow__node[data-id="${parentId}"]`)
+    const child = page.locator(`.react-flow__node[data-id="${childId}"]`)
+    const [parentBox, childBox] = await Promise.all([parent.boundingBox(), child.boundingBox()])
+
+    expect(parentBox, `Expected ${parentId} to render`).not.toBeNull()
+    expect(childBox, `Expected ${childId} to render`).not.toBeNull()
+    expect(
+      boxContains(parentBox!, childBox!, 4),
+      `Expected ${childId} to stay within ${parentId}`,
+    ).toBe(true)
+  }
 })
 
 test('hover cards stay clear of the overview panel', async ({ page }) => {
