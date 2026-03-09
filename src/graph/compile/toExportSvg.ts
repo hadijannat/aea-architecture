@@ -1,7 +1,8 @@
-import { graphManifest, resolveGraphNode } from '@/graph/spec/manifest'
+import { graphManifest } from '@/graph/spec/manifest'
 import type { EdgeSpec, GraphManifest, ProjectionOverrides, ProjectionTheme } from '@/graph/spec/schema'
 import { resolveEdgeHandles } from '@/layout/ports'
-import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
+import { resolveBoardLabelPosition } from '@/layout/board'
+import { buildBoardEdgeRouteFromPositions } from '@/layout/boardGeometry'
 import type { DiagramStore } from '@/state/diagramStore'
 
 import { compileSequenceBoard, type SequenceBoardModel } from './sequenceBoard'
@@ -128,30 +129,9 @@ function scaledPoint(point: Point, transform: ExportTransform): Point {
   }
 }
 
-function anchorPoint(nodeId: string, handleId: 'left' | 'right' | 'top' | 'bottom', state: DiagramStore) {
-  const node = resolveGraphNode(nodeId)
-  const position = state.layout.positions[nodeId]
-  if (!node || !position) {
-    return { x: 0, y: 0 }
-  }
-
-  switch (handleId) {
-    case 'left':
-      return { x: position.x, y: position.y + node.height / 2 }
-    case 'right':
-      return { x: position.x + node.width, y: position.y + node.height / 2 }
-    case 'top':
-      return { x: position.x + node.width / 2, y: position.y }
-    case 'bottom':
-      return { x: position.x + node.width / 2, y: position.y + node.height }
-  }
-}
-
 function buildArchitectureEdgePath(edge: EdgeSpec, state: DiagramStore, projection: ProjectionOverrides) {
   const handles = resolveEdgeHandles(edge, projection.edgeHandles)
-  const source = anchorPoint(edge.source, handles.sourceHandle, state)
-  const target = anchorPoint(edge.target, handles.targetHandle, state)
-  return buildBoardEdgeRoute(edge, source, target)
+  return buildBoardEdgeRouteFromPositions(edge, state.layout.positions, graphManifest, handles)
 }
 
 function edgeStroke(edge: EdgeSpec) {

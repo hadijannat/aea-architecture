@@ -5,7 +5,9 @@ import {
   Controls,
   Panel as FlowPanel,
   ReactFlow,
+  ViewportPortal,
   useReactFlow,
+  useViewport,
   type OnNodeDrag,
 } from '@xyflow/react'
 
@@ -22,7 +24,7 @@ import { graphManifest, resolveGraphEdge, resolveGraphNode, resolveSequenceStep 
 import type { ProjectionTheme } from '@/graph/spec/schema'
 import type { DiagramStore } from '@/state/diagramStore'
 import { bandVisuals, laneVisuals, resolveSemanticVisual } from '@/graph/compile/visualSystem'
-import { boardRouteChannels } from '@/layout/board'
+import { buildBoardGeometryFromNodes, clampRectToCanvas } from '@/layout/boardGeometry'
 
 import AckEdge from '@/ui/edges/AckEdge'
 import KpiEdge from '@/ui/edges/KpiEdge'
@@ -133,63 +135,22 @@ function ArchitectureEdgeMarkers() {
 }
 
 function ArchitectureStructureOverlay({
-  nodes,
-  viewport,
+  geometry,
 }: {
-  nodes: DiagramFlowNode[]
-  viewport: DiagramStore['ui']['viewport']
+  geometry: ReturnType<typeof buildBoardGeometryFromNodes>
 }) {
-  const visibleNodes = useMemo(() => new Map(nodes.filter((node) => !node.hidden).map((node) => [node.id, node])), [nodes])
-
-  const overlayGeometry = useMemo(() => {
-    const laneRects = ['LANE_A', 'LANE_B', 'LANE_C']
-      .map((id) => getNodeRect(visibleNodes.get(id)))
-      .filter((rect): rect is NonNullable<ReturnType<typeof getNodeRect>> => Boolean(rect))
-    const aea = getNodeRect(visibleNodes.get('AEA'))
-    const bandSense = getNodeRect(visibleNodes.get('BAND_SENSE'))
-    const bandDecide = getNodeRect(visibleNodes.get('BAND_DECIDE'))
-    const bandAct = getNodeRect(visibleNodes.get('BAND_ACT'))
-    const gateway = getNodeRect(visibleNodes.get('GW'))
-
-    if (!aea || !bandSense || !bandDecide || !bandAct || !gateway) {
-      return null
-    }
-
-    return {
-      laneRects,
-      aea,
-      bandSense,
-      bandDecide,
-      bandAct,
-      gateway,
-      horizontalLines: [bandDecide.y - 14, bandAct.y - 14],
-      channelYs: [
-        boardRouteChannels.telemetryY,
-        boardRouteChannels.policyY,
-        boardRouteChannels.rejectionY,
-        boardRouteChannels.validationY,
-        boardRouteChannels.writeY,
-      ],
-      verticalChannels: [
-        boardRouteChannels.cpcSpineX,
-        boardRouteChannels.monitorSpineX,
-        boardRouteChannels.laneCSpineX,
-      ],
-    }
-  }, [visibleNodes])
-
-  if (!overlayGeometry) {
-    return null
-  }
-
-  const { laneRects, aea, bandSense, bandDecide, bandAct, gateway, horizontalLines, channelYs, verticalChannels } = overlayGeometry
+  const laneRects = [geometry.lanes.A, geometry.lanes.B, geometry.lanes.C]
+  const { aea, gateway, bands, horizontalDividers, routeGuideYs, verticalGuideXs, canvas } = geometry
 
   return (
     <div
       className="architecture-structure-overlay"
       aria-hidden="true"
       style={{
-        transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        left: `${canvas.x}px`,
+        top: `${canvas.y}px`,
+        width: `${canvas.width}px`,
+        height: `${canvas.height}px`,
       }}
     >
       {laneRects.map((rect, index) => {
@@ -198,6 +159,7 @@ function ArchitectureStructureOverlay({
           <div
             key={`lane-strip-${laneId}`}
             className={`architecture-structure-overlay__lane-strip architecture-structure-overlay__lane-strip--${laneId}`}
+            data-structure-lane={laneId}
             style={{
               left: `${rect.x}px`,
               top: `${rect.y}px`,
@@ -226,10 +188,10 @@ function ArchitectureStructureOverlay({
           height: `${gateway.height}px`,
         }}
       />
-      {horizontalLines.map((y) => (
+      {horizontalDividers.map((y) => (
         <div key={`line-${y}`} className="architecture-structure-overlay__divider" style={{ top: `${y}px` }} />
       ))}
-      {channelYs.map((y) => (
+      {routeGuideYs.map((y) => (
         <div
           key={`channel-y-${y}`}
           className="architecture-structure-overlay__route-guide architecture-structure-overlay__route-guide--horizontal"
@@ -240,25 +202,26 @@ function ArchitectureStructureOverlay({
           }}
         />
       ))}
-      {verticalChannels.map((x) => (
+      {verticalGuideXs.map((x) => (
         <div
           key={`channel-x-${x}`}
           className="architecture-structure-overlay__route-guide architecture-structure-overlay__route-guide--vertical"
           style={{
             left: `${x}px`,
-            top: `${bandSense.y + 24}px`,
-            height: `${bandAct.y + bandAct.height - bandSense.y - 48}px`,
+            top: `${bands.Sense.y + 24}px`,
+            height: `${bands.Act.y + bands.Act.height - bands.Sense.y - 48}px`,
           }}
         />
       ))}
       {[
-        { rect: bandSense, label: bandVisuals.Sense.label, accent: bandVisuals.Sense.accent },
-        { rect: bandDecide, label: bandVisuals.Decide.label, accent: bandVisuals.Decide.accent },
-        { rect: bandAct, label: bandVisuals.Act.label, accent: bandVisuals.Act.accent },
+        { rect: bands.Sense, label: bandVisuals.Sense.label, accent: bandVisuals.Sense.accent },
+        { rect: bands.Decide, label: bandVisuals.Decide.label, accent: bandVisuals.Decide.accent },
+        { rect: bands.Act, label: bandVisuals.Act.label, accent: bandVisuals.Act.accent },
       ].map(({ rect, label, accent }) => (
         <div
           key={label}
           className="architecture-structure-overlay__band-strip"
+          data-band-strip={label}
           style={{
             left: `${rect.x + 16}px`,
             top: `${rect.y + 12}px`,
@@ -313,56 +276,46 @@ function hasCustomViewport(viewport: DiagramStore['ui']['viewport']) {
   )
 }
 
-function getNodeRect(node?: DiagramFlowNode) {
-  if (!node) {
-    return undefined
-  }
-
-  const width = node.width ?? node.data.spec.width
-  const height = node.height ?? node.data.spec.height
-
-  return {
-    x: node.position.x,
-    y: node.position.y,
-    width,
-    height,
-  }
-}
-
 function OverviewWriteRibbon({
-  nodes,
-  viewport,
+  geometry,
 }: {
-  nodes: DiagramFlowNode[]
-  viewport: DiagramStore['ui']['viewport']
+  geometry: ReturnType<typeof buildBoardGeometryFromNodes>
 }) {
+  const { zoom } = useViewport()
   const ribbon = useMemo(() => {
-    const visibleNodes = new Map(nodes.filter((node) => !node.hidden).map((node) => [node.id, node]))
-    const act = getNodeRect(visibleNodes.get('ACT1'))
-    const gateway = getNodeRect(visibleNodes.get('VOI'))
-    const cpc = getNodeRect(visibleNodes.get('A3'))
-    const band = getNodeRect(visibleNodes.get('BAND_ACT'))
-
-    if (!act || !gateway || !cpc || !band) {
+    const corridor = geometry.writeCorridorBounds
+    if (!corridor) {
       return undefined
     }
 
-    const x1 = Math.min(act.x + act.width / 2, gateway.x + gateway.width / 2, cpc.x + cpc.width / 2) - 24
-    const x2 = Math.max(act.x + act.width / 2, gateway.x + gateway.width / 2, cpc.x + cpc.width / 2) + 24
-    const y = Math.max(band.y + band.height + 18, cpc.y + cpc.height + 18)
+    const desiredWidth = Math.max(252, Math.min(420, corridor.width + 92))
+    const desiredHeight = 56
+    const ribbonRect = clampRectToCanvas(
+      {
+        x: corridor.x + corridor.width / 2 - desiredWidth / 2,
+        y: corridor.y + corridor.height + 18,
+        width: desiredWidth,
+        height: desiredHeight,
+      },
+      {
+        ...geometry.canvas,
+        height: Math.min(geometry.canvas.height, geometry.bands.Act.y + geometry.bands.Act.height + 44),
+      },
+      24,
+    )
 
     return {
-      left: x1 * viewport.zoom + viewport.x,
-      top: y * viewport.zoom + viewport.y,
-      width: (x2 - x1) * viewport.zoom,
+      left: ribbonRect.x,
+      top: ribbonRect.y,
+      width: ribbonRect.width,
     }
-  }, [nodes, viewport.x, viewport.y, viewport.zoom])
+  }, [geometry])
 
   if (!ribbon) {
     return null
   }
 
-  const ribbonVisible = viewport.zoom <= 1.105
+  const ribbonVisible = zoom <= 1.105
 
   return (
     <div
@@ -518,6 +471,7 @@ export function ArchitectureCanvas({
   onNodeDragStop,
   onResetLayout,
 }: ArchitectureCanvasProps) {
+  const boardGeometry = useMemo(() => buildBoardGeometryFromNodes(nodes, edges), [edges, nodes])
   const activeSelectionLabel = useMemo(() => {
     if (ui.selectedNodeId) {
       return resolveGraphNode(ui.selectedNodeId)?.title ?? ui.selectedNodeId
@@ -552,7 +506,6 @@ export function ArchitectureCanvas({
     >
       <span className="architecture-canvas__panel-label">(A)</span>
       <ArchitectureEdgeMarkers />
-      <ArchitectureStructureOverlay nodes={nodes} viewport={ui.viewport} />
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -581,6 +534,10 @@ export function ArchitectureCanvas({
         />
         <AutoFocusSelection containerRef={containerRef} nodes={nodes} selectedNodeId={ui.selectedNodeId} />
         <Background color="var(--canvas-grid-color)" gap={24} size={1.2} />
+        <ViewportPortal>
+          <ArchitectureStructureOverlay geometry={boardGeometry} />
+          <OverviewWriteRibbon geometry={boardGeometry} />
+        </ViewportPortal>
         <Controls showInteractive={false}>
           <ControlButton onClick={onResetLayout} title="Reset layout">
             R
@@ -594,7 +551,6 @@ export function ArchitectureCanvas({
             activeSelectionLabel={activeSelectionLabel}
           />
         </FlowPanel>
-        <OverviewWriteRibbon nodes={nodes} viewport={ui.viewport} />
       </ReactFlow>
       <CanvasLegendStrip />
     </div>

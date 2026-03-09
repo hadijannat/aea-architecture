@@ -5,8 +5,8 @@ import { useReactFlow, useViewport } from '@xyflow/react'
 import { isStructuralNodeSpec } from '@/graph/compile/nodeVisuals'
 import type { DiagramFlowEdge, DiagramFlowNode } from '@/graph/compile/toReactFlow'
 import { graphManifest } from '@/graph/spec/manifest'
-import { buildBoardEdgeRoute, type Point } from '@/layout/board'
-import type { HandleId } from '@/layout/ports'
+import type { Point } from '@/layout/board'
+import { buildBoardGeometryFromNodes } from '@/layout/boardGeometry'
 import { resolveLaneVisual } from '@/graph/compile/visualSystem'
 
 import {
@@ -38,27 +38,6 @@ interface OverviewNodeDot {
 }
 
 const { canvas } = graphManifest.layoutDefaults
-const overviewWriteRouteIds = new Set(['F5', 'F6', 'F_CPC_INT'])
-
-function isHandleId(value?: string | null): value is HandleId {
-  return value === 'left' || value === 'right' || value === 'top' || value === 'bottom'
-}
-
-function nodeAnchor(node: DiagramFlowNode, handleId: HandleId): Point {
-  const width = node.width ?? node.data.spec.width
-  const height = node.height ?? node.data.spec.height
-
-  switch (handleId) {
-    case 'left':
-      return { x: node.position.x, y: node.position.y + height / 2 }
-    case 'right':
-      return { x: node.position.x + width, y: node.position.y + height / 2 }
-    case 'top':
-      return { x: node.position.x + width / 2, y: node.position.y }
-    case 'bottom':
-      return { x: node.position.x + width / 2, y: node.position.y + height }
-  }
-}
 
 export function SemanticOverviewMap({
   containerRef,
@@ -142,42 +121,8 @@ export function SemanticOverviewMap({
     }
   }, [containerSize, viewport.x, viewport.y, viewport.zoom])
 
-  const writeRoutes = useMemo<OverviewWriteRoute[]>(() => {
-    const nodesById = new Map(nodes.map((node) => [node.id, node]))
-
-    return edges
-      .filter((edge) => {
-        const spec = edge.data?.spec
-        if (edge.hidden || !spec) {
-          return false
-        }
-        return overviewWriteRouteIds.has(spec.id)
-      })
-      .map((edge) => {
-        if (!edge.data) {
-          return undefined
-        }
-
-        const sourceNode = nodesById.get(edge.source)
-        const targetNode = nodesById.get(edge.target)
-        if (!sourceNode || !targetNode || !isHandleId(edge.sourceHandle) || !isHandleId(edge.targetHandle)) {
-          return undefined
-        }
-
-        const route = buildBoardEdgeRoute(
-          edge.data.spec,
-          nodeAnchor(sourceNode, edge.sourceHandle),
-          nodeAnchor(targetNode, edge.targetHandle),
-        )
-
-        return {
-          id: edge.id,
-          path: route.path,
-          points: route.points,
-        }
-      })
-      .filter((route): route is OverviewWriteRoute => Boolean(route))
-  }, [edges, nodes])
+  const boardGeometry = useMemo(() => buildBoardGeometryFromNodes(nodes, edges), [edges, nodes])
+  const writeRoutes = (boardGeometry.writeRoutes ?? []) as OverviewWriteRoute[]
 
   const overviewRegions = useMemo(() => deriveOverviewRegions(nodes, writeRoutes), [nodes, writeRoutes])
   const nodesById = useMemo(() => new Map(nodes.filter((node) => !node.hidden).map((node) => [node.id, node])), [nodes])

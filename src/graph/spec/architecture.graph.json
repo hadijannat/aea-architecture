@@ -198,7 +198,7 @@
       "claimIds": ["C1", "C4"],
       "tags": ["lane", "cpc"],
       "width": 360,
-      "height": 1160,
+      "height": 1540,
       "fixed": true,
       "visual": {
         "fill": "#FFF7ED",
@@ -229,8 +229,8 @@
       "standardIds": ["NE175"],
       "claimIds": ["C1", "C2", "C3", "C4", "C5"],
       "tags": ["lane", "psmo"],
-      "width": 940,
-      "height": 1160,
+      "width": 1180,
+      "height": 1540,
       "fixed": true,
       "visual": {
         "fill": "#EFF6FF",
@@ -262,7 +262,7 @@
       "claimIds": ["C5"],
       "tags": ["lane", "central-mo", "telemetry-path"],
       "width": 344,
-      "height": 1160,
+      "height": 1540,
       "fixed": true,
       "visual": {
         "fill": "#F0FDF4",
@@ -293,7 +293,7 @@
       "claimIds": ["C2", "C4"],
       "tags": ["gateway", "boundary"],
       "width": 152,
-      "height": 834,
+      "height": 1140,
       "fixed": true,
       "visual": {
         "fill": "#F8FBFF",
@@ -324,8 +324,8 @@
       "standardIds": ["NE175"],
       "claimIds": ["C1", "C2", "C3", "C4", "C5"],
       "tags": ["aea", "container"],
-      "width": 860,
-      "height": 890,
+      "width": 1100,
+      "height": 1280,
       "fixed": true,
       "visual": {
         "fill": "#F8FBFF",
@@ -393,7 +393,7 @@
       "tags": ["band", "decide", "policy-path"],
       "parentId": "AEA",
       "width": 1060,
-      "height": 340,
+      "height": 730,
       "fixed": true,
       "visual": {
         "fill": "#F7F5FF",
@@ -1014,7 +1014,7 @@
       "claimIds": ["C3", "C4", "C6"],
       "tags": ["decide", "policy-path", "write-path", "validator"],
       "parentId": "BAND_DECIDE",
-      "width": 240,
+      "width": 230,
       "height": 128,
       "visual": {
         "fill": "#ffffff",

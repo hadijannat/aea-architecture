@@ -18,10 +18,11 @@ import { compileArchitectureEdges, deriveDiagramState, type CompileCallbacks } f
 import { toMermaid } from '@/graph/compile/toMermaid'
 import { defaultProjectionOverrides, graphManifest, resolveGraphEdge, resolveGraphNode } from '@/graph/spec/manifest'
 import { projectionOverridesSchema } from '@/graph/spec/schema'
-import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
+import { resolveBoardLabelPosition } from '@/layout/board'
 import { validateGraphManifest } from '@/graph/spec/validators'
 import { computeBoardNodePositions } from '@/layout/boardLayout'
-import { resolveEdgeHandles, type HandleId } from '@/layout/ports'
+import { buildBoardEdgeRouteFromPositions, buildBoardGeometryFromPositions } from '@/layout/boardGeometry'
+import { resolveEdgeHandles } from '@/layout/ports'
 import { useDiagramStore, type DiagramStore } from '@/state/diagramStore'
 import { buildUiSearchParams, parseUiSearchParams } from '@/state/urlState'
 
@@ -58,30 +59,6 @@ async function createState(overrides?: Partial<DiagramStore['ui']>): Promise<Dia
   }
 }
 
-function anchorPoint(
-  state: DiagramStore,
-  nodeId: string,
-  handleId: HandleId,
-) {
-  const node = resolveGraphNode(nodeId)
-  const position = state.layout.positions[nodeId]
-
-  if (!node || !position) {
-    throw new Error(`Missing anchor state for ${nodeId}`)
-  }
-
-  switch (handleId) {
-    case 'left':
-      return { x: position.x, y: position.y + node.height / 2 }
-    case 'right':
-      return { x: position.x + node.width, y: position.y + node.height / 2 }
-    case 'top':
-      return { x: position.x + node.width / 2, y: position.y }
-    case 'bottom':
-      return { x: position.x + node.width / 2, y: position.y + node.height }
-  }
-}
-
 function buildArchitectureRoute(state: DiagramStore, edgeId: string) {
   const edge = resolveGraphEdge(edgeId)
   if (!edge) {
@@ -89,11 +66,7 @@ function buildArchitectureRoute(state: DiagramStore, edgeId: string) {
   }
 
   const handles = resolveEdgeHandles(edge, state.projection.edgeHandles)
-  return buildBoardEdgeRoute(
-    edge,
-    anchorPoint(state, edge.source, handles.sourceHandle),
-    anchorPoint(state, edge.target, handles.targetHandle),
-  )
+  return buildBoardEdgeRouteFromPositions(edge, state.layout.positions, graphManifest, handles)
 }
 
 function routeIsAxisAligned(points: Array<{ x: number; y: number }>) {
@@ -142,6 +115,52 @@ function containsPoint(bounds: ReturnType<typeof nodeBounds>, point: { x: number
   return point.x >= bounds.left && point.x <= bounds.right && point.y >= bounds.top && point.y <= bounds.bottom
 }
 
+function containsBounds(outer: ReturnType<typeof nodeBounds>, inner: ReturnType<typeof nodeBounds>) {
+  return (
+    inner.left >= outer.left &&
+    inner.top >= outer.top &&
+    inner.right <= outer.right &&
+    inner.bottom <= outer.bottom
+  )
+}
+
+function expectedStructuralSizes() {
+  return {
+    LANE_A: {
+      width: graphManifest.layoutDefaults.lanes.A.width,
+      height: graphManifest.layoutDefaults.lanes.A.height,
+    },
+    LANE_B: {
+      width: graphManifest.layoutDefaults.lanes.B.width,
+      height: graphManifest.layoutDefaults.lanes.B.height,
+    },
+    LANE_C: {
+      width: graphManifest.layoutDefaults.lanes.C.width,
+      height: graphManifest.layoutDefaults.lanes.C.height,
+    },
+    GW: {
+      width: graphManifest.layoutDefaults.gateway.width,
+      height: graphManifest.layoutDefaults.gateway.height,
+    },
+    AEA: {
+      width: graphManifest.layoutDefaults.aea.width,
+      height: graphManifest.layoutDefaults.aea.height,
+    },
+    BAND_SENSE: {
+      width: graphManifest.layoutDefaults.aea.width - 40,
+      height: graphManifest.layoutDefaults.aea.bandHeights.Sense,
+    },
+    BAND_DECIDE: {
+      width: graphManifest.layoutDefaults.aea.width - 40,
+      height: graphManifest.layoutDefaults.aea.bandHeights.Decide,
+    },
+    BAND_ACT: {
+      width: graphManifest.layoutDefaults.aea.width - 40,
+      height: graphManifest.layoutDefaults.aea.bandHeights.Act,
+    },
+  } as const
+}
+
 describe('graph manifest', () => {
   it('passes integrity and semantic validation', () => {
     const issues = validateGraphManifest(graphManifest)
@@ -172,6 +191,58 @@ describe('graph manifest', () => {
         'invalid-interaction-edge',
       ]),
     )
+  })
+
+  it('rejects structural container drift from layout defaults', () => {
+    const mutated = structuredClone(graphManifest)
+    const gateway = mutated.nodes.find((node) => node.id === 'GW')
+    const laneB = mutated.nodes.find((node) => node.id === 'LANE_B')
+    const decideBand = mutated.nodes.find((node) => node.id === 'BAND_DECIDE')
+
+    if (!gateway || !laneB || !decideBand) {
+      throw new Error('Expected GW, LANE_B, and BAND_DECIDE objects to exist')
+    }
+
+    gateway.height -= 12
+    laneB.width -= 24
+    decideBand.height -= 18
+
+    const issues = validateGraphManifest(mutated)
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-structural-node-height',
+          message: expect.stringContaining('GW'),
+        }),
+        expect.objectContaining({
+          code: 'invalid-structural-node-width',
+          message: expect.stringContaining('LANE_B'),
+        }),
+        expect.objectContaining({
+          code: 'invalid-structural-node-height',
+          message: expect.stringContaining('BAND_DECIDE'),
+        }),
+      ]),
+    )
+  })
+
+  it('keeps structural container dimensions synchronized with layout defaults', () => {
+    for (const [nodeId, expected] of Object.entries(expectedStructuralSizes())) {
+      const node = resolveGraphNode(nodeId)
+      expect(node, `Missing structural node ${nodeId}`).toBeDefined()
+      expect(node).toMatchObject(expected)
+    }
+  })
+
+  it('locks PR-corrected structural dimensions against future layoutDefaults drift', () => {
+    expect(resolveGraphNode('GW')?.height).toBe(1140)
+    expect(resolveGraphNode('BAND_DECIDE')?.height).toBe(730)
+    expect(resolveGraphNode('LANE_A')?.height).toBe(1540)
+    expect(resolveGraphNode('LANE_B')?.height).toBe(1540)
+    expect(resolveGraphNode('LANE_B')?.width).toBe(1180)
+    expect(resolveGraphNode('LANE_C')?.height).toBe(1540)
+    expect(resolveGraphNode('AEA')?.height).toBe(1280)
+    expect(resolveGraphNode('AEA')?.width).toBe(1100)
   })
 
   it('keeps the canonical connection inventory aligned with the spec', () => {
@@ -470,6 +541,54 @@ describe('graph manifest', () => {
     // KPI edges must carry C5 claim
     for (const edge of kpiEdges) {
       expect(edge.claimIds, `${edge.id} missing C5 claim`).toContain('C5')
+    }
+  })
+
+  it('derives board support geometry from live positions rather than static manifest channels', async () => {
+    const state = await createState()
+    const geometry = buildBoardGeometryFromPositions(state.layout.positions, graphManifest)
+
+    expect(geometry.routeChannels.gatewayApproachX).toBe(geometry.gateway.x - 28)
+    expect(geometry.routeChannels.writeY).toBe(geometry.bands.Act.y + 25)
+    expect(geometry.routeGuideYs).toContain(geometry.routeChannels.writeY)
+    expect(geometry.verticalGuideXs).toContain(geometry.routeChannels.monitorSpineX)
+  })
+
+  it('board support geometry follows persisted structural overrides', async () => {
+    const positions = await computeBoardNodePositions(graphManifest, {
+      ...defaultProjectionOverrides,
+      nodePositions: {
+        LANE_A: { x: 96, y: 72 },
+        GW: { x: 440, y: 160 },
+      },
+    })
+
+    const geometry = buildBoardGeometryFromPositions(positions, graphManifest)
+
+    expect(geometry.lanes.A.x).toBe(96)
+    expect(geometry.lanes.A.y).toBe(72)
+    expect(geometry.gateway.x).toBe(440)
+    expect(geometry.gateway.y).toBe(160)
+    expect(geometry.routeChannels.cpcSpineX).toBe(120)
+    expect(geometry.routeChannels.gatewayApproachX).toBe(412)
+  })
+
+  it('keeps architecture children inside their parent bounds with the computed board layout', async () => {
+    const state = await createState()
+    const containmentPairs = [
+      { childId: 'AEA', parentId: 'LANE_B' },
+      ...graphManifest.nodes
+        .filter((node) => node.panel.includes('architecture') && typeof node.parentId === 'string')
+        .map((node) => ({ childId: node.id, parentId: node.parentId })),
+    ]
+
+    for (const { childId, parentId } of containmentPairs) {
+      const childBounds = nodeBounds(state, childId)
+      const parentBounds = nodeBounds(state, parentId)
+      expect(
+        containsBounds(parentBounds, childBounds),
+        `${childId} should remain inside ${parentId} after applying layoutDefaults`,
+      ).toBe(true)
     }
   })
 
@@ -783,6 +902,7 @@ describe('exports', () => {
     expect(resolveGraphNode('DEC_K2')?.width).toBe(230)
     expect(resolveGraphNode('DEC_R2')?.width).toBe(230)
     expect(resolveGraphNode('DEC_G1')?.width).toBe(230)
+    expect(resolveGraphNode('DEC_G2')?.width).toBe(230)
     expect(resolveGraphNode('DEC_M1')?.width).toBe(230)
 
     for (const column of columns) {
@@ -822,24 +942,24 @@ describe('exports', () => {
         labelPoint: { x: 1353.5, y: 778 },
       },
       F_G1A_pass: {
-        path: 'M 1583 796 L 1583 823 Q 1583 837 1569 837 L 1329 837 Q 1315 837 1315 851 L 1315 888',
-        labelPoint: { x: 1467, y: 837 },
+        path: 'M 1583 796 L 1583 833 Q 1583 847 1569 847 L 1329 847 Q 1315 847 1315 861 L 1315 888',
+        labelPoint: { x: 1467, y: 847 },
       },
       F_G1A_reject: {
-        path: 'M 1468 732 L 1468 767 Q 1468 781 1454 781 L 1444 781 Q 1430 781 1430 767 L 1430 733',
-        labelPoint: { x: 1449, y: 799 },
+        path: 'M 1468 732 L 1468 777 Q 1468 791 1454 791 L 1444 791 Q 1430 791 1430 777 L 1430 733',
+        labelPoint: { x: 1449, y: 809 },
       },
       F3f_reject: {
-        path: 'M 1315 1008 L 1315 817 Q 1315 803 1301 803 L 1244 803 Q 1230 803 1230 789 L 1230 747 Q 1230 733 1216 733 L 1200 733',
-        labelPoint: { x: 1272.5, y: 821 },
+        path: 'M 1315 1008 L 1315 827 Q 1315 813 1301 813 L 1244 813 Q 1230 813 1230 799 L 1230 747 Q 1230 733 1216 733 L 1200 733',
+        labelPoint: { x: 1272.5, y: 831 },
       },
       F3g: {
-        path: 'M 779 568 L 779 952 Q 779 966 793 966 L 1574 966 Q 1588 966 1588 952 L 1588 888',
-        labelPoint: { x: 1183.5, y: 938 },
+        path: 'M 779 568 L 779 952 Q 779 966 793 966 L 1569 966 Q 1583 966 1583 952 L 1583 888',
+        labelPoint: { x: 1181, y: 938 },
       },
       F3h: {
-        path: 'M 1230 292 L 1230 862 Q 1230 876 1244 876 L 1546 876 Q 1552 876 1552 882 L 1552 882 Q 1552 888 1558 888 L 1588 888',
-        labelPoint: { x: 1534, y: 882 },
+        path: 'M 1230 292 L 1230 862 Q 1230 876 1244 876 L 1541 876 Q 1547 876 1547 882 L 1547 882 Q 1547 888 1553 888 L 1583 888',
+        labelPoint: { x: 1529, y: 882 },
       },
       F3i: {
         path: 'M 534 1109 L 534 1000 Q 534 986 548 986 L 1454 986 Q 1468 986 1468 972 L 1468 952',
@@ -862,16 +982,16 @@ describe('exports', () => {
         labelPoint: { x: 1315, y: 556 },
       },
       F4: {
-        path: 'M 1588 1016 L 1198 1016 Q 1184 1016 1184 1002 L 1184 902 Q 1184 888 1170 888 L 779 888',
-        labelPoint: { x: 1386, y: 1002 },
+        path: 'M 1583 1016 L 1195 1016 Q 1181 1016 1181 1002 L 1181 902 Q 1181 888 1167 888 L 779 888',
+        labelPoint: { x: 1382, y: 1002 },
       },
       F_H1_revalidate: {
         path: 'M 894 948 L 1179 948 Q 1181 948 1181 950 L 1181 950 Q 1181 952 1183 952 L 1468 952',
         labelPoint: { x: 1037.5, y: 934 },
       },
       F_H1_reject: {
-        path: 'M 779 888 L 779 839 Q 779 825 793 825 L 1301.5 825 Q 1315 825 1315 811.5 L 1315 798',
-        labelPoint: { x: 1047, y: 807 },
+        path: 'M 779 888 L 779 849 Q 779 835 793 835 L 1301 835 Q 1315 835 1315 821 L 1315 798',
+        labelPoint: { x: 1047, y: 817 },
       },
       F_H1_pass: {
         path: 'M 779 1008 L 779 1047.5 Q 779 1050 781.5 1050 L 781.5 1050 Q 784 1050 784 1052.5 L 784 1212',
@@ -1032,9 +1152,9 @@ describe('exports', () => {
   it('keeps rejection and monitor reroutes on distinct local channels', async () => {
     const state = await createState()
     const rejectionRoutes = {
-      F_G1A_reject: 781,
-      F3f_reject: 803,
-      F_H1_reject: 825,
+      F_G1A_reject: 791,
+      F3f_reject: 813,
+      F_H1_reject: 835,
     } as const
 
     for (const [edgeId, expectedY] of Object.entries(rejectionRoutes)) {

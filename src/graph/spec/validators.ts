@@ -683,6 +683,63 @@ export interface ValidationIssue {
   message: string
 }
 
+function validateStructuralNodeLayoutSync(manifest: GraphManifest): ValidationIssue[] {
+  const expectedStructuralSizes = {
+    LANE_A: {
+      width: manifest.layoutDefaults.lanes.A.width,
+      height: manifest.layoutDefaults.lanes.A.height,
+    },
+    LANE_B: {
+      width: manifest.layoutDefaults.lanes.B.width,
+      height: manifest.layoutDefaults.lanes.B.height,
+    },
+    LANE_C: {
+      width: manifest.layoutDefaults.lanes.C.width,
+      height: manifest.layoutDefaults.lanes.C.height,
+    },
+    GW: {
+      width: manifest.layoutDefaults.gateway.width,
+      height: manifest.layoutDefaults.gateway.height,
+    },
+    AEA: {
+      width: manifest.layoutDefaults.aea.width,
+      height: manifest.layoutDefaults.aea.height,
+    },
+    BAND_SENSE: {
+      width: manifest.layoutDefaults.aea.width - 40,
+      height: manifest.layoutDefaults.aea.bandHeights.Sense,
+    },
+    BAND_DECIDE: {
+      width: manifest.layoutDefaults.aea.width - 40,
+      height: manifest.layoutDefaults.aea.bandHeights.Decide,
+    },
+    BAND_ACT: {
+      width: manifest.layoutDefaults.aea.width - 40,
+      height: manifest.layoutDefaults.aea.bandHeights.Act,
+    },
+  } satisfies Record<string, Pick<NodeSpec, 'width' | 'height'>>
+
+  const issues: ValidationIssue[] = []
+
+  for (const [nodeId, expected] of Object.entries(expectedStructuralSizes)) {
+    const node = manifest.nodes.find((candidate) => candidate.id === nodeId)
+    if (!node) {
+      continue
+    }
+
+    for (const dimension of ['width', 'height'] as const) {
+      if (node[dimension] !== expected[dimension]) {
+        issues.push({
+          code: `invalid-structural-node-${dimension}`,
+          message: `${nodeId} must use ${dimension}=${expected[dimension]} to stay synchronized with layoutDefaults (found ${node[dimension]})`,
+        })
+      }
+    }
+  }
+
+  return issues
+}
+
 function validateEntityReference(
   entityKey: string,
   nodeIds: Set<string>,
@@ -815,6 +872,8 @@ export function validateGraphManifest(manifest: GraphManifest): ValidationIssue[
     nodeIds.add(node.id)
     issues.push(...validateCanonicalNode(node))
   }
+
+  issues.push(...validateStructuralNodeLayoutSync(manifest))
 
   for (const edge of manifest.edges) {
     if (edgeIds.has(edge.id)) {
