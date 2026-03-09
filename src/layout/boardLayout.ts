@@ -8,6 +8,10 @@ export interface NodePosition {
 
 export type NodePositionMap = Record<string, NodePosition>
 
+export const BAND_INSET_X = 20
+export const BAND_INSET_Y = 66
+export const BAND_SPACING = 26
+
 export async function computeBoardNodePositions(
   manifest: GraphManifest = graphManifest,
   overrides?: ProjectionOverrides,
@@ -21,9 +25,9 @@ export async function computeBoardNodePositions(
   positions.GW = { x: gateway.x, y: gateway.y }
   positions.AEA = { x: aea.x, y: aea.y }
 
-  const bandInsetX = 20
-  const bandInsetY = 66
-  const bandSpacing = 26
+  const bandInsetX = BAND_INSET_X
+  const bandInsetY = BAND_INSET_Y
+  const bandSpacing = BAND_SPACING
 
   positions.BAND_SENSE = { x: aea.x + bandInsetX, y: aea.y + bandInsetY }
   positions.BAND_DECIDE = {

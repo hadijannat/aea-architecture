@@ -1,5 +1,6 @@
 import { graphManifest, resolveGraphNode } from '@/graph/spec/manifest'
 import type { EdgeSpec, GraphManifest } from '@/graph/spec/schema'
+import { BAND_INSET_X, BAND_INSET_Y, BAND_SPACING } from '@/layout/boardLayout'
 import type { NodePositionMap } from '@/layout/boardLayout'
 import { buildBoardEdgeRoute, type BoardRouteChannels, type Point, type RoutedBoardEdge } from '@/layout/board'
 import type { HandleId } from '@/layout/ports'
@@ -28,6 +29,7 @@ export interface BoardGeometry {
   routeGuideYs: number[]
   verticalGuideXs: number[]
   writeCorridorBounds?: BoardRect
+  writeRoutes?: BoardRouteLike[]
 }
 
 interface NodeLike {
@@ -100,27 +102,27 @@ function fallbackRectMap(manifest: GraphManifest): Record<string, BoardRect> {
     GW: { ...layoutDefaults.gateway },
     AEA: { ...layoutDefaults.aea },
     BAND_SENSE: {
-      x: layoutDefaults.aea.x + 20,
-      y: layoutDefaults.aea.y + 66,
-      width: layoutDefaults.aea.width - 40,
+      x: layoutDefaults.aea.x + BAND_INSET_X,
+      y: layoutDefaults.aea.y + BAND_INSET_Y,
+      width: layoutDefaults.aea.width - BAND_INSET_X * 2,
       height: layoutDefaults.aea.bandHeights.Sense,
     },
     BAND_DECIDE: {
-      x: layoutDefaults.aea.x + 20,
-      y: layoutDefaults.aea.y + 66 + layoutDefaults.aea.bandHeights.Sense + 26,
-      width: layoutDefaults.aea.width - 40,
+      x: layoutDefaults.aea.x + BAND_INSET_X,
+      y: layoutDefaults.aea.y + BAND_INSET_Y + layoutDefaults.aea.bandHeights.Sense + BAND_SPACING,
+      width: layoutDefaults.aea.width - BAND_INSET_X * 2,
       height: layoutDefaults.aea.bandHeights.Decide,
     },
     BAND_ACT: {
-      x: layoutDefaults.aea.x + 20,
+      x: layoutDefaults.aea.x + BAND_INSET_X,
       y:
         layoutDefaults.aea.y +
-        66 +
+        BAND_INSET_Y +
         layoutDefaults.aea.bandHeights.Sense +
-        26 +
+        BAND_SPACING +
         layoutDefaults.aea.bandHeights.Decide +
-        26,
-      width: layoutDefaults.aea.width - 40,
+        BAND_SPACING,
+      width: layoutDefaults.aea.width - BAND_INSET_X * 2,
       height: layoutDefaults.aea.bandHeights.Act,
     },
   }
@@ -393,6 +395,7 @@ export function buildBoardGeometry(
       routeChannels.laneCSpineX,
     ],
     writeCorridorBounds: corridorFromRoutes ?? corridorFallback,
+    writeRoutes: options?.writeRoutes,
   }
 }
 

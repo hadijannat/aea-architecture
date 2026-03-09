@@ -6,7 +6,7 @@ import { isStructuralNodeSpec } from '@/graph/compile/nodeVisuals'
 import type { DiagramFlowEdge, DiagramFlowNode } from '@/graph/compile/toReactFlow'
 import { graphManifest } from '@/graph/spec/manifest'
 import type { Point } from '@/layout/board'
-import { buildBoardGeometryFromNodes, buildWriteCorridorRoutes } from '@/layout/boardGeometry'
+import { buildBoardGeometryFromNodes } from '@/layout/boardGeometry'
 import { resolveLaneVisual } from '@/graph/compile/visualSystem'
 
 import {
@@ -122,9 +122,7 @@ export function SemanticOverviewMap({
   }, [containerSize, viewport.x, viewport.y, viewport.zoom])
 
   const boardGeometry = useMemo(() => buildBoardGeometryFromNodes(nodes, edges), [edges, nodes])
-  const writeRoutes = useMemo<OverviewWriteRoute[]>(() => {
-    return buildWriteCorridorRoutes(nodes, edges, boardGeometry.routeChannels)
-  }, [boardGeometry.routeChannels, edges, nodes])
+  const writeRoutes = (boardGeometry.writeRoutes ?? []) as OverviewWriteRoute[]
 
   const overviewRegions = useMemo(() => deriveOverviewRegions(nodes, writeRoutes), [nodes, writeRoutes])
   const nodesById = useMemo(() => new Map(nodes.filter((node) => !node.hidden).map((node) => [node.id, node])), [nodes])

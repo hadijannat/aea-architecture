@@ -234,6 +234,17 @@ describe('graph manifest', () => {
     }
   })
 
+  it('locks PR-corrected structural dimensions against future layoutDefaults drift', () => {
+    expect(resolveGraphNode('GW')?.height).toBe(1140)
+    expect(resolveGraphNode('BAND_DECIDE')?.height).toBe(730)
+    expect(resolveGraphNode('LANE_A')?.height).toBe(1540)
+    expect(resolveGraphNode('LANE_B')?.height).toBe(1540)
+    expect(resolveGraphNode('LANE_B')?.width).toBe(1180)
+    expect(resolveGraphNode('LANE_C')?.height).toBe(1540)
+    expect(resolveGraphNode('AEA')?.height).toBe(1280)
+    expect(resolveGraphNode('AEA')?.width).toBe(1100)
+  })
+
   it('keeps the canonical connection inventory aligned with the spec', () => {
     const expectedEdges = {
       F_GW1: { source: 'A2', target: 'G1', semantic: 'gateway-internal', style: 'medium', direction: 'ltr' },
@@ -891,6 +902,7 @@ describe('exports', () => {
     expect(resolveGraphNode('DEC_K2')?.width).toBe(230)
     expect(resolveGraphNode('DEC_R2')?.width).toBe(230)
     expect(resolveGraphNode('DEC_G1')?.width).toBe(230)
+    expect(resolveGraphNode('DEC_G2')?.width).toBe(230)
     expect(resolveGraphNode('DEC_M1')?.width).toBe(230)
 
     for (const column of columns) {
