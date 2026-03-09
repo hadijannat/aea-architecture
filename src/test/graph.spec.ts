@@ -535,11 +535,11 @@ describe('derived projections', () => {
 
   it('uses surface-aware marker tokens while keeping the canonical marker coordinates shared', () => {
     expect(getSemanticMarkerTokens('architecture')).toMatchObject({
-      width: 18,
-      height: 14,
+      width: 12,
+      height: 10,
       refY: 4,
       viewBox: '0 0 10 8',
-      units: 'strokeWidth',
+      units: 'userSpaceOnUse',
     })
     expect(getSemanticMarkerTokens('legend')).toMatchObject({
       width: 12,
@@ -950,6 +950,46 @@ describe('exports', () => {
     expect(curvedRoute.path).toContain('Q')
     expect(routeIsAxisAligned(curvedRoute.points)).toBe(true)
     expect(straightRoute.path).not.toContain('Q')
+  })
+
+  it('routes gateway diode edges vertically with dedicated gutter labels', async () => {
+    const state = await createState()
+    const fGw1 = resolveGraphEdge('F_GW1')
+    const fGw2 = resolveGraphEdge('F_GW2')
+    const fGw3 = resolveGraphEdge('F_GW3')
+
+    if (!fGw1 || !fGw2 || !fGw3) {
+      throw new Error('Expected gateway edges F_GW1, F_GW2, F_GW3 to exist')
+    }
+
+    expect(resolveEdgeHandles(fGw1, state.projection.edgeHandles)).toEqual({
+      sourceHandle: 'right',
+      targetHandle: 'left',
+    })
+    expect(resolveEdgeHandles(fGw2, state.projection.edgeHandles)).toEqual({
+      sourceHandle: 'bottom',
+      targetHandle: 'top',
+    })
+    expect(resolveEdgeHandles(fGw3, state.projection.edgeHandles)).toEqual({
+      sourceHandle: 'bottom',
+      targetHandle: 'top',
+    })
+
+    const routeGw1 = buildArchitectureRoute(state, 'F_GW1')
+    const routeGw2 = buildArchitectureRoute(state, 'F_GW2')
+    const routeGw3 = buildArchitectureRoute(state, 'F_GW3')
+
+    expect(routeGw2.points).toEqual([
+      { x: 480, y: 312 },
+      { x: 480, y: 348 },
+    ])
+    expect(routeGw3.points).toEqual([
+      { x: 480, y: 440 },
+      { x: 480, y: 472 },
+    ])
+    expect(resolveBoardLabelPosition(routeGw1.label)).toEqual({ x: 370, y: 254 })
+    expect(resolveBoardLabelPosition(routeGw2.label)).toEqual({ x: 584, y: 330 })
+    expect(resolveBoardLabelPosition(routeGw3.label)).toEqual({ x: 584, y: 456 })
   })
 
   it('keeps write-corridor label anchors outside nearby node boxes', async () => {

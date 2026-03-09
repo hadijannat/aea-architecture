@@ -366,10 +366,63 @@ test('diode edges use dedicated diode markers with readable labels', async ({ pa
   await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'chip')
   await expect(edgeLabel).toHaveText('F_GW2 · Ingress')
 
-  await expect(architectureMainEdgePath(page, 'F_GW2')).toHaveAttribute(
-    'marker-end',
-    /architecture-marker-gateway-internal-diode/,
+  const markerEnd = await architectureMainEdgePath(page, 'F_GW2').getAttribute('marker-end')
+  expect(markerEnd).toMatch(/architecture-marker-gateway-internal-diode/)
+  expect(markerEnd).not.toMatch(/arrowclosed/)
+  await expect(page.locator('#architecture-marker-gateway-internal-diode')).toHaveAttribute('markerUnits', 'userSpaceOnUse')
+  await expect(page.locator('#architecture-marker-gateway-internal-diode')).toHaveAttribute('markerWidth', '12')
+  await expect(page.locator('#architecture-marker-gateway-internal-diode')).toHaveAttribute('markerHeight', '10')
+  await expect(page.locator('#architecture-marker-gateway-internal-diode path')).toHaveAttribute(
+    'd',
+    'M 1 1 L 7 4 L 1 7 z M 7.5 1 L 7.5 7',
   )
+  await expect(page.locator('#architecture-marker-writeback-arrowclosed path')).toHaveAttribute('d', 'M 0 0 L 10 4 L 0 8 z')
+
+  // F_GW2 must route vertically (bottom→top), not horizontally (right→left).
+  // A vertical path shares the same canvas x at start and end; a horizontal path does not.
+  const edgePath = await architectureMainEdgePath(page, 'F_GW2').getAttribute('d')
+  expect(edgePath).not.toBeNull()
+  const xCoords = [...edgePath!.matchAll(/([\d.]+)\s+([\d.]+)/g)].map((m) => parseFloat(m[1]))
+  expect(xCoords.length).toBeGreaterThanOrEqual(2)
+  expect(Math.abs(xCoords[0] - xCoords[xCoords.length - 1])).toBeLessThan(5)
+})
+
+test('gateway labels stay clear of the gateway stack in a gateway-focused view', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+  await page.waitForTimeout(700)
+
+  await page.locator('[data-hotspot-id="gateway"]').click({ force: true })
+  await page.waitForTimeout(500)
+  await ensureEdgeLabelMode(page, 'F_GW2', 'chip', 'zoom-in')
+
+  for (const edgeId of ['F_GW1', 'F_GW2', 'F_GW3']) {
+    await expect(page.locator(`.edge-label[data-edge-id="${edgeId}"]`)).toHaveAttribute('data-edge-label-mode', 'chip')
+  }
+
+  const [gw1LabelBox, gw2LabelBox, gw3LabelBox] = await Promise.all([
+    page.locator('.edge-label[data-edge-id="F_GW1"]').boundingBox(),
+    page.locator('.edge-label[data-edge-id="F_GW2"]').boundingBox(),
+    page.locator('.edge-label[data-edge-id="F_GW3"]').boundingBox(),
+  ])
+
+  const gatewayNodeBoxes = await Promise.all(
+    ['G1', 'G2', 'G3'].map((nodeId) => page.locator(`.node-card[data-node-id="${nodeId}"]`).boundingBox()),
+  )
+
+  expect(gw1LabelBox).not.toBeNull()
+  expect(gw2LabelBox).not.toBeNull()
+  expect(gw3LabelBox).not.toBeNull()
+  expect(gatewayNodeBoxes.every((box) => box !== null)).toBe(true)
+
+  expect(boxesOverlap(gw1LabelBox!, gatewayNodeBoxes[0]!, 4)).toBe(false)
+  expect(gw1LabelBox!.x + gw1LabelBox!.width).toBeLessThan(gatewayNodeBoxes[0]!.x)
+
+  for (const labelBox of [gw2LabelBox!, gw3LabelBox!]) {
+    for (const nodeBox of gatewayNodeBoxes) {
+      expect(boxesOverlap(labelBox, nodeBox!, 4)).toBe(false)
+    }
+  }
 })
 
 test('F3e and F3g display labels stay separated at the desktop viewport', async ({ page }) => {
@@ -538,13 +591,13 @@ test('highlighted non-writeback paths receive a visible glow', async ({ page }) 
   expect(await computedStyleValue(highlightedPath, 'filter')).not.toBe('none')
 })
 
-test('architecture marker defs stay stroke-relative and the write ribbon follows zoom visibility', async ({ page }) => {
+test('architecture marker defs stay fixed-size and the write ribbon follows zoom visibility', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
 
-  await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('markerUnits', 'strokeWidth')
-  await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('markerWidth', '18')
-  await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('markerHeight', '14')
+  await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('markerUnits', 'userSpaceOnUse')
+  await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('markerWidth', '12')
+  await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('markerHeight', '10')
   await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('refY', '4')
   await page.getByRole('button', { name: 'Expand legend' }).click()
   await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute(
