@@ -104,28 +104,30 @@ function buildLabel(edge: EdgeSpec, points: Point[], channels: BoardRouteChannel
     case 'F_GW3':
       return gatewayGutterLabel(points, channels)
     case 'F1':
-      return segmentLabel(points, 3, 'top', 18)
+      return segmentLabel(points, 2, 'top', 18)
     case 'F2':
       return segmentLabel(points, 0, 'top', 16)
     case 'F3a':
     case 'F3f':
-    case 'F_H1_revalidate':
     case 'F_T0_req':
     case 'F_T2':
-    case 'F4':
       return segmentLabel(points, 0, 'top', 14)
+    case 'F4':
+      return segmentLabel(points, 0, 'bottom', 22)
+    case 'F_H1_revalidate':
+      return segmentLabel(points, 2, 'bottom', 58)
     case 'F_G0_out':
       return segmentLabel(points, 0, 'bottom', 18)
     case 'F_R0_out':
-      return segmentLabel(points, 0, 'right', 16)
+      return segmentLabel(points, 1, 'right', 16)
     case 'F_G0_pol':
       return segmentLabel(points, 0, 'bottom', 24)
     case 'F3e':
-      return segmentLabel(points, 0, 'top', 20)
+      return segmentLabel(points, 0, 'bottom', 18)
     case 'F3c':
       return segmentLabel(points, 1, 'top', 14)
     case 'F3d':
-      return segmentLabel(points, 1, 'top', 30)
+      return segmentLabel(points, 1, 'bottom', 14)
     case 'F_G1A_pass':
       return segmentLabel(points, 2, 'right', 22)
     case 'F_G1A_reject':
@@ -148,13 +150,13 @@ function buildLabel(edge: EdgeSpec, points: Point[], channels: BoardRouteChannel
     case "F3b'":
       return anchoredLabel(points[1]?.x ?? 0, channels.rejectionY + 26, 'right', 18)
     case 'F3i':
-      return segmentLabel(points, 1, 'top', 14)
+      return segmentLabel(points, 1, 'bottom', 32)
     case 'F3g':
       return segmentLabel(points, 1, 'top', 28)
     case 'F3h':
       return segmentLabel(points, 2, 'left', 18)
     case 'F3f_reject':
-      return segmentLabel(points, 2, 'left', 22)
+      return segmentLabel(points, 1, 'bottom', 18)
     case 'F_H1_reject':
       return segmentLabel(points, 0, 'left', 22)
     case 'F_T1':

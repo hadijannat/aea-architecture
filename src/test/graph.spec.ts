@@ -1045,7 +1045,7 @@ describe('exports', () => {
     const expectedRoutes = {
       F3e: {
         path: 'M 1555 996 L 1649 996 Q 1663 996 1663 982 L 1663 944 Q 1663 930 1677 930 L 1770 930',
-        labelPoint: { x: 1609, y: 976 },
+        labelPoint: { x: 1609, y: 1014 },
       },
       F_G1A_pass: {
         path: 'M 1885 994 L 1885 1110 Q 1885 1124 1871 1124 L 1569 1124 Q 1555 1124 1555 1138 L 1555 1186',
@@ -1057,7 +1057,7 @@ describe('exports', () => {
       },
       F3f_reject: {
         path: 'M 1555 1306 L 1555 1038 Q 1555 1024 1541 1024 L 1484 1024 Q 1470 1024 1470 1010 L 1470 945 Q 1470 931 1456 931 L 1440 931',
-        labelPoint: { x: 1448, y: 977.5 },
+        labelPoint: { x: 1512.5, y: 1042 },
       },
       F3g: {
         path: 'M 895 666 L 895 1250 Q 895 1264 909 1264 L 1871 1264 Q 1885 1264 1885 1250 L 1885 1186',
@@ -1069,7 +1069,7 @@ describe('exports', () => {
       },
       F3i: {
         path: 'M 596 1309 L 596 1296.5 Q 596 1284 608.5 1284 L 1756 1284 Q 1770 1284 1770 1270 L 1770 1250',
-        labelPoint: { x: 1183, y: 1270 },
+        labelPoint: { x: 1183, y: 1316 },
       },
       F_T0_req: {
         path: 'M 1555 866 L 1555 780 Q 1555 766 1569 766 L 1871 766 Q 1885 766 1885 752 L 1885 666',
@@ -1089,11 +1089,11 @@ describe('exports', () => {
       },
       F4: {
         path: 'M 1885 1314 L 1404 1314 Q 1390 1314 1390 1300 L 1390 1200 Q 1390 1186 1376 1186 L 895 1186',
-        labelPoint: { x: 1637.5, y: 1300 },
+        labelPoint: { x: 1637.5, y: 1336 },
       },
       F_H1_revalidate: {
         path: 'M 1010 1246 L 1388 1246 Q 1390 1246 1390 1248 L 1390 1248 Q 1390 1250 1392 1250 L 1770 1250',
-        labelPoint: { x: 1200, y: 1232 },
+        labelPoint: { x: 1580, y: 1308 },
       },
       F_H1_reject: {
         path: 'M 895 1186 L 895 1098 Q 895 1084 909 1084 L 1541 1084 Q 1555 1084 1555 1070 L 1555 996',
@@ -1236,10 +1236,17 @@ describe('exports', () => {
   it('keeps newly rerouted labels outside their guarded node boxes', async () => {
     const state = await createState()
     const checks = [
+      { edgeId: 'F1', nodes: ['S1', 'S2'] },
+      { edgeId: 'F_R0_out', nodes: ['DEC_R0', 'DEC_R1'] },
+      { edgeId: 'F3d', nodes: ['DEC_R0', 'DEC_K1', 'DEC_T0'] },
+      { edgeId: 'F3e', nodes: ['DEC_R2', 'DEC_G1A'] },
+      { edgeId: 'F3f_reject', nodes: ['DEC_R2', 'DEC_G1A'] },
+      { edgeId: 'F3i', nodes: ['DEC_H1', 'DEC_M1', 'DEC_G1'] },
+      { edgeId: 'F4', nodes: ['DEC_G1', 'DEC_G2', 'DEC_M1'] },
       { edgeId: 'F_G1A_pass', nodes: ['DEC_G1A', 'DEC_G1', 'DEC_M1'] },
       { edgeId: 'F_T1', nodes: ['S1', 'S2', 'DEC_T0'] },
       { edgeId: 'F_T0_obs', nodes: ['DEC_T0', 'DEC_G0', 'DEC_R2'] },
-      { edgeId: 'F_H1_revalidate', nodes: ['DEC_H1', 'DEC_G2', 'DEC_G1'] },
+      { edgeId: 'F_H1_revalidate', nodes: ['DEC_M1', 'DEC_G1', 'DEC_G2'] },
       { edgeId: 'F_H1_reject', nodes: ['DEC_H1', 'DEC_R2', 'DEC_M1'] },
       { edgeId: 'F_H1_pass', nodes: ['DEC_H1', 'ACT1', 'ACT3'] },
       { edgeId: 'F_CPC_INT', nodes: ['A1', 'A2', 'A3'] },
@@ -1465,4 +1472,6 @@ describe('exports', () => {
 
     useDiagramStore.setState(initialState)
   })
+
+
 })
