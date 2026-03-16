@@ -8,9 +8,9 @@ export interface NodePosition {
 
 export type NodePositionMap = Record<string, NodePosition>
 
-export const BAND_INSET_X = 20
-export const BAND_INSET_Y = 66
-export const BAND_SPACING = 26
+export const BAND_INSET_X = 28
+export const BAND_INSET_Y = 78
+export const BAND_SPACING = 40
 
 export async function computeBoardNodePositions(
   manifest: GraphManifest = graphManifest,
@@ -41,25 +41,25 @@ export async function computeBoardNodePositions(
 
   const decideBandX = positions.BAND_DECIDE.x
   const decideBandY = positions.BAND_DECIDE.y
-  const decideColumnOffsets = [24, 292, 560, 828] as const
-  const decideRowOffsets = [34, 254, 474] as const
+  const decideColumnOffsets = [32, 362, 692, 1022] as const
+  const decideRowOffsets = [46, 366, 686] as const
 
   Object.assign(positions, {
-    A1: { x: lanes.A.x + 56, y: lanes.A.y + 176 },
-    A2: { x: lanes.A.x + 56, y: lanes.A.y + 442 },
-    A3: { x: lanes.A.x + 56, y: lanes.A.y + 1184 },
+    A1: { x: lanes.A.x + 66, y: lanes.A.y + 210 },
+    A2: { x: lanes.A.x + 66, y: lanes.A.y + 544 },
+    A3: { x: lanes.A.x + 66, y: lanes.A.y + 1470 },
   })
 
   Object.assign(positions, {
-    G1: { x: gateway.x + 26, y: gateway.y + 80 },
-    G2: { x: gateway.x + 26, y: gateway.y + 204 },
-    G3: { x: gateway.x + 26, y: gateway.y + 328 },
-    VOI: { x: gateway.x + 20, y: gateway.y + gateway.height - 250 },
+    G1: { x: gateway.x + 32, y: gateway.y + 96 },
+    G2: { x: gateway.x + 32, y: gateway.y + 252 },
+    G3: { x: gateway.x + 32, y: gateway.y + 406 },
+    VOI: { x: gateway.x + 26, y: gateway.y + gateway.height - 310 },
   })
 
   Object.assign(positions, {
-    S1: { x: positions.BAND_SENSE.x + 24, y: positions.BAND_SENSE.y + 40 },
-    S2: { x: positions.BAND_SENSE.x + 360, y: positions.BAND_SENSE.y + 34 },
+    S1: { x: positions.BAND_SENSE.x + 30, y: positions.BAND_SENSE.y + 50 },
+    S2: { x: positions.BAND_SENSE.x + 440, y: positions.BAND_SENSE.y + 46 },
   })
 
   Object.assign(positions, {
@@ -78,14 +78,14 @@ export async function computeBoardNodePositions(
   })
 
   Object.assign(positions, {
-    ACT1: { x: positions.BAND_ACT.x + 24, y: positions.BAND_ACT.y + 42 },
-    ACT3: { x: positions.BAND_ACT.x + 396, y: positions.BAND_ACT.y + 44 },
-    ACT2: { x: positions.BAND_ACT.x + 820, y: positions.BAND_ACT.y + 40 },
+    ACT1: { x: positions.BAND_ACT.x + 32, y: positions.BAND_ACT.y + 54 },
+    ACT3: { x: positions.BAND_ACT.x + 490, y: positions.BAND_ACT.y + 56 },
+    ACT2: { x: positions.BAND_ACT.x + 1000, y: positions.BAND_ACT.y + 52 },
   })
 
   Object.assign(positions, {
-    C1: { x: lanes.C.x + 58, y: lanes.C.y + 1196 },
-    C2: { x: lanes.C.x + 38, y: lanes.C.y + 1366 },
+    C1: { x: lanes.C.x + 66, y: lanes.C.y + 1480 },
+    C2: { x: lanes.C.x + 46, y: lanes.C.y + 1690 },
   })
 
   for (const [nodeId, position] of Object.entries(overrides?.nodePositions ?? {})) {

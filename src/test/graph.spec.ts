@@ -147,15 +147,15 @@ function expectedStructuralSizes() {
       height: graphManifest.layoutDefaults.aea.height,
     },
     BAND_SENSE: {
-      width: graphManifest.layoutDefaults.aea.width - 40,
+      width: graphManifest.layoutDefaults.aea.width - 56,
       height: graphManifest.layoutDefaults.aea.bandHeights.Sense,
     },
     BAND_DECIDE: {
-      width: graphManifest.layoutDefaults.aea.width - 40,
+      width: graphManifest.layoutDefaults.aea.width - 56,
       height: graphManifest.layoutDefaults.aea.bandHeights.Decide,
     },
     BAND_ACT: {
-      width: graphManifest.layoutDefaults.aea.width - 40,
+      width: graphManifest.layoutDefaults.aea.width - 56,
       height: graphManifest.layoutDefaults.aea.bandHeights.Act,
     },
   } as const
@@ -226,6 +226,112 @@ describe('graph manifest', () => {
     )
   })
 
+  it('rejects unauthorized planner ingress edges targeting DEC_R2', () => {
+    const mutated = structuredClone(graphManifest)
+    mutated.edges.push({
+      ...mutated.edges.find((edge) => edge.id === 'F1')!,
+      id: 'F_ROGUE',
+      source: 'S2',
+      target: 'DEC_R2',
+      semantic: 'retrieval',
+      style: 'medium',
+      direction: 'ttb',
+    })
+
+    const issues = validateGraphManifest(mutated)
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'unauthorized-planner-ingress',
+          message: expect.stringContaining('F_ROGUE'),
+        }),
+      ]),
+    )
+  })
+
+  it('allows the four canonical planner inbound edges', () => {
+    const plannerInbound = graphManifest.edges.filter((edge) => edge.target === 'DEC_R2')
+    expect(plannerInbound.map((edge) => edge.id).sort()).toEqual([
+      'F3f_reject',
+      'F_G0_out',
+      'F_G1A_reject',
+      'F_H1_reject',
+    ])
+
+    const issues = validateGraphManifest(graphManifest)
+    const plannerIssues = issues.filter((issue) => issue.code === 'unauthorized-planner-ingress')
+    expect(plannerIssues).toEqual([])
+  })
+
+  it('reports zero claim-coverage issues for the unmodified manifest', () => {
+    const issues = validateGraphManifest(graphManifest)
+    const claimIssues = issues.filter(
+      (issue) => issue.code === 'orphaned-claim-node' || issue.code === 'orphaned-claim-edge',
+    )
+    expect(claimIssues).toEqual([])
+  })
+
+  it('rejects orphaned claims that appear on no node or edge', () => {
+    const mutated = structuredClone(graphManifest)
+    for (const node of mutated.nodes) {
+      node.claimIds = node.claimIds.filter((id) => id !== 'C5')
+    }
+    for (const edge of mutated.edges) {
+      edge.claimIds = edge.claimIds.filter((id) => id !== 'C5')
+    }
+
+    const issues = validateGraphManifest(mutated)
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'orphaned-claim-node', message: expect.stringContaining('C5') }),
+        expect.objectContaining({ code: 'orphaned-claim-edge', message: expect.stringContaining('C5') }),
+      ]),
+    )
+  })
+
+  it('reports zero standard-coverage issues for the unmodified manifest', () => {
+    const issues = validateGraphManifest(graphManifest)
+    const standardIssues = issues.filter((issue) => issue.code === 'orphaned-standard')
+    expect(standardIssues).toEqual([])
+  })
+
+  it('rejects orphaned standards that appear on no node or edge', () => {
+    const mutated = structuredClone(graphManifest)
+    for (const node of mutated.nodes) {
+      node.standardIds = node.standardIds.filter((id) => id !== 'MQTT5')
+    }
+    for (const edge of mutated.edges) {
+      edge.standardIds = edge.standardIds.filter((id) => id !== 'MQTT5')
+    }
+
+    const issues = validateGraphManifest(mutated)
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'orphaned-standard', message: expect.stringContaining('MQTT5') }),
+      ]),
+    )
+  })
+
+  it('validates F_AUDIT step correspondence', () => {
+    const fAudit = graphManifest.edges.find((edge) => edge.id === 'F_AUDIT')
+    expect(fAudit).toBeDefined()
+    expect(fAudit!.interactive.relatedStepIds).toEqual(['PB5'])
+
+    const mutated = structuredClone(graphManifest)
+    const mutatedAudit = mutated.edges.find((edge) => edge.id === 'F_AUDIT')!
+    mutatedAudit.interactive.relatedStepIds = []
+
+    const issues = validateGraphManifest(mutated)
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-edge-step-correspondence',
+          message: expect.stringContaining('F_AUDIT'),
+        }),
+      ]),
+    )
+  })
+
   it('keeps structural container dimensions synchronized with layout defaults', () => {
     for (const [nodeId, expected] of Object.entries(expectedStructuralSizes())) {
       const node = resolveGraphNode(nodeId)
@@ -235,14 +341,14 @@ describe('graph manifest', () => {
   })
 
   it('locks PR-corrected structural dimensions against future layoutDefaults drift', () => {
-    expect(resolveGraphNode('GW')?.height).toBe(1140)
-    expect(resolveGraphNode('BAND_DECIDE')?.height).toBe(730)
-    expect(resolveGraphNode('LANE_A')?.height).toBe(1540)
-    expect(resolveGraphNode('LANE_B')?.height).toBe(1540)
-    expect(resolveGraphNode('LANE_B')?.width).toBe(1180)
-    expect(resolveGraphNode('LANE_C')?.height).toBe(1540)
-    expect(resolveGraphNode('AEA')?.height).toBe(1280)
-    expect(resolveGraphNode('AEA')?.width).toBe(1100)
+    expect(resolveGraphNode('GW')?.height).toBe(1380)
+    expect(resolveGraphNode('BAND_DECIDE')?.height).toBe(930)
+    expect(resolveGraphNode('LANE_A')?.height).toBe(1900)
+    expect(resolveGraphNode('LANE_B')?.height).toBe(1900)
+    expect(resolveGraphNode('LANE_B')?.width).toBe(1480)
+    expect(resolveGraphNode('LANE_C')?.height).toBe(1900)
+    expect(resolveGraphNode('AEA')?.height).toBe(1580)
+    expect(resolveGraphNode('AEA')?.width).toBe(1340)
   })
 
   it('keeps the canonical connection inventory aligned with the spec', () => {
@@ -548,8 +654,8 @@ describe('graph manifest', () => {
     const state = await createState()
     const geometry = buildBoardGeometryFromPositions(state.layout.positions, graphManifest)
 
-    expect(geometry.routeChannels.gatewayApproachX).toBe(geometry.gateway.x - 28)
-    expect(geometry.routeChannels.writeY).toBe(geometry.bands.Act.y + 25)
+    expect(geometry.routeChannels.gatewayApproachX).toBe(geometry.gateway.x - 38)
+    expect(geometry.routeChannels.writeY).toBe(geometry.bands.Act.y + 34)
     expect(geometry.routeGuideYs).toContain(geometry.routeChannels.writeY)
     expect(geometry.verticalGuideXs).toContain(geometry.routeChannels.monitorSpineX)
   })
@@ -569,8 +675,8 @@ describe('graph manifest', () => {
     expect(geometry.lanes.A.y).toBe(72)
     expect(geometry.gateway.x).toBe(440)
     expect(geometry.gateway.y).toBe(160)
-    expect(geometry.routeChannels.cpcSpineX).toBe(120)
-    expect(geometry.routeChannels.gatewayApproachX).toBe(412)
+    expect(geometry.routeChannels.cpcSpineX).toBe(130)
+    expect(geometry.routeChannels.gatewayApproachX).toBe(402)
   })
 
   it('keeps architecture children inside their parent bounds with the computed board layout', async () => {
@@ -884,7 +990,7 @@ describe('exports', () => {
     expect(sequenceMermaid).toContain('PB_REJECT_OUT')
   })
 
-  it('keeps the shifted Decide columns aligned and preserves 38 px gaps across the full grid', async () => {
+  it('keeps the shifted Decide columns aligned and preserves 100 px gaps across the full grid', async () => {
     const positions = await computeBoardNodePositions(graphManifest, defaultProjectionOverrides)
     const columns = [
       ['DEC_K1', 'DEC_K2', 'DEC_H1'],
@@ -928,8 +1034,8 @@ describe('exports', () => {
 
         expect(
           rightPosition.x - (leftPosition.x + leftNode.width),
-          `${leftId} and ${rightId} should keep a 38 px gap`,
-        ).toBe(38)
+          `${leftId} and ${rightId} should keep a 100 px gap`,
+        ).toBe(100)
       }
     }
   })
@@ -938,88 +1044,88 @@ describe('exports', () => {
     const state = await createState()
     const expectedRoutes = {
       F3e: {
-        path: 'M 1315 798 L 1378 798 Q 1392 798 1392 784 L 1392 746 Q 1392 732 1406 732 L 1468 732',
-        labelPoint: { x: 1353.5, y: 778 },
+        path: 'M 1555 996 L 1649 996 Q 1663 996 1663 982 L 1663 944 Q 1663 930 1677 930 L 1770 930',
+        labelPoint: { x: 1609, y: 976 },
       },
       F_G1A_pass: {
-        path: 'M 1583 796 L 1583 833 Q 1583 847 1569 847 L 1329 847 Q 1315 847 1315 861 L 1315 888',
-        labelPoint: { x: 1467, y: 847 },
+        path: 'M 1885 994 L 1885 1066 Q 1885 1080 1871 1080 L 1569 1080 Q 1555 1080 1555 1094 L 1555 1186',
+        labelPoint: { x: 1577, y: 1133 },
       },
       F_G1A_reject: {
-        path: 'M 1468 732 L 1468 777 Q 1468 791 1454 791 L 1444 791 Q 1430 791 1430 777 L 1430 733',
-        labelPoint: { x: 1449, y: 809 },
+        path: 'M 1770 930 L 1770 966 Q 1770 980 1756 980 L 1684 980 Q 1670 980 1670 966 L 1670 931',
+        labelPoint: { x: 1750, y: 955 },
       },
       F3f_reject: {
-        path: 'M 1315 1008 L 1315 827 Q 1315 813 1301 813 L 1244 813 Q 1230 813 1230 799 L 1230 747 Q 1230 733 1216 733 L 1200 733',
-        labelPoint: { x: 1272.5, y: 831 },
+        path: 'M 1555 1306 L 1555 1038 Q 1555 1024 1541 1024 L 1484 1024 Q 1470 1024 1470 1010 L 1470 945 Q 1470 931 1456 931 L 1440 931',
+        labelPoint: { x: 1448, y: 977.5 },
       },
       F3g: {
-        path: 'M 779 568 L 779 952 Q 779 966 793 966 L 1569 966 Q 1583 966 1583 952 L 1583 888',
-        labelPoint: { x: 1181, y: 938 },
+        path: 'M 895 666 L 895 1250 Q 895 1264 909 1264 L 1871 1264 Q 1885 1264 1885 1250 L 1885 1186',
+        labelPoint: { x: 1390, y: 1236 },
       },
       F3h: {
-        path: 'M 1230 292 L 1230 862 Q 1230 876 1244 876 L 1541 876 Q 1547 876 1547 882 L 1547 882 Q 1547 888 1553 888 L 1583 888',
-        labelPoint: { x: 1529, y: 882 },
+        path: 'M 1418 336 L 1418 1160 Q 1418 1174 1432 1174 L 1843 1174 Q 1849 1174 1849 1180 L 1849 1180 Q 1849 1186 1855 1186 L 1885 1186',
+        labelPoint: { x: 1831, y: 1180 },
       },
       F3i: {
-        path: 'M 534 1109 L 534 1000 Q 534 986 548 986 L 1454 986 Q 1468 986 1468 972 L 1468 952',
-        labelPoint: { x: 1001, y: 972 },
+        path: 'M 596 1309 L 596 1296.5 Q 596 1284 608.5 1284 L 1756 1284 Q 1770 1284 1770 1270 L 1770 1250',
+        labelPoint: { x: 1183, y: 1270 },
       },
       F_T0_req: {
-        path: 'M 1315 668 L 1315 632 Q 1315 618 1329 618 L 1569 618 Q 1583 618 1583 604 L 1583 568',
-        labelPoint: { x: 1315, y: 629 },
+        path: 'M 1555 866 L 1555 780 Q 1555 766 1569 766 L 1871 766 Q 1885 766 1885 752 L 1885 666',
+        labelPoint: { x: 1555, y: 802 },
       },
       F_T1: {
-        path: 'M 1468 508 L 1468 441 Q 1468 427 1454 427 L 654 427 Q 640 427 640 413 L 640 224 Q 640 210 654 210 L 744 210 Q 758 210 758 224 L 758 238',
-        labelPoint: { x: 640, y: 336.5 },
+        path: 'M 1770 606 L 1770 524 Q 1770 510 1756 510 L 768 510 Q 754 510 754 496 L 754 260 Q 754 246 768 246 L 858 246 Q 872 246 872 260 L 872 280',
+        labelPoint: { x: 754, y: 396 },
       },
       F_T2: {
-        path: 'M 1468 508 L 894 508',
-        labelPoint: { x: 1181, y: 494 },
+        path: 'M 1770 606 L 1010 606',
+        labelPoint: { x: 1390, y: 592 },
       },
       F_T0_obs: {
-        path: 'M 1583 448 L 1583 598 Q 1583 612 1569 612 L 1061 612 Q 1047 612 1047 626 L 1047 796',
-        labelPoint: { x: 1315, y: 556 },
+        path: 'M 1885 546 L 1885 746 Q 1885 760 1871 760 L 1239 760 Q 1225 760 1225 774 L 1225 994',
+        labelPoint: { x: 1555, y: 718 },
       },
       F4: {
-        path: 'M 1583 1016 L 1195 1016 Q 1181 1016 1181 1002 L 1181 902 Q 1181 888 1167 888 L 779 888',
-        labelPoint: { x: 1382, y: 1002 },
+        path: 'M 1885 1314 L 1404 1314 Q 1390 1314 1390 1300 L 1390 1200 Q 1390 1186 1376 1186 L 895 1186',
+        labelPoint: { x: 1637.5, y: 1300 },
       },
       F_H1_revalidate: {
-        path: 'M 894 948 L 1179 948 Q 1181 948 1181 950 L 1181 950 Q 1181 952 1183 952 L 1468 952',
-        labelPoint: { x: 1037.5, y: 934 },
+        path: 'M 1010 1246 L 1388 1246 Q 1390 1246 1390 1248 L 1390 1248 Q 1390 1250 1392 1250 L 1770 1250',
+        labelPoint: { x: 1200, y: 1232 },
       },
       F_H1_reject: {
-        path: 'M 779 888 L 779 849 Q 779 835 793 835 L 1301 835 Q 1315 835 1315 821 L 1315 798',
-        labelPoint: { x: 1047, y: 817 },
+        path: 'M 895 1186 L 895 1082 Q 895 1068 909 1068 L 1541 1068 Q 1555 1068 1555 1054 L 1555 996',
+        labelPoint: { x: 873, y: 1127 },
       },
       F_H1_pass: {
-        path: 'M 779 1008 L 779 1047.5 Q 779 1050 781.5 1050 L 781.5 1050 Q 784 1050 784 1052.5 L 784 1212',
-        labelPoint: { x: 799, y: 1029 },
+        path: 'M 895 1306 L 895 1345.5 Q 895 1348 897.5 1348 L 897.5 1348 Q 900 1348 900 1350.5 L 900 1524',
+        labelPoint: { x: 915, y: 1327 },
       },
       F5: {
-        path: 'M 664 1272 L 642 1272 Q 628 1272 628 1258 L 628 1209 Q 628 1195 614 1195 L 576 1195 Q 562 1195 562 1181 L 562 1123 Q 562 1109 548 1109 L 534 1109',
-        labelPoint: { x: 595, y: 1219 },
+        path: 'M 780 1584 L 758 1584 Q 744 1584 744 1570 L 744 1518 Q 744 1504 730 1504 L 638 1504 Q 624 1504 624 1490 L 624 1323 Q 624 1309 610 1309 L 596 1309',
+        labelPoint: { x: 684, y: 1528 },
       },
       F6: {
-        path: 'M 424 1109 L 374 1109 Q 360 1109 360 1123 L 360 1183 Q 360 1195 348 1195 L 348 1195 Q 336 1195 336 1207 L 336 1253 Q 336 1267 322 1267 L 308 1267',
-        labelPoint: { x: 332, y: 1152 },
+        path: 'M 486 1309 L 416 1309 Q 402 1309 402 1323 L 402 1490 Q 402 1504 388 1504 L 366 1504 Q 352 1504 352 1518 L 352 1545 Q 352 1559 338 1559 L 324 1559',
+        labelPoint: { x: 374, y: 1406.5 },
       },
       F_VoR_ACK: {
-        path: 'M 534 1109 L 548 1109 Q 562 1109 562 1123 L 562 1141 Q 562 1155 576 1155 L 620 1155 Q 634 1155 634 1169 L 634 1258 Q 634 1272 648 1272 L 664 1272',
-        labelPoint: { x: 590, y: 1132 },
+        path: 'M 596 1309 L 610 1309 Q 624 1309 624 1323 L 624 1436 Q 624 1450 638 1450 L 736 1450 Q 750 1450 750 1464 L 750 1570 Q 750 1584 764 1584 L 780 1584',
+        labelPoint: { x: 652, y: 1379.5 },
       },
       F_CPC_INT: {
-        path: 'M 80 1267 L 62 1267 Q 48 1267 48 1253 L 48 269 Q 48 255 62 255 L 80 255',
-        labelPoint: { x: 64, y: 761 },
+        path: 'M 96 1559 L 78 1559 Q 64 1559 64 1545 L 64 309 Q 64 295 78 295 L 96 295',
+        labelPoint: { x: 80, y: 927 },
       },
       F7a: {
-        path: 'M 1670 1265 L 1690 1265 Q 1704 1265 1704 1251 L 1704 1197 Q 1704 1183 1718 1183 L 1818 1183 Q 1832 1183 1832 1197 L 1832 1261 Q 1832 1274 1845 1274 L 1858 1274',
-        labelPoint: { x: 1768, y: 1203 },
+        path: 'M 1958 1577 L 1978 1577 Q 1992 1577 1992 1563 L 1992 1499 Q 1992 1485 2006 1485 L 2236 1485 Q 2250 1485 2250 1499 L 2250 1551 Q 2250 1564 2263 1564 L 2276 1564',
+        labelPoint: { x: 2121, y: 1505 },
       },
       F7_sub: {
-        path: 'M 1958 1390 L 2102 1390 Q 2116 1390 2116 1376 L 2116 1342 Q 2116 1328 2102 1328 L 1958 1328',
-        labelPoint: { x: 2037, y: 1372 },
+        path: 'M 2376 1720 L 2538 1720 Q 2552 1720 2552 1706 L 2552 1632 Q 2552 1618 2538 1618 L 2376 1618',
+        labelPoint: { x: 2464, y: 1702 },
       },
     } as const
 
@@ -1100,16 +1206,16 @@ describe('exports', () => {
     const routeGw3 = buildArchitectureRoute(state, 'F_GW3')
 
     expect(routeGw2.points).toEqual([
-      { x: 480, y: 312 },
-      { x: 480, y: 348 },
+      { x: 542, y: 348 },
+      { x: 542, y: 416 },
     ])
     expect(routeGw3.points).toEqual([
-      { x: 480, y: 440 },
-      { x: 480, y: 472 },
+      { x: 542, y: 508 },
+      { x: 542, y: 570 },
     ])
-    expect(resolveBoardLabelPosition(routeGw1.label)).toEqual({ x: 370, y: 254 })
-    expect(resolveBoardLabelPosition(routeGw2.label)).toEqual({ x: 584, y: 330 })
-    expect(resolveBoardLabelPosition(routeGw3.label)).toEqual({ x: 584, y: 456 })
+    expect(resolveBoardLabelPosition(routeGw1.label)).toEqual({ x: 416, y: 290 })
+    expect(resolveBoardLabelPosition(routeGw2.label)).toEqual({ x: 670, y: 382 })
+    expect(resolveBoardLabelPosition(routeGw3.label)).toEqual({ x: 670, y: 539 })
   })
 
   it('keeps write-corridor label anchors outside nearby node boxes', async () => {
@@ -1152,9 +1258,9 @@ describe('exports', () => {
   it('keeps rejection and monitor reroutes on distinct local channels', async () => {
     const state = await createState()
     const rejectionRoutes = {
-      F_G1A_reject: 791,
-      F3f_reject: 813,
-      F_H1_reject: 835,
+      F_G1A_reject: 980,
+      F3f_reject: 1024,
+      F_H1_reject: 1068,
     } as const
 
     for (const [edgeId, expectedY] of Object.entries(rejectionRoutes)) {
@@ -1164,14 +1270,14 @@ describe('exports', () => {
     }
 
     expect(buildArchitectureRoute(state, 'F_M1_G0').points).toEqual([
-      { x: 1162, y: 732 },
-      { x: 1162, y: 840 },
-      { x: 932, y: 840 },
-      { x: 932, y: 948 },
+      { x: 1340, y: 930 },
+      { x: 1340, y: 1088 },
+      { x: 1110, y: 1088 },
+      { x: 1110, y: 1246 },
     ])
     expect(buildArchitectureRoute(state, 'F_M1_H1').points).toEqual([
-      { x: 894, y: 948 },
-      { x: 932, y: 948 },
+      { x: 1010, y: 1246 },
+      { x: 1110, y: 1246 },
     ])
   })
 

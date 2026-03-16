@@ -60,18 +60,18 @@ interface EdgeLike {
 
 const writeCorridorEdgeIds = new Set(['F5', 'F6', 'F_VoR_ACK'])
 const routeGuideOffsets = {
-  gatewayApproach: 28,
-  gatewayLabel: 28,
-  laneReturn: 44,
-  toolEntry: 12,
-  toolCross: 39,
-  actTelemetry: 5,
-  write: 25,
-  ack: 15,
-  divider: 14,
-  monitorSpine: 68,
-  laneCSpine: 28,
-  cpcSpine: 24,
+  gatewayApproach: 38,
+  gatewayLabel: 38,
+  laneReturn: 58,
+  toolEntry: 16,
+  toolCross: 50,
+  actTelemetry: 7,
+  write: 34,
+  ack: 20,
+  divider: 18,
+  monitorSpine: 90,
+  laneCSpine: 38,
+  cpcSpine: 34,
 } as const
 
 const decideRowIds = {
@@ -261,8 +261,8 @@ export function buildBoardRouteChannels(
   const policyY = rowOne && rowTwo
     ? Math.round(bottom(rowOne) + Math.max(18, (rowTwo.y - bottom(rowOne)) * 0.35))
     : Math.round(bandSense.y + bandSense.height + 215)
-  const contextY = policyY + 9
-  const rejectionY = rowTwo ? Math.round(bottom(rowTwo) + 15) : Math.round(policyY + 200)
+  const contextY = policyY + 24
+  const rejectionY = rowTwo ? Math.round(bottom(rowTwo) + 28) : Math.round(policyY + 200)
   const validationY = validator
     ? Math.round(validator.y + validator.height - 30)
     : Math.round(bandAct.y - 184)
