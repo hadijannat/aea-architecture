@@ -1279,6 +1279,19 @@ describe('exports', () => {
       { x: 1010, y: 1246 },
       { x: 1110, y: 1246 },
     ])
+
+    expect(buildArchitectureRoute(state, 'F3d').points).toEqual([
+      { x: 1303, y: 396 },
+      { x: 1303, y: 680 },
+      { x: 1225, y: 680 },
+      { x: 1225, y: 866 },
+    ])
+    expect(buildArchitectureRoute(state, 'F_M1_G1A').points).toEqual([
+      { x: 2000, y: 930 },
+      { x: 2034, y: 930 },
+      { x: 2034, y: 1246 },
+      { x: 1110, y: 1246 },
+    ])
   })
 
   it('keeps Panel B acknowledgement and rejection routes on the shared sequence geometry', async () => {
