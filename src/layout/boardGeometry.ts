@@ -261,8 +261,8 @@ export function buildBoardRouteChannels(
   const policyY = rowOne && rowTwo
     ? Math.round(bottom(rowOne) + Math.max(18, (rowTwo.y - bottom(rowOne)) * 0.35))
     : Math.round(bandSense.y + bandSense.height + 215)
-  const contextY = policyY + 9
-  const rejectionY = rowTwo ? Math.round(bottom(rowTwo) + 15) : Math.round(policyY + 200)
+  const contextY = policyY + 24
+  const rejectionY = rowTwo ? Math.round(bottom(rowTwo) + 28) : Math.round(policyY + 200)
   const validationY = validator
     ? Math.round(validator.y + validator.height - 30)
     : Math.round(bandAct.y - 184)

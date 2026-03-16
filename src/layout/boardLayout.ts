@@ -42,7 +42,7 @@ export async function computeBoardNodePositions(
   const decideBandX = positions.BAND_DECIDE.x
   const decideBandY = positions.BAND_DECIDE.y
   const decideColumnOffsets = [24, 292, 560, 828] as const
-  const decideRowOffsets = [34, 254, 474] as const
+  const decideRowOffsets = [34, 274, 514] as const
 
   Object.assign(positions, {
     A1: { x: lanes.A.x + 56, y: lanes.A.y + 176 },
