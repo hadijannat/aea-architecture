@@ -1048,12 +1048,12 @@ describe('exports', () => {
         labelPoint: { x: 1609, y: 976 },
       },
       F_G1A_pass: {
-        path: 'M 1885 994 L 1885 1066 Q 1885 1080 1871 1080 L 1569 1080 Q 1555 1080 1555 1094 L 1555 1186',
-        labelPoint: { x: 1577, y: 1133 },
+        path: 'M 1885 994 L 1885 1110 Q 1885 1124 1871 1124 L 1569 1124 Q 1555 1124 1555 1138 L 1555 1186',
+        labelPoint: { x: 1577, y: 1155 },
       },
       F_G1A_reject: {
-        path: 'M 1770 930 L 1770 966 Q 1770 980 1756 980 L 1684 980 Q 1670 980 1670 966 L 1670 931',
-        labelPoint: { x: 1750, y: 955 },
+        path: 'M 1770 930 L 1770 950 Q 1770 964 1756 964 L 1684 964 Q 1670 964 1670 950 L 1670 931',
+        labelPoint: { x: 1750, y: 947 },
       },
       F3f_reject: {
         path: 'M 1555 1306 L 1555 1038 Q 1555 1024 1541 1024 L 1484 1024 Q 1470 1024 1470 1010 L 1470 945 Q 1470 931 1456 931 L 1440 931',
@@ -1084,8 +1084,8 @@ describe('exports', () => {
         labelPoint: { x: 1390, y: 592 },
       },
       F_T0_obs: {
-        path: 'M 1885 546 L 1885 746 Q 1885 760 1871 760 L 1239 760 Q 1225 760 1225 774 L 1225 994',
-        labelPoint: { x: 1555, y: 718 },
+        path: 'M 1885 546 L 1885 778 Q 1885 792 1871 792 L 1239 792 Q 1225 792 1225 806 L 1225 994',
+        labelPoint: { x: 1555, y: 750 },
       },
       F4: {
         path: 'M 1885 1314 L 1404 1314 Q 1390 1314 1390 1300 L 1390 1200 Q 1390 1186 1376 1186 L 895 1186',
@@ -1096,8 +1096,8 @@ describe('exports', () => {
         labelPoint: { x: 1200, y: 1232 },
       },
       F_H1_reject: {
-        path: 'M 895 1186 L 895 1082 Q 895 1068 909 1068 L 1541 1068 Q 1555 1068 1555 1054 L 1555 996',
-        labelPoint: { x: 873, y: 1127 },
+        path: 'M 895 1186 L 895 1098 Q 895 1084 909 1084 L 1541 1084 Q 1555 1084 1555 1070 L 1555 996',
+        labelPoint: { x: 873, y: 1135 },
       },
       F_H1_pass: {
         path: 'M 895 1306 L 895 1345.5 Q 895 1348 897.5 1348 L 897.5 1348 Q 900 1348 900 1350.5 L 900 1524',
@@ -1258,9 +1258,9 @@ describe('exports', () => {
   it('keeps rejection and monitor reroutes on distinct local channels', async () => {
     const state = await createState()
     const rejectionRoutes = {
-      F_G1A_reject: 980,
+      F_G1A_reject: 964,
       F3f_reject: 1024,
-      F_H1_reject: 1068,
+      F_H1_reject: 1084,
     } as const
 
     for (const [edgeId, expectedY] of Object.entries(rejectionRoutes)) {
