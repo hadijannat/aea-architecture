@@ -1243,6 +1243,8 @@ describe('exports', () => {
       { edgeId: 'F_H1_reject', nodes: ['DEC_H1', 'DEC_R2', 'DEC_M1'] },
       { edgeId: 'F_H1_pass', nodes: ['DEC_H1', 'ACT1', 'ACT3'] },
       { edgeId: 'F_CPC_INT', nodes: ['A1', 'A2', 'A3'] },
+      { edgeId: "F3b'", nodes: ['DEC_K2', 'DEC_G0', 'DEC_R2'] },
+      { edgeId: 'F_M1_R0', nodes: ['DEC_R0', 'DEC_R1', 'DEC_R2', 'DEC_M1'] },
     ] as const
 
     for (const check of checks) {
