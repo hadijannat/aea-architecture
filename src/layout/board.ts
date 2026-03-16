@@ -108,17 +108,18 @@ function buildLabel(edge: EdgeSpec, points: Point[], channels: BoardRouteChannel
     case 'F2':
       return segmentLabel(points, 0, 'top', 16)
     case 'F3a':
-    case 'F_G0_out':
     case 'F3f':
     case 'F_H1_revalidate':
     case 'F_T0_req':
     case 'F_T2':
     case 'F4':
       return segmentLabel(points, 0, 'top', 14)
+    case 'F_G0_out':
+      return segmentLabel(points, 0, 'bottom', 18)
     case 'F_R0_out':
       return segmentLabel(points, 0, 'right', 16)
     case 'F_G0_pol':
-      return segmentLabel(points, 0, 'bottom', 16)
+      return segmentLabel(points, 0, 'bottom', 24)
     case 'F3e':
       return segmentLabel(points, 0, 'top', 20)
     case 'F3c':
@@ -126,14 +127,15 @@ function buildLabel(edge: EdgeSpec, points: Point[], channels: BoardRouteChannel
     case 'F3d':
       return segmentLabel(points, 1, 'top', 16)
     case 'F_G1A_pass':
-      return segmentLabel(points, 1, 'right', 18)
+      return segmentLabel(points, 2, 'right', 22)
     case 'F_G1A_reject':
-      return segmentLabel(points, 1, 'bottom', 18)
+      return segmentLabel(points, 0, 'left', 20)
     case 'F_T0_obs':
       return segmentLabel(points, 1, 'top', 42)
     case 'F_H1_pass':
       return segmentLabel(points, 0, 'right', 20)
     case 'F_M1_G0':
+      return segmentLabel(points, 1, 'bottom', 22)
     case 'F_M1_R0':
     case 'F_M1_T0':
     case 'F_M1_G1A':
@@ -143,7 +145,7 @@ function buildLabel(edge: EdgeSpec, points: Point[], channels: BoardRouteChannel
     case 'F3b':
       return segmentLabel(points, 1, 'top', 18)
     case "F3b'":
-      return segmentLabel(points, 0, 'top', 14)
+      return segmentLabel(points, 0, 'right', 18)
     case 'F3i':
       return segmentLabel(points, 1, 'top', 14)
     case 'F3g':
@@ -151,9 +153,9 @@ function buildLabel(edge: EdgeSpec, points: Point[], channels: BoardRouteChannel
     case 'F3h':
       return segmentLabel(points, 2, 'left', 18)
     case 'F3f_reject':
-      return segmentLabel(points, 1, 'bottom', 18)
+      return segmentLabel(points, 2, 'left', 22)
     case 'F_H1_reject':
-      return segmentLabel(points, 1, 'top', 18)
+      return segmentLabel(points, 0, 'left', 22)
     case 'F_T1':
       return segmentLabel(points, 2, 'bottom', 18)
     case 'F_CPC_INT':
@@ -258,16 +260,16 @@ export function buildBoardEdgeRoute(
     case 'F_G1A_pass':
       points = [
         source,
-        point(source.x, channels.rejectionY + 34),
-        point(target.x, channels.rejectionY + 34),
+        point(source.x, channels.rejectionY + 56),
+        point(target.x, channels.rejectionY + 56),
         target,
       ]
       break
     case 'F_G1A_reject':
       points = [
         source,
-        point(source.x, channels.rejectionY - 22),
-        point(target.x, channels.rejectionY - 22),
+        point(source.x, channels.rejectionY - 44),
+        point(target.x, channels.rejectionY - 44),
         target,
       ]
       break
@@ -283,8 +285,8 @@ export function buildBoardEdgeRoute(
     case 'F_H1_reject':
       points = [
         source,
-        point(source.x, channels.rejectionY + 22),
-        point(target.x, channels.rejectionY + 22),
+        point(source.x, channels.rejectionY + 44),
+        point(target.x, channels.rejectionY + 44),
         target,
       ]
       break

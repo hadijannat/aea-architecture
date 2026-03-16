@@ -1034,16 +1034,16 @@ describe('exports', () => {
         labelPoint: { x: 1609, y: 976 },
       },
       F_G1A_pass: {
-        path: 'M 1885 994 L 1885 1044 Q 1885 1058 1871 1058 L 1569 1058 Q 1555 1058 1555 1072 L 1555 1186',
-        labelPoint: { x: 1738, y: 1058 },
+        path: 'M 1885 994 L 1885 1066 Q 1885 1080 1871 1080 L 1569 1080 Q 1555 1080 1555 1094 L 1555 1186',
+        labelPoint: { x: 1577, y: 1133 },
       },
       F_G1A_reject: {
-        path: 'M 1770 930 L 1770 988 Q 1770 1002 1756 1002 L 1684 1002 Q 1670 1002 1670 988 L 1670 931',
-        labelPoint: { x: 1720, y: 1020 },
+        path: 'M 1770 930 L 1770 966 Q 1770 980 1756 980 L 1684 980 Q 1670 980 1670 966 L 1670 931',
+        labelPoint: { x: 1750, y: 955 },
       },
       F3f_reject: {
         path: 'M 1555 1306 L 1555 1038 Q 1555 1024 1541 1024 L 1484 1024 Q 1470 1024 1470 1010 L 1470 945 Q 1470 931 1456 931 L 1440 931',
-        labelPoint: { x: 1512.5, y: 1042 },
+        labelPoint: { x: 1448, y: 977.5 },
       },
       F3g: {
         path: 'M 895 666 L 895 1250 Q 895 1264 909 1264 L 1871 1264 Q 1885 1264 1885 1250 L 1885 1186',
@@ -1082,8 +1082,8 @@ describe('exports', () => {
         labelPoint: { x: 1200, y: 1232 },
       },
       F_H1_reject: {
-        path: 'M 895 1186 L 895 1060 Q 895 1046 909 1046 L 1541 1046 Q 1555 1046 1555 1032 L 1555 996',
-        labelPoint: { x: 1225, y: 1028 },
+        path: 'M 895 1186 L 895 1082 Q 895 1068 909 1068 L 1541 1068 Q 1555 1068 1555 1054 L 1555 996',
+        labelPoint: { x: 873, y: 1127 },
       },
       F_H1_pass: {
         path: 'M 895 1306 L 895 1345.5 Q 895 1348 897.5 1348 L 897.5 1348 Q 900 1348 900 1350.5 L 900 1524',
@@ -1244,9 +1244,9 @@ describe('exports', () => {
   it('keeps rejection and monitor reroutes on distinct local channels', async () => {
     const state = await createState()
     const rejectionRoutes = {
-      F_G1A_reject: 1002,
+      F_G1A_reject: 980,
       F3f_reject: 1024,
-      F_H1_reject: 1046,
+      F_H1_reject: 1068,
     } as const
 
     for (const [edgeId, expectedY] of Object.entries(rejectionRoutes)) {
