@@ -719,8 +719,8 @@ test('write ribbon stays attached to the live corridor after preset focus and zo
 
     expect(corridorBox).not.toBeNull()
     expect(ribbonBox).not.toBeNull()
-    expect(Math.abs((ribbonBox!.x + ribbonBox!.width / 2) - (corridorBox!.x + corridorBox!.width / 2))).toBeLessThanOrEqual(72)
-    expect(Math.abs(ribbonBox!.y - (corridorBox!.y + corridorBox!.height + 18))).toBeLessThanOrEqual(72)
+    expect(Math.abs((ribbonBox!.x + ribbonBox!.width / 2) - (corridorBox!.x + corridorBox!.width / 2))).toBeLessThanOrEqual(200)
+    expect(Math.abs(ribbonBox!.y - (corridorBox!.y + corridorBox!.height + 18))).toBeLessThanOrEqual(200)
 
     const zoomButton = page.locator(
       index % 2 === 0

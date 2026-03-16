@@ -263,6 +263,14 @@ describe('graph manifest', () => {
     expect(plannerIssues).toEqual([])
   })
 
+  it('reports zero claim-coverage issues for the unmodified manifest', () => {
+    const issues = validateGraphManifest(graphManifest)
+    const claimIssues = issues.filter(
+      (issue) => issue.code === 'orphaned-claim-node' || issue.code === 'orphaned-claim-edge',
+    )
+    expect(claimIssues).toEqual([])
+  })
+
   it('rejects orphaned claims that appear on no node or edge', () => {
     const mutated = structuredClone(graphManifest)
     for (const node of mutated.nodes) {
@@ -279,6 +287,12 @@ describe('graph manifest', () => {
         expect.objectContaining({ code: 'orphaned-claim-edge', message: expect.stringContaining('C5') }),
       ]),
     )
+  })
+
+  it('reports zero standard-coverage issues for the unmodified manifest', () => {
+    const issues = validateGraphManifest(graphManifest)
+    const standardIssues = issues.filter((issue) => issue.code === 'orphaned-standard')
+    expect(standardIssues).toEqual([])
   })
 
   it('rejects orphaned standards that appear on no node or edge', () => {
