@@ -252,24 +252,24 @@ export function buildBoardEdgeRoute(
     case 'F3d':
       points = [
         source,
-        point(source.x, channels.contextY - 76),
-        point(target.x, channels.contextY - 76),
+        point(source.x, channels.policyY - 56),
+        point(target.x, channels.policyY - 56),
         target,
       ]
       break
     case 'F_G1A_pass':
       points = [
         source,
-        point(source.x, channels.rejectionY + 56),
-        point(target.x, channels.rejectionY + 56),
+        point(source.x, channels.rejectionY + 100),
+        point(target.x, channels.rejectionY + 100),
         target,
       ]
       break
     case 'F_G1A_reject':
       points = [
         source,
-        point(source.x, channels.rejectionY - 44),
-        point(target.x, channels.rejectionY - 44),
+        point(source.x, channels.rejectionY - 60),
+        point(target.x, channels.rejectionY - 60),
         target,
       ]
       break
@@ -285,8 +285,8 @@ export function buildBoardEdgeRoute(
     case 'F_H1_reject':
       points = [
         source,
-        point(source.x, channels.rejectionY + 44),
-        point(target.x, channels.rejectionY + 44),
+        point(source.x, channels.rejectionY + 60),
+        point(target.x, channels.rejectionY + 60),
         target,
       ]
       break
@@ -349,7 +349,7 @@ export function buildBoardEdgeRoute(
       points = doglegX(source, target, channels.monitorSpineX)
       break
     case 'F_M1_G1A':
-      points = doglegX(source, target, channels.monitorSpineX - 18)
+      points = doglegX(source, target, channels.monitorSpineX - 36)
       break
     case 'F_M1_H1':
       points = [source, target]
