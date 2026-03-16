@@ -226,6 +226,98 @@ describe('graph manifest', () => {
     )
   })
 
+  it('rejects unauthorized planner ingress edges targeting DEC_R2', () => {
+    const mutated = structuredClone(graphManifest)
+    mutated.edges.push({
+      ...mutated.edges.find((edge) => edge.id === 'F1')!,
+      id: 'F_ROGUE',
+      source: 'S2',
+      target: 'DEC_R2',
+      semantic: 'retrieval',
+      style: 'medium',
+      direction: 'ttb',
+    })
+
+    const issues = validateGraphManifest(mutated)
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'unauthorized-planner-ingress',
+          message: expect.stringContaining('F_ROGUE'),
+        }),
+      ]),
+    )
+  })
+
+  it('allows the four canonical planner inbound edges', () => {
+    const plannerInbound = graphManifest.edges.filter((edge) => edge.target === 'DEC_R2')
+    expect(plannerInbound.map((edge) => edge.id).sort()).toEqual([
+      'F3f_reject',
+      'F_G0_out',
+      'F_G1A_reject',
+      'F_H1_reject',
+    ])
+
+    const issues = validateGraphManifest(graphManifest)
+    const plannerIssues = issues.filter((issue) => issue.code === 'unauthorized-planner-ingress')
+    expect(plannerIssues).toEqual([])
+  })
+
+  it('rejects orphaned claims that appear on no node or edge', () => {
+    const mutated = structuredClone(graphManifest)
+    for (const node of mutated.nodes) {
+      node.claimIds = node.claimIds.filter((id) => id !== 'C5')
+    }
+    for (const edge of mutated.edges) {
+      edge.claimIds = edge.claimIds.filter((id) => id !== 'C5')
+    }
+
+    const issues = validateGraphManifest(mutated)
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'orphaned-claim-node', message: expect.stringContaining('C5') }),
+        expect.objectContaining({ code: 'orphaned-claim-edge', message: expect.stringContaining('C5') }),
+      ]),
+    )
+  })
+
+  it('rejects orphaned standards that appear on no node or edge', () => {
+    const mutated = structuredClone(graphManifest)
+    for (const node of mutated.nodes) {
+      node.standardIds = node.standardIds.filter((id) => id !== 'MQTT5')
+    }
+    for (const edge of mutated.edges) {
+      edge.standardIds = edge.standardIds.filter((id) => id !== 'MQTT5')
+    }
+
+    const issues = validateGraphManifest(mutated)
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'orphaned-standard', message: expect.stringContaining('MQTT5') }),
+      ]),
+    )
+  })
+
+  it('validates F_AUDIT step correspondence', () => {
+    const fAudit = graphManifest.edges.find((edge) => edge.id === 'F_AUDIT')
+    expect(fAudit).toBeDefined()
+    expect(fAudit!.interactive.relatedStepIds).toEqual(['PB5'])
+
+    const mutated = structuredClone(graphManifest)
+    const mutatedAudit = mutated.edges.find((edge) => edge.id === 'F_AUDIT')!
+    mutatedAudit.interactive.relatedStepIds = []
+
+    const issues = validateGraphManifest(mutated)
+    expect(issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid-edge-step-correspondence',
+          message: expect.stringContaining('F_AUDIT'),
+        }),
+      ]),
+    )
+  })
+
   it('keeps structural container dimensions synchronized with layout defaults', () => {
     for (const [nodeId, expected] of Object.entries(expectedStructuralSizes())) {
       const node = resolveGraphNode(nodeId)

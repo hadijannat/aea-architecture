@@ -492,10 +492,10 @@ Badge: **NE 178 §4 (traceability); NIST AI RMF Govern function**
 
 ### Act band arrows
 
-**F4:**  
-Source → Target: Deterministic Validators → VoR Request Composer  
-Label: *validated candidate plan*  
-Style: solid, medium, crosses Decide → Act band boundary  
+**F4:**
+Source → Target: Deterministic Validators → Human Approval Gate
+Label: *validated candidate plan (approval pending)*
+Style: solid, medium  
 
 **F_KPI:**  
 Source → Target: PA-DIM Harmonizer (Sense band) → KPI Publisher  
@@ -674,8 +674,8 @@ The figure uses four distinct arrow styles. Each style must be used **consistent
 | Style | Appearance | Semantic meaning | Arrows using this style |
 |---|---|---|---|
 | **Solid bold** | 1.5 pt solid | Primary, safety-relevant, exclusive path | F5 (VoR write-back initiation) |
-| **Solid medium** | 1.0 pt solid | Standard data flow, in-scope | F1, F3c, F3d, F3e, F3f, F4, F7a, F7b, F_GW1-3 (with diode), F5 |
-| **Solid thin** | 0.5 pt solid | Secondary/supporting data flow | F2, F3a, F3b, F3b', F3g, F3h, F3i, F6, F_KPI, F_AUDIT |
+| **Solid medium** | 1.0 pt solid | Standard data flow, in-scope | F1, F3b', F3c, F3d, F3e, F3f, F4, F6, F7a, F7b, F_GW1-3 (with diode), F5 |
+| **Solid thin** | 0.5 pt solid | Secondary/supporting data flow | F2, F3a, F3b, F3g, F3h, F3i, F_KPI, F_AUDIT |
 | **Dashed** | 1.0 pt dashed (4pt dash, 2pt gap) | Status, feedback, rejection, acknowledgement | F_VoR_ACK, F3f_reject, PB_ACK, PB_REJECT |
 | **Dotted** | 0.5 pt dotted | Agent-initiated tool calls; optional subscription | F_T1, F_T2, F7_sub |
 

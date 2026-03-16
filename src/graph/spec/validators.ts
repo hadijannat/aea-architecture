@@ -584,10 +584,22 @@ const canonicalEdgeStepRules: Record<string, readonly string[]> = {
   F5: ['PB1', 'PB2', 'PB3', 'PB4', 'PB5'],
   F6: ['PB5'],
   F_VoR_ACK: ['PB5'],
+  F_AUDIT: ['PB5'],
   PB_ACK: ['PB5'],
   PB_REJECT: ['PB4'],
   F3f_reject: ['PB4'],
 }
+
+/**
+ * Edges allowed to target DEC_R2 (LLM Agent / Planner).
+ * F_G0_out is the sole context ingress; the others are rejection feedback loops.
+ */
+const allowedPlannerInboundEdges = new Set([
+  'F_G0_out',
+  'F_G1A_reject',
+  'F3f_reject',
+  'F_H1_reject',
+])
 
 const canonicalInteractionRuleRequirements: Record<
   (typeof requiredInteractionRuleIds)[number],
@@ -681,6 +693,56 @@ const canonicalInteractionRuleRequirements: Record<
 export interface ValidationIssue {
   code: string
   message: string
+}
+
+function validateSolePlannerIngress(manifest: GraphManifest): ValidationIssue[] {
+  const issues: ValidationIssue[] = []
+  for (const edge of manifest.edges) {
+    if (edge.target === 'DEC_R2' && !allowedPlannerInboundEdges.has(edge.id)) {
+      issues.push({
+        code: 'unauthorized-planner-ingress',
+        message: `${edge.id} targets DEC_R2 but is not in the allowed planner inbound set (${[...allowedPlannerInboundEdges].join(', ')})`,
+      })
+    }
+  }
+  return issues
+}
+
+function validateClaimCoverage(manifest: GraphManifest): ValidationIssue[] {
+  const issues: ValidationIssue[] = []
+  const claimIds = Object.keys(manifest.claims) as Array<keyof typeof manifest.claims>
+  for (const claimId of claimIds) {
+    const onNode = manifest.nodes.some((node) => node.claimIds.includes(claimId))
+    if (!onNode) {
+      issues.push({
+        code: 'orphaned-claim-node',
+        message: `Claim ${claimId} is not referenced by any node`,
+      })
+    }
+    const onEdge = manifest.edges.some((edge) => edge.claimIds.includes(claimId))
+    if (!onEdge) {
+      issues.push({
+        code: 'orphaned-claim-edge',
+        message: `Claim ${claimId} is not referenced by any edge`,
+      })
+    }
+  }
+  return issues
+}
+
+function validateStandardCoverage(manifest: GraphManifest): ValidationIssue[] {
+  const issues: ValidationIssue[] = []
+  for (const standardId of Object.keys(manifest.standards)) {
+    const onNode = manifest.nodes.some((node) => node.standardIds.includes(standardId))
+    const onEdge = manifest.edges.some((edge) => edge.standardIds.includes(standardId))
+    if (!onNode && !onEdge) {
+      issues.push({
+        code: 'orphaned-standard',
+        message: `Standard ${standardId} is not referenced by any node or edge`,
+      })
+    }
+  }
+  return issues
 }
 
 function validateStructuralNodeLayoutSync(manifest: GraphManifest): ValidationIssue[] {
@@ -874,6 +936,9 @@ export function validateGraphManifest(manifest: GraphManifest): ValidationIssue[
   }
 
   issues.push(...validateStructuralNodeLayoutSync(manifest))
+  issues.push(...validateSolePlannerIngress(manifest))
+  issues.push(...validateClaimCoverage(manifest))
+  issues.push(...validateStandardCoverage(manifest))
 
   for (const edge of manifest.edges) {
     if (edgeIds.has(edge.id)) {
