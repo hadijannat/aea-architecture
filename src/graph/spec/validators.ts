@@ -768,15 +768,15 @@ function validateStructuralNodeLayoutSync(manifest: GraphManifest): ValidationIs
       height: manifest.layoutDefaults.aea.height,
     },
     BAND_SENSE: {
-      width: manifest.layoutDefaults.aea.width - 40,
+      width: manifest.layoutDefaults.aea.width - 56,
       height: manifest.layoutDefaults.aea.bandHeights.Sense,
     },
     BAND_DECIDE: {
-      width: manifest.layoutDefaults.aea.width - 40,
+      width: manifest.layoutDefaults.aea.width - 56,
       height: manifest.layoutDefaults.aea.bandHeights.Decide,
     },
     BAND_ACT: {
-      width: manifest.layoutDefaults.aea.width - 40,
+      width: manifest.layoutDefaults.aea.width - 56,
       height: manifest.layoutDefaults.aea.bandHeights.Act,
     },
   } satisfies Record<string, Pick<NodeSpec, 'width' | 'height'>>

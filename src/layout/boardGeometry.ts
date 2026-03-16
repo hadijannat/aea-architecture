@@ -60,18 +60,18 @@ interface EdgeLike {
 
 const writeCorridorEdgeIds = new Set(['F5', 'F6', 'F_VoR_ACK'])
 const routeGuideOffsets = {
-  gatewayApproach: 28,
-  gatewayLabel: 28,
-  laneReturn: 44,
-  toolEntry: 12,
-  toolCross: 39,
-  actTelemetry: 5,
-  write: 25,
-  ack: 15,
-  divider: 14,
-  monitorSpine: 68,
-  laneCSpine: 28,
-  cpcSpine: 24,
+  gatewayApproach: 34,
+  gatewayLabel: 34,
+  laneReturn: 52,
+  toolEntry: 14,
+  toolCross: 44,
+  actTelemetry: 6,
+  write: 30,
+  ack: 18,
+  divider: 16,
+  monitorSpine: 80,
+  laneCSpine: 34,
+  cpcSpine: 30,
 } as const
 
 const decideRowIds = {

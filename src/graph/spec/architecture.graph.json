@@ -197,8 +197,8 @@
       "standardIds": ["NE175"],
       "claimIds": ["C1", "C4"],
       "tags": ["lane", "cpc"],
-      "width": 360,
-      "height": 1540,
+      "width": 370,
+      "height": 1740,
       "fixed": true,
       "visual": {
         "fill": "#FFF7ED",
@@ -229,8 +229,8 @@
       "standardIds": ["NE175"],
       "claimIds": ["C1", "C2", "C3", "C4", "C5"],
       "tags": ["lane", "psmo"],
-      "width": 1180,
-      "height": 1540,
+      "width": 1340,
+      "height": 1740,
       "fixed": true,
       "visual": {
         "fill": "#EFF6FF",
@@ -261,8 +261,8 @@
       "standardIds": ["NE175"],
       "claimIds": ["C5"],
       "tags": ["lane", "central-mo", "telemetry-path"],
-      "width": 344,
-      "height": 1540,
+      "width": 370,
+      "height": 1740,
       "fixed": true,
       "visual": {
         "fill": "#F0FDF4",
@@ -292,8 +292,8 @@
       "standardIds": ["NE176", "NE177", "NE178"],
       "claimIds": ["C2", "C4"],
       "tags": ["gateway", "boundary"],
-      "width": 152,
-      "height": 1140,
+      "width": 164,
+      "height": 1260,
       "fixed": true,
       "visual": {
         "fill": "#F8FBFF",
@@ -324,8 +324,8 @@
       "standardIds": ["NE175", "NE179"],
       "claimIds": ["C1", "C2", "C3", "C4", "C5"],
       "tags": ["aea", "container"],
-      "width": 1100,
-      "height": 1280,
+      "width": 1200,
+      "height": 1440,
       "fixed": true,
       "visual": {
         "fill": "#F8FBFF",
@@ -358,8 +358,8 @@
       "claimIds": ["C2", "C3"],
       "tags": ["band", "sense", "telemetry-path"],
       "parentId": "AEA",
-      "width": 1060,
-      "height": 190,
+      "width": 1144,
+      "height": 220,
       "fixed": true,
       "visual": {
         "fill": "#F5FAFF",
@@ -392,8 +392,8 @@
       "claimIds": ["C3", "C4"],
       "tags": ["band", "decide", "policy-path"],
       "parentId": "AEA",
-      "width": 1060,
-      "height": 730,
+      "width": 1144,
+      "height": 810,
       "fixed": true,
       "visual": {
         "fill": "#F7F5FF",
@@ -426,8 +426,8 @@
       "claimIds": ["C4", "C5"],
       "tags": ["band", "act", "write-path", "telemetry-path"],
       "parentId": "AEA",
-      "width": 1060,
-      "height": 190,
+      "width": 1144,
+      "height": 220,
       "fixed": true,
       "visual": {
         "fill": "#FFF8EB",
@@ -2653,51 +2653,51 @@
   ],
   "layoutDefaults": {
     "canvas": {
-      "width": 2176,
-      "height": 1600
+      "width": 2480,
+      "height": 1800
     },
     "viewport": {
       "x": 18,
       "y": 18,
-      "zoom": 0.60
+      "zoom": 0.52
     },
     "lanes": {
       "A": {
-        "x": 24,
-        "y": 24,
-        "width": 360,
-        "height": 1540
+        "x": 28,
+        "y": 28,
+        "width": 370,
+        "height": 1740
       },
       "B": {
-        "x": 584,
-        "y": 24,
-        "width": 1180,
-        "height": 1540
+        "x": 640,
+        "y": 28,
+        "width": 1340,
+        "height": 1740
       },
       "C": {
-        "x": 1800,
-        "y": 24,
-        "width": 344,
-        "height": 1540
+        "x": 2020,
+        "y": 28,
+        "width": 370,
+        "height": 1740
       }
     },
     "gateway": {
-      "x": 404,
-      "y": 144,
-      "width": 152,
-      "height": 1140,
-      "ne177Height": 430,
-      "ne178Height": 284
+      "x": 440,
+      "y": 156,
+      "width": 164,
+      "height": 1260,
+      "ne177Height": 480,
+      "ne178Height": 320
     },
     "aea": {
-      "x": 620,
-      "y": 132,
-      "width": 1100,
-      "height": 1280,
+      "x": 678,
+      "y": 144,
+      "width": 1200,
+      "height": 1440,
       "bandHeights": {
-        "Sense": 190,
-        "Decide": 730,
-        "Act": 190
+        "Sense": 220,
+        "Decide": 810,
+        "Act": 220
       }
     }
   }
