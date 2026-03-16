@@ -674,7 +674,7 @@ The figure uses four distinct arrow styles. Each style must be used **consistent
 | Style | Appearance | Semantic meaning | Arrows using this style |
 |---|---|---|---|
 | **Solid bold** | 1.5 pt solid | Primary, safety-relevant, exclusive path | F5 (VoR write-back initiation) |
-| **Solid medium** | 1.0 pt solid | Standard data flow, in-scope | F1, F3b', F3c, F3d, F3e, F3f, F4, F6, F7a, F7b, F_GW1-3 (with diode), F5 |
+| **Solid medium** | 1.0 pt solid | Standard data flow, in-scope | F1, F3b', F3c, F3d, F3e, F3f, F4, F6, F7a, F7b, F_GW1-3 (with diode) |
 | **Solid thin** | 0.5 pt solid | Secondary/supporting data flow | F2, F3a, F3b, F3g, F3h, F3i, F_KPI, F_AUDIT |
 | **Dashed** | 1.0 pt dashed (4pt dash, 2pt gap) | Status, feedback, rejection, acknowledgement | F_VoR_ACK, F3f_reject, PB_ACK, PB_REJECT |
 | **Dotted** | 0.5 pt dotted | Agent-initiated tool calls; optional subscription | F_T1, F_T2, F7_sub |
