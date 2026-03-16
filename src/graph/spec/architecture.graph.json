@@ -187,18 +187,28 @@
   "nodes": [
     {
       "id": "LANE_A",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "A",
       "kind": "lane",
       "nodeType": "LaneNode",
       "title": "Lane A",
       "subtitle": "Core Process Control (CPC / OT)",
       "description": "CPC lane holding the DCS or PLC system, the read-only data interface, and the change handler that receives VoR-approved write instructions.",
-      "standardIds": ["NE175"],
-      "claimIds": ["C1", "C4"],
-      "tags": ["lane", "cpc"],
-      "width": 370,
-      "height": 1740,
+      "standardIds": [
+        "NE175"
+      ],
+      "claimIds": [
+        "C1",
+        "C4"
+      ],
+      "tags": [
+        "lane",
+        "cpc"
+      ],
+      "width": 380,
+      "height": 1900,
       "fixed": true,
       "visual": {
         "fill": "#FFF7ED",
@@ -213,24 +223,43 @@
           "Lane A never hosts the autonomous agent.",
           "Write-back terminates at the CPC Change Handler, not at the CPC Data Interface."
         ],
-        "relatedEdgeIds": ["F_GW1", "F6", "F_CPC_INT"],
-        "relatedStepIds": ["PB5"]
+        "relatedEdgeIds": [
+          "F_GW1",
+          "F6",
+          "F_CPC_INT"
+        ],
+        "relatedStepIds": [
+          "PB5"
+        ]
       }
     },
     {
       "id": "LANE_B",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "kind": "lane",
       "nodeType": "LaneNode",
       "title": "Lane B",
       "subtitle": "Plant-specific M+O (psM+O edge)",
       "description": "Plant-specific Monitoring and Optimization lane containing the AEA, gateway-adjacent consumption, decision logic, and VoR request composition.",
-      "standardIds": ["NE175"],
-      "claimIds": ["C1", "C2", "C3", "C4", "C5"],
-      "tags": ["lane", "psmo"],
-      "width": 1340,
-      "height": 1740,
+      "standardIds": [
+        "NE175"
+      ],
+      "claimIds": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "tags": [
+        "lane",
+        "psmo"
+      ],
+      "width": 1480,
+      "height": 1900,
       "fixed": true,
       "visual": {
         "fill": "#EFF6FF",
@@ -245,24 +274,44 @@
           "Sense, Decide, and Act are logical bands, not separate security zones.",
           "The VoR request originates here and is handed to the NE 178 interface."
         ],
-        "relatedEdgeIds": ["F1", "F5", "F7a"],
-        "relatedStepIds": ["PB1", "PB2", "PB3", "PB4", "PB5"]
+        "relatedEdgeIds": [
+          "F1",
+          "F5",
+          "F7a"
+        ],
+        "relatedStepIds": [
+          "PB1",
+          "PB2",
+          "PB3",
+          "PB4",
+          "PB5"
+        ]
       }
     },
     {
       "id": "LANE_C",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "C",
       "kind": "lane",
       "nodeType": "LaneNode",
       "title": "Lane C",
       "subtitle": "Central M+O (off-prem)",
       "description": "Central analytics and historian lane consuming publish-only KPI telemetry over MQTT.",
-      "standardIds": ["NE175"],
-      "claimIds": ["C5"],
-      "tags": ["lane", "central-mo", "telemetry-path"],
-      "width": 370,
-      "height": 1740,
+      "standardIds": [
+        "NE175"
+      ],
+      "claimIds": [
+        "C5"
+      ],
+      "tags": [
+        "lane",
+        "central-mo",
+        "telemetry-path"
+      ],
+      "width": 380,
+      "height": 1900,
       "fixed": true,
       "visual": {
         "fill": "#F0FDF4",
@@ -277,23 +326,39 @@
           "No write-back edge returns from Lane C into CPC or psM+O.",
           "Optional F7_sub shows subscription semantics without changing the one-way KPI stream."
         ],
-        "relatedEdgeIds": ["F7a", "F7b", "F7_sub"],
+        "relatedEdgeIds": [
+          "F7a",
+          "F7b",
+          "F7_sub"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "GW",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "kind": "container",
       "nodeType": "ContainerNode",
       "title": "NOA Security Gateway",
       "subtitle": "NE 177 / NE 178",
       "description": "Boundary container that separates CPC from psM+O. The upper section is the NE 177 read-only chain and the lower section is the NE 178 VoR interface.",
-      "standardIds": ["NE176", "NE177", "NE178"],
-      "claimIds": ["C2", "C4"],
-      "tags": ["gateway", "boundary"],
-      "width": 164,
-      "height": 1260,
+      "standardIds": [
+        "NE176",
+        "NE177",
+        "NE178"
+      ],
+      "claimIds": [
+        "C2",
+        "C4"
+      ],
+      "tags": [
+        "gateway",
+        "boundary"
+      ],
+      "width": 172,
+      "height": 1380,
       "fixed": true,
       "visual": {
         "fill": "#F8FBFF",
@@ -308,24 +373,52 @@
           "The upper section is NE 177 and must never imply a feedback path.",
           "The lower section is the separate NE 178 VoR interface, not a fourth NE 177 module."
         ],
-        "relatedEdgeIds": ["F_GW1", "F_GW2", "F_GW3", "F5", "F6", "F_VoR_ACK", "F3i"],
-        "relatedStepIds": ["PB1", "PB2", "PB3", "PB4", "PB5"]
+        "relatedEdgeIds": [
+          "F_GW1",
+          "F_GW2",
+          "F_GW3",
+          "F5",
+          "F6",
+          "F_VoR_ACK",
+          "F3i"
+        ],
+        "relatedStepIds": [
+          "PB1",
+          "PB2",
+          "PB3",
+          "PB4",
+          "PB5"
+        ]
       }
     },
     {
       "id": "AEA",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "kind": "container",
       "nodeType": "ContainerNode",
       "title": "Autonomous Edge Agent (AEA)",
       "subtitle": "psM+O edge node",
       "description": "Large container grouping the Sense, Decide, and Act bands on the plant-specific M+O edge node.",
-      "standardIds": ["NE175", "NE179"],
-      "claimIds": ["C1", "C2", "C3", "C4", "C5"],
-      "tags": ["aea", "container"],
-      "width": 1200,
-      "height": 1440,
+      "standardIds": [
+        "NE175",
+        "NE179"
+      ],
+      "claimIds": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+      ],
+      "tags": [
+        "aea",
+        "container"
+      ],
+      "width": 1340,
+      "height": 1580,
       "fixed": true,
       "visual": {
         "fill": "#F8FBFF",
@@ -340,13 +433,26 @@
           "The AEA is a logical container, not an additional security boundary.",
           "Nodes inside the AEA are positioned within fixed board slots inside each band."
         ],
-        "relatedEdgeIds": ["F1", "F4", "F5", "F7a"],
-        "relatedStepIds": ["PB1", "PB2", "PB3", "PB4", "PB5"]
+        "relatedEdgeIds": [
+          "F1",
+          "F4",
+          "F5",
+          "F7a"
+        ],
+        "relatedStepIds": [
+          "PB1",
+          "PB2",
+          "PB3",
+          "PB4",
+          "PB5"
+        ]
       }
     },
     {
       "id": "BAND_SENSE",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Sense",
       "kind": "band",
@@ -354,12 +460,22 @@
       "title": "Sense",
       "subtitle": "Data acquisition and normalisation",
       "description": "Sense band for OPC UA ingestion, PA-DIM normalization, and the canonical t0 telemetry snapshot.",
-      "standardIds": ["PADIM102", "IEC61987"],
-      "claimIds": ["C2", "C3"],
-      "tags": ["band", "sense", "telemetry-path"],
+      "standardIds": [
+        "PADIM102",
+        "IEC61987"
+      ],
+      "claimIds": [
+        "C2",
+        "C3"
+      ],
+      "tags": [
+        "band",
+        "sense",
+        "telemetry-path"
+      ],
       "parentId": "AEA",
-      "width": 1144,
-      "height": 220,
+      "width": 1284,
+      "height": 230,
       "fixed": true,
       "visual": {
         "fill": "#F5FAFF",
@@ -374,13 +490,22 @@
           "F3d and F3h both source from the same time-stamped snapshot.",
           "The band remains entirely on the psM+O side of the gateway."
         ],
-        "relatedEdgeIds": ["F1", "F2", "F3d", "F3h", "F_KPI", "F_T1"],
+        "relatedEdgeIds": [
+          "F1",
+          "F2",
+          "F3d",
+          "F3h",
+          "F_KPI",
+          "F_T1"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "BAND_DECIDE",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Decide",
       "kind": "band",
@@ -388,12 +513,24 @@
       "title": "Decide",
       "subtitle": "Reasoning, retrieval, and gating",
       "description": "Decide band for semantic retrieval, LLM planning, policy enforcement, and deterministic validation.",
-      "standardIds": ["IEC63278", "IDTAPART2311", "NISTAIRMF10", "OPC1000018"],
-      "claimIds": ["C3", "C4"],
-      "tags": ["band", "decide", "policy-path"],
+      "standardIds": [
+        "IEC63278",
+        "IDTAPART2311",
+        "NISTAIRMF10",
+        "OPC1000018"
+      ],
+      "claimIds": [
+        "C3",
+        "C4"
+      ],
+      "tags": [
+        "band",
+        "decide",
+        "policy-path"
+      ],
       "parentId": "AEA",
-      "width": 1144,
-      "height": 810,
+      "width": 1284,
+      "height": 930,
       "fixed": true,
       "visual": {
         "fill": "#F7F5FF",
@@ -408,13 +545,31 @@
           "Soft policy grounding and hard policy enforcement are intentionally separate flows.",
           "Tool-call edges are dotted so they cannot be confused with telemetry or status."
         ],
-        "relatedEdgeIds": ["F3a", "F3b", "F3b'", "F3c", "F3d", "F3e", "F3f", "F3f_reject", "F3g", "F3h", "F3i", "F_T2"],
-        "relatedStepIds": ["PB1", "PB2"]
+        "relatedEdgeIds": [
+          "F3a",
+          "F3b",
+          "F3b'",
+          "F3c",
+          "F3d",
+          "F3e",
+          "F3f",
+          "F3f_reject",
+          "F3g",
+          "F3h",
+          "F3i",
+          "F_T2"
+        ],
+        "relatedStepIds": [
+          "PB1",
+          "PB2"
+        ]
       }
     },
     {
       "id": "BAND_ACT",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Act",
       "kind": "band",
@@ -422,12 +577,24 @@
       "title": "Act",
       "subtitle": "Validated actuation and KPI publication",
       "description": "Act band for VoR request composition, publish-only KPI emission, and audit records.",
-      "standardIds": ["NE178", "OPC1000014", "MQTT5"],
-      "claimIds": ["C4", "C5"],
-      "tags": ["band", "act", "write-path", "telemetry-path"],
+      "standardIds": [
+        "NE178",
+        "OPC1000014",
+        "MQTT5"
+      ],
+      "claimIds": [
+        "C4",
+        "C5"
+      ],
+      "tags": [
+        "band",
+        "act",
+        "write-path",
+        "telemetry-path"
+      ],
       "parentId": "AEA",
-      "width": 1144,
-      "height": 220,
+      "width": 1284,
+      "height": 230,
       "fixed": true,
       "visual": {
         "fill": "#FFF8EB",
@@ -442,13 +609,27 @@
           "KPI publication is driven from harmonized signals, not from actuation outcomes.",
           "Audit capture is separated from northbound telemetry."
         ],
-        "relatedEdgeIds": ["F4", "F5", "F_KPI", "F_AUDIT", "F7a"],
-        "relatedStepIds": ["PB1", "PB2", "PB3", "PB4", "PB5"]
+        "relatedEdgeIds": [
+          "F4",
+          "F5",
+          "F_KPI",
+          "F_AUDIT",
+          "F7a"
+        ],
+        "relatedStepIds": [
+          "PB1",
+          "PB2",
+          "PB3",
+          "PB4",
+          "PB5"
+        ]
       }
     },
     {
       "id": "A1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "A",
       "kind": "cpc-block",
       "nodeType": "SystemNode",
@@ -456,8 +637,13 @@
       "subtitle": "DCS / PLC",
       "description": "Core process control system that remains SIL-rated and independent from the M+O agent.",
       "standardIds": [],
-      "claimIds": ["C1"],
-      "tags": ["cpc", "system"],
+      "claimIds": [
+        "C1"
+      ],
+      "tags": [
+        "cpc",
+        "system"
+      ],
       "parentId": "LANE_A",
       "width": 228,
       "height": 110,
@@ -470,23 +656,40 @@
       "inspector": {
         "role": "Controlled process execution target",
         "rationale": "The CPC System stays autonomous from agent logic even when the change handler executes approved instructions.",
-        "notes": ["The optional internal CPC arrow F_CPC_INT terminates here if rendered."],
-        "relatedEdgeIds": ["F_CPC_INT"],
-        "relatedStepIds": ["PB5"]
+        "notes": [
+          "The optional internal CPC arrow F_CPC_INT terminates here if rendered."
+        ],
+        "relatedEdgeIds": [
+          "F_CPC_INT"
+        ],
+        "relatedStepIds": [
+          "PB5"
+        ]
       }
     },
     {
       "id": "A2",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "A",
       "kind": "cpc-block",
       "nodeType": "SystemNode",
       "title": "CPC Data Interface",
       "subtitle": "OPC UA Server · PA-DIM information model",
       "description": "Read-only sensing endpoint exposing CPC telemetry in the PA-DIM model to the security gateway.",
-      "standardIds": ["OPC62541", "PADIM102"],
-      "claimIds": ["C2"],
-      "tags": ["cpc", "telemetry-path", "read-only"],
+      "standardIds": [
+        "OPC62541",
+        "PADIM102"
+      ],
+      "claimIds": [
+        "C2"
+      ],
+      "tags": [
+        "cpc",
+        "telemetry-path",
+        "read-only"
+      ],
       "parentId": "LANE_A",
       "width": 228,
       "height": 118,
@@ -499,23 +702,36 @@
       "inspector": {
         "role": "CPC telemetry source",
         "rationale": "A2 is the source for all telemetry and must remain read-only from the perspective of the gateway and the AEA.",
-        "notes": ["Nothing writes through A2. The exclusive write target is A3."],
-        "relatedEdgeIds": ["F_GW1"],
+        "notes": [
+          "Nothing writes through A2. The exclusive write target is A3."
+        ],
+        "relatedEdgeIds": [
+          "F_GW1"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "A3",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "A",
       "kind": "cpc-block",
       "nodeType": "SystemNode",
       "title": "CPC Change Handler",
       "subtitle": "Executes or queues VoR-accepted changes",
       "description": "Exclusive write target for VoR-approved mapped change instructions.",
-      "standardIds": ["NE178"],
-      "claimIds": ["C4"],
-      "tags": ["cpc", "write-path"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "cpc",
+        "write-path"
+      ],
       "parentId": "LANE_A",
       "width": 228,
       "height": 118,
@@ -528,22 +744,38 @@
       "inspector": {
         "role": "VoR execution endpoint",
         "rationale": "A3, not A2, is the exclusive CPC-side target for validated change instructions.",
-        "notes": ["VoR write-back terminates here before any optional internal CPC execution arrow."],
-        "relatedEdgeIds": ["F6", "F_CPC_INT"],
-        "relatedStepIds": ["PB5"]
+        "notes": [
+          "VoR write-back terminates here before any optional internal CPC execution arrow."
+        ],
+        "relatedEdgeIds": [
+          "F6",
+          "F_CPC_INT"
+        ],
+        "relatedStepIds": [
+          "PB5"
+        ]
       }
     },
     {
       "id": "G1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "kind": "gateway-module",
       "nodeType": "GatewayModuleNode",
       "title": "G1",
       "subtitle": "Data Retrieval",
       "description": "CPC-side retrieval module that subscribes to the CPC Data Interface.",
-      "standardIds": ["NE177"],
-      "claimIds": ["C2"],
-      "tags": ["gateway", "telemetry-path"],
+      "standardIds": [
+        "NE177"
+      ],
+      "claimIds": [
+        "C2"
+      ],
+      "tags": [
+        "gateway",
+        "telemetry-path"
+      ],
       "parentId": "GW",
       "width": 100,
       "height": 88,
@@ -557,21 +789,34 @@
       "inspector": {
         "role": "NE 177 module",
         "rationale": "G1 is the CPC-side subscription endpoint in the read-only chain.",
-        "relatedEdgeIds": ["F_GW1", "F_GW2"],
+        "relatedEdgeIds": [
+          "F_GW1",
+          "F_GW2"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "G2",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "kind": "gateway-module",
       "nodeType": "GatewayModuleNode",
       "title": "G2",
       "subtitle": "Unidirectional Transfer / Data Diode",
       "description": "One-way transfer module enforcing the absence of any feedback path from psM+O to CPC for sensing.",
-      "standardIds": ["NE177"],
-      "claimIds": ["C2"],
-      "tags": ["gateway", "telemetry-path", "diode"],
+      "standardIds": [
+        "NE177"
+      ],
+      "claimIds": [
+        "C2"
+      ],
+      "tags": [
+        "gateway",
+        "telemetry-path",
+        "diode"
+      ],
       "parentId": "GW",
       "width": 100,
       "height": 92,
@@ -585,22 +830,36 @@
       "inspector": {
         "role": "NE 177 module",
         "rationale": "G2 is the hardware or logical data diode that makes the read-only sensing guarantee explicit.",
-        "notes": ["The 'unidirectional — no feedback path' guarantee is the core of claim C2."],
-        "relatedEdgeIds": ["F_GW2", "F_GW3"],
+        "notes": [
+          "The 'unidirectional — no feedback path' guarantee is the core of claim C2."
+        ],
+        "relatedEdgeIds": [
+          "F_GW2",
+          "F_GW3"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "G3",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "kind": "gateway-module",
       "nodeType": "GatewayModuleNode",
       "title": "G3",
       "subtitle": "Data Provision",
       "description": "psM+O-side provision module exposing a mirrored PA-DIM endpoint to the AEA.",
-      "standardIds": ["NE177"],
-      "claimIds": ["C2"],
-      "tags": ["gateway", "telemetry-path"],
+      "standardIds": [
+        "NE177"
+      ],
+      "claimIds": [
+        "C2"
+      ],
+      "tags": [
+        "gateway",
+        "telemetry-path"
+      ],
       "parentId": "GW",
       "width": 100,
       "height": 88,
@@ -614,21 +873,34 @@
       "inspector": {
         "role": "NE 177 module",
         "rationale": "G3 mirrors the PA-DIM telemetry interface into psM+O without exposing a return channel.",
-        "relatedEdgeIds": ["F_GW3", "F1"],
+        "relatedEdgeIds": [
+          "F_GW3",
+          "F1"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "VOI",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "kind": "gateway-interface",
       "nodeType": "GatewayInterfaceNode",
       "title": "VoR Interface",
       "subtitle": "NE 178 interface",
       "description": "Separate security function handling authentication, authorisation, semantic validation, mapping, audit logging, and non-plant-specific status feedback for write-back.",
-      "standardIds": ["NE178"],
-      "claimIds": ["C4"],
-      "tags": ["gateway", "write-path", "vor"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "gateway",
+        "write-path",
+        "vor"
+      ],
       "parentId": "GW",
       "width": 110,
       "height": 150,
@@ -646,13 +918,26 @@
           "VOI enforces authentication, authorisation, semantic validation, mapping, and audit logging.",
           "Status feedback is intentionally non-plant-specific."
         ],
-        "relatedEdgeIds": ["F5", "F6", "F_VoR_ACK", "F3i"],
-        "relatedStepIds": ["PB1", "PB2", "PB3", "PB4", "PB5"]
+        "relatedEdgeIds": [
+          "F5",
+          "F6",
+          "F_VoR_ACK",
+          "F3i"
+        ],
+        "relatedStepIds": [
+          "PB1",
+          "PB2",
+          "PB3",
+          "PB4",
+          "PB5"
+        ]
       }
     },
     {
       "id": "S1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Sense",
       "kind": "aea-block",
@@ -660,9 +945,18 @@
       "title": "OPC UA Client",
       "subtitle": "Read-only session · subscribes to PA-DIM nodes",
       "description": "AEA-side client consuming the mirrored PA-DIM endpoint through a read-only session role.",
-      "standardIds": ["OPC62541", "PADIM102"],
-      "claimIds": ["C2"],
-      "tags": ["sense", "telemetry-path", "read-only"],
+      "standardIds": [
+        "OPC62541",
+        "PADIM102"
+      ],
+      "claimIds": [
+        "C2"
+      ],
+      "tags": [
+        "sense",
+        "telemetry-path",
+        "read-only"
+      ],
       "parentId": "BAND_SENSE",
       "width": 188,
       "height": 110,
@@ -675,14 +969,22 @@
       "inspector": {
         "role": "Read-only telemetry consumer",
         "rationale": "S1 keeps the sensing path read-only and exposes an explicit on-demand tool endpoint via opcua.read.",
-        "notes": ["The OPC UA session role is provisioned by the gateway/server side, not self-assigned by the client."],
-        "relatedEdgeIds": ["F1", "F2", "F_T1"],
+        "notes": [
+          "The OPC UA session role is provisioned by the gateway/server side, not self-assigned by the client."
+        ],
+        "relatedEdgeIds": [
+          "F1",
+          "F2",
+          "F_T1"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "S2",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Sense",
       "kind": "aea-block",
@@ -690,9 +992,20 @@
       "title": "PA-DIM Harmonizer",
       "subtitle": "Normalises signals; assigns IEC 61987 IRDIs; time-stamps feature vector (t0)",
       "description": "Normalization block converting heterogeneous device signals into a harmonized PA-DIM-aligned snapshot with shared t0 semantics.",
-      "standardIds": ["PADIM102", "IEC61987"],
-      "claimIds": ["C2", "C3", "C5"],
-      "tags": ["sense", "telemetry-path", "policy-path"],
+      "standardIds": [
+        "PADIM102",
+        "IEC61987"
+      ],
+      "claimIds": [
+        "C2",
+        "C3",
+        "C5"
+      ],
+      "tags": [
+        "sense",
+        "telemetry-path",
+        "policy-path"
+      ],
       "parentId": "BAND_SENSE",
       "width": 230,
       "height": 120,
@@ -709,13 +1022,20 @@
           "F3d and F3h must source from the same snapshot.",
           "KPI inputs also originate here to keep telemetry independent from actuation."
         ],
-        "relatedEdgeIds": ["F2", "F3d", "F3h", "F_KPI"],
+        "relatedEdgeIds": [
+          "F2",
+          "F3d",
+          "F3h",
+          "F_KPI"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "DEC_K1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Decide",
       "kind": "repository",
@@ -723,9 +1043,18 @@
       "title": "AAS Repository",
       "subtitle": "Submodel templates; device configurations; operational constraints",
       "description": "Primary semantic context source containing typed AAS submodels, units, bounds, and operational constraints.",
-      "standardIds": ["IEC63278", "IDTA01001V3"],
-      "claimIds": ["C3"],
-      "tags": ["decide", "policy-path", "repository"],
+      "standardIds": [
+        "IEC63278",
+        "IDTA01001V3"
+      ],
+      "claimIds": [
+        "C3"
+      ],
+      "tags": [
+        "decide",
+        "policy-path",
+        "repository"
+      ],
       "parentId": "BAND_DECIDE",
       "width": 230,
       "height": 120,
@@ -738,13 +1067,23 @@
       "inspector": {
         "role": "Semantic ground-truth store",
         "rationale": "AAS submodels provide the typed context, bounds, and mapping data needed for grounded reasoning and deterministic validation.",
-        "relatedEdgeIds": ["F3a", "F3g", "F_T2"],
-        "relatedStepIds": ["PB2", "PB3", "PB5"]
+        "relatedEdgeIds": [
+          "F3a",
+          "F3g",
+          "F_T2"
+        ],
+        "relatedStepIds": [
+          "PB2",
+          "PB3",
+          "PB5"
+        ]
       }
     },
     {
       "id": "DEC_K2",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Decide",
       "kind": "policy",
@@ -752,9 +1091,19 @@
       "title": "Policy Store",
       "subtitle": "Site-specific operational policies; safety interlocks; change approval rules",
       "description": "Policy source with separate retrieval, refusal, and hard-enforcement outbound paths.",
-      "standardIds": ["OWASPLMM25"],
-      "claimIds": ["C3", "C4", "C6"],
-      "tags": ["decide", "policy-path", "policy-store"],
+      "standardIds": [
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C3",
+        "C4",
+        "C6"
+      ],
+      "tags": [
+        "decide",
+        "policy-path",
+        "policy-store"
+      ],
       "parentId": "BAND_DECIDE",
       "width": 230,
       "height": 120,
@@ -771,13 +1120,21 @@
           "F3b and F3b' must never be collapsed into a single arrow.",
           "Refusal and sensitive-topic rules are external policy, not prompt text."
         ],
-        "relatedEdgeIds": ["F3b", "F3b'", "F_G0_pol"],
-        "relatedStepIds": ["PB4"]
+        "relatedEdgeIds": [
+          "F3b",
+          "F3b'",
+          "F_G0_pol"
+        ],
+        "relatedStepIds": [
+          "PB4"
+        ]
       }
     },
     {
       "id": "DEC_R0",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Decide",
       "kind": "gateway-module",
@@ -785,9 +1142,20 @@
       "title": "Retrieval Guard",
       "subtitle": "ACL-aware; provenance-tagged; source-scoped retrieval filter",
       "description": "Deterministic access-control gate between the semantic stores and the retrieval stage.",
-      "standardIds": ["OWASPLMM25", "IEC63278"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["decide", "policy-path", "guardrail", "retrieval"],
+      "standardIds": [
+        "OWASPLMM25",
+        "IEC63278"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "decide",
+        "policy-path",
+        "guardrail",
+        "retrieval"
+      ],
       "parentId": "BAND_DECIDE",
       "width": 230,
       "height": 120,
@@ -804,13 +1172,22 @@
           "Retrieved chunks must carry source ID, timestamp, scope, and trust classification.",
           "Only approved slices may reach DEC_R1."
         ],
-        "relatedEdgeIds": ["F3a", "F3b", "F_R0_out", "F_M1_R0"],
-        "relatedStepIds": ["PB2"]
+        "relatedEdgeIds": [
+          "F3a",
+          "F3b",
+          "F_R0_out",
+          "F_M1_R0"
+        ],
+        "relatedStepIds": [
+          "PB2"
+        ]
       }
     },
     {
       "id": "DEC_R1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Decide",
       "kind": "repository",
@@ -818,9 +1195,18 @@
       "title": "RAG / Knowledge Retrieval",
       "subtitle": "AAS-structured retrieval; semantic chunking; IDTA Part 2 API",
       "description": "Retrieval stage collecting AAS excerpts and policy summaries for the guarded planner context.",
-      "standardIds": ["IDTAPART2311", "IEC63278"],
-      "claimIds": ["C3"],
-      "tags": ["decide", "policy-path", "retrieval"],
+      "standardIds": [
+        "IDTAPART2311",
+        "IEC63278"
+      ],
+      "claimIds": [
+        "C3"
+      ],
+      "tags": [
+        "decide",
+        "policy-path",
+        "retrieval"
+      ],
       "parentId": "BAND_DECIDE",
       "width": 230,
       "height": 120,
@@ -833,13 +1219,20 @@
       "inspector": {
         "role": "Semantic retrieval stage",
         "rationale": "DEC_R1 assembles approved AAS and policy context before the input/context guard classifies it for model use.",
-        "relatedEdgeIds": ["F_R0_out", "F3c"],
-        "relatedStepIds": ["PB2"]
+        "relatedEdgeIds": [
+          "F_R0_out",
+          "F3c"
+        ],
+        "relatedStepIds": [
+          "PB2"
+        ]
       }
     },
     {
       "id": "DEC_G0",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Decide",
       "kind": "policy",
@@ -847,9 +1240,19 @@
       "title": "Input / Context Guard",
       "subtitle": "Sole planner ingress; classifies, redacts, and refuses before model access",
       "description": "Deterministic input gate for retrieved text, plant snapshots, and tool observations before any model sees them.",
-      "standardIds": ["OWASPLMM25"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["decide", "policy-path", "guardrail", "context"],
+      "standardIds": [
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "decide",
+        "policy-path",
+        "guardrail",
+        "context"
+      ],
       "parentId": "BAND_DECIDE",
       "width": 230,
       "height": 128,
@@ -866,13 +1269,24 @@
           "Retrieved narrative, plant-state snapshots, and tool observations all terminate here first.",
           "Refusal policy is sourced from DEC_K2, not from prompt text."
         ],
-        "relatedEdgeIds": ["F3c", "F3d", "F_G0_pol", "F_G0_out", "F_T0_obs", "F_M1_G0"],
-        "relatedStepIds": ["PB2"]
+        "relatedEdgeIds": [
+          "F3c",
+          "F3d",
+          "F_G0_pol",
+          "F_G0_out",
+          "F_T0_obs",
+          "F_M1_G0"
+        ],
+        "relatedStepIds": [
+          "PB2"
+        ]
       }
     },
     {
       "id": "DEC_R2",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Decide",
       "kind": "agent",
@@ -881,8 +1295,16 @@
       "subtitle": "Tool-using; ReAct reasoning loop",
       "description": "Planner that consumes only guarded context, proposes structured plans, and reacts to deterministic schema or policy rejections.",
       "standardIds": [],
-      "claimIds": ["C3", "C4"],
-      "tags": ["decide", "policy-path", "write-path", "agent"],
+      "claimIds": [
+        "C3",
+        "C4"
+      ],
+      "tags": [
+        "decide",
+        "policy-path",
+        "write-path",
+        "agent"
+      ],
       "parentId": "BAND_DECIDE",
       "width": 230,
       "height": 130,
@@ -900,13 +1322,25 @@
           "Local tools: anomaly.detect, kpi.compute, sim.check.",
           "External arrows only exist for brokered opcua.read and aas.query."
         ],
-        "relatedEdgeIds": ["F_G0_out", "F3e", "F_G1A_reject", "F3f_reject", "F_H1_reject", "F_T0_req"],
-        "relatedStepIds": ["PB1", "PB2"]
+        "relatedEdgeIds": [
+          "F_G0_out",
+          "F3e",
+          "F_G1A_reject",
+          "F3f_reject",
+          "F_H1_reject",
+          "F_T0_req"
+        ],
+        "relatedStepIds": [
+          "PB1",
+          "PB2"
+        ]
       }
     },
     {
       "id": "DEC_T0",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Decide",
       "kind": "gateway-module",
@@ -914,9 +1348,19 @@
       "title": "Tool Guard / Broker",
       "subtitle": "Read-only tool mediation; schema-checked requests; guarded observations",
       "description": "Deterministic broker that is solely responsible for dispatching external tool calls and returning observations through the guarded context path.",
-      "standardIds": ["OWASPLMM25"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["decide", "policy-path", "guardrail", "tooling"],
+      "standardIds": [
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "decide",
+        "policy-path",
+        "guardrail",
+        "tooling"
+      ],
       "parentId": "BAND_DECIDE",
       "width": 230,
       "height": 120,
@@ -933,13 +1377,21 @@
           "DEC_R2 no longer invokes external tools directly.",
           "Tool observations must return through DEC_G0 before they can affect reasoning."
         ],
-        "relatedEdgeIds": ["F_T0_req", "F_T1", "F_T2", "F_T0_obs", "F_M1_T0"],
+        "relatedEdgeIds": [
+          "F_T0_req",
+          "F_T1",
+          "F_T2",
+          "F_T0_obs",
+          "F_M1_T0"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "DEC_G1A",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Decide",
       "kind": "policy",
@@ -947,9 +1399,20 @@
       "title": "Output Guard / Schema Checker",
       "subtitle": "Strict plan schema; deterministic fields remain external",
       "description": "Schema-validation gate that accepts only a machine-readable plan object and rejects free text or unsupported fields before policy evaluation.",
-      "standardIds": ["OWASPLMM25", "NISTAIRMF10"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["decide", "policy-path", "guardrail", "schema"],
+      "standardIds": [
+        "OWASPLMM25",
+        "NISTAIRMF10"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "decide",
+        "policy-path",
+        "guardrail",
+        "schema"
+      ],
       "parentId": "BAND_DECIDE",
       "width": 230,
       "height": 128,
@@ -966,13 +1429,22 @@
           "Required fields are structural only: action_type, asset_id, parameter_id, requested_value, unit, snapshot_id, evidence_refs.",
           "Risk tier, approval requirement, and approval token are deterministic downstream outputs, not LLM-authored fields."
         ],
-        "relatedEdgeIds": ["F3e", "F_G1A_pass", "F_G1A_reject", "F_M1_G1A"],
-        "relatedStepIds": ["PB2"]
+        "relatedEdgeIds": [
+          "F3e",
+          "F_G1A_pass",
+          "F_G1A_reject",
+          "F_M1_G1A"
+        ],
+        "relatedStepIds": [
+          "PB2"
+        ]
       }
     },
     {
       "id": "DEC_G1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Decide",
       "kind": "policy",
@@ -980,9 +1452,18 @@
       "title": "Policy-Guard",
       "subtitle": "Runtime policy enforcement; rejects non-compliant proposals",
       "description": "Hard policy enforcement stage that consumes direct policy rules and emits either compliant candidates or rejection feedback.",
-      "standardIds": ["NISTAIRMF10"],
-      "claimIds": ["C3", "C4"],
-      "tags": ["decide", "policy-path", "guard"],
+      "standardIds": [
+        "NISTAIRMF10"
+      ],
+      "claimIds": [
+        "C3",
+        "C4"
+      ],
+      "tags": [
+        "decide",
+        "policy-path",
+        "guard"
+      ],
       "parentId": "BAND_DECIDE",
       "width": 230,
       "height": 120,
@@ -995,14 +1476,25 @@
       "inspector": {
         "role": "Policy enforcement gate",
         "rationale": "DEC_G1 is the non-bypassable policy guard that receives hard rules from DEC_K2 and forces the planner loop to react to rejections.",
-        "relatedEdgeIds": ["F3b'", "F_G1A_pass", "F3f", "F3f_reject"],
-        "relatedStepIds": ["PB4"]
+        "relatedEdgeIds": [
+          "F3b'",
+          "F_G1A_pass",
+          "F3f",
+          "F3f_reject"
+        ],
+        "relatedStepIds": [
+          "PB4"
+        ]
       }
     },
     {
       "id": "DEC_G2",
-      "aliases": ["DEC3"],
-      "panel": ["architecture"],
+      "aliases": [
+        "DEC3"
+      ],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Decide",
       "kind": "aea-block",
@@ -1010,9 +1502,22 @@
       "title": "Deterministic Validators",
       "subtitle": "AAS bounds validator + OPC UA RBAC validator",
       "description": "Deterministic stage validating typed bounds, current values, permitted write scope, plan hash, and approval freshness before any VoR request is composed.",
-      "standardIds": ["OPC1000018", "IEC63278", "NISTAI6001"],
-      "claimIds": ["C3", "C4", "C6"],
-      "tags": ["decide", "policy-path", "write-path", "validator"],
+      "standardIds": [
+        "OPC1000018",
+        "IEC63278",
+        "NISTAI6001"
+      ],
+      "claimIds": [
+        "C3",
+        "C4",
+        "C6"
+      ],
+      "tags": [
+        "decide",
+        "policy-path",
+        "write-path",
+        "validator"
+      ],
       "parentId": "BAND_DECIDE",
       "width": 230,
       "height": 128,
@@ -1029,13 +1534,26 @@
           "The spec alias DEC3 resolves here for traceability.",
           "Approval freshness is bound to plan_hash + snapshot_id + expires_at."
         ],
-        "relatedEdgeIds": ["F3f", "F3g", "F3h", "F3i", "F4", "F_H1_revalidate"],
-        "relatedStepIds": ["PB1", "PB2", "PB5"]
+        "relatedEdgeIds": [
+          "F3f",
+          "F3g",
+          "F3h",
+          "F3i",
+          "F4",
+          "F_H1_revalidate"
+        ],
+        "relatedStepIds": [
+          "PB1",
+          "PB2",
+          "PB5"
+        ]
       }
     },
     {
       "id": "DEC_H1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Decide",
       "kind": "gateway-module",
@@ -1043,9 +1561,20 @@
       "title": "Human Approval Gate",
       "subtitle": "All VoR-bound plans require explicit operator approval",
       "description": "Human-in-the-loop gate that approves a specific plan hash against a specific snapshot and expiry window before VoR composition.",
-      "standardIds": ["OWASPLMM25", "NISTAI6001"],
-      "claimIds": ["C4", "C6"],
-      "tags": ["decide", "write-path", "guardrail", "human-in-loop"],
+      "standardIds": [
+        "OWASPLMM25",
+        "NISTAI6001"
+      ],
+      "claimIds": [
+        "C4",
+        "C6"
+      ],
+      "tags": [
+        "decide",
+        "write-path",
+        "guardrail",
+        "human-in-loop"
+      ],
       "parentId": "BAND_DECIDE",
       "width": 230,
       "height": 120,
@@ -1063,13 +1592,21 @@
           "If approval expires or t0 changes before ACT1, the plan returns to DEC_G2 for deterministic revalidation.",
           "Panel B remains an NE 178 protocol view and does not absorb this AEA-side gate."
         ],
-        "relatedEdgeIds": ["F4", "F_H1_revalidate", "F_H1_reject", "F_H1_pass", "F_M1_H1"],
+        "relatedEdgeIds": [
+          "F4",
+          "F_H1_revalidate",
+          "F_H1_reject",
+          "F_H1_pass",
+          "F_M1_H1"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "DEC_M1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Decide",
       "kind": "audit",
@@ -1077,9 +1614,18 @@
       "title": "Guardrail Monitor / Evals",
       "subtitle": "Write-once event stream for guardrails, denials, and approvals",
       "description": "Sidecar monitor that aggregates guardrail pass, reject, deny, and approval events for audit and evaluation.",
-      "standardIds": ["NISTAI6001", "OWASPLMM25"],
-      "claimIds": ["C6"],
-      "tags": ["decide", "guardrail", "audit"],
+      "standardIds": [
+        "NISTAI6001",
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C6"
+      ],
+      "tags": [
+        "decide",
+        "guardrail",
+        "audit"
+      ],
       "parentId": "BAND_DECIDE",
       "width": 230,
       "height": 120,
@@ -1096,13 +1642,22 @@
           "Monitoring is a sidecar and must not block decision execution.",
           "Events are write-once and immutable once committed."
         ],
-        "relatedEdgeIds": ["F_M1_G0", "F_M1_R0", "F_M1_T0", "F_M1_G1A", "F_M1_H1", "F_M1_out"],
+        "relatedEdgeIds": [
+          "F_M1_G0",
+          "F_M1_R0",
+          "F_M1_T0",
+          "F_M1_G1A",
+          "F_M1_H1",
+          "F_M1_out"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "ACT1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Act",
       "kind": "agent",
@@ -1110,9 +1665,17 @@
       "title": "VoR Request Composer",
       "subtitle": "Primary actuation path; composes non-plant-specific VoR request payload",
       "description": "AEA-side actuation block that translates the approved plan into the non-plant-specific VoR request payload.",
-      "standardIds": ["NE178"],
-      "claimIds": ["C4"],
-      "tags": ["act", "write-path", "vor"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "act",
+        "write-path",
+        "vor"
+      ],
       "parentId": "BAND_ACT",
       "width": 240,
       "height": 120,
@@ -1125,13 +1688,26 @@
       "inspector": {
         "role": "VoR initiation point",
         "rationale": "ACT1 owns the exclusive write-back initiation path and can only be entered through explicit approval or feedback from the VoR interface.",
-        "relatedEdgeIds": ["F_H1_pass", "F5", "F_VoR_ACK", "F_AUDIT"],
-        "relatedStepIds": ["PB1", "PB2", "PB3", "PB4", "PB5"]
+        "relatedEdgeIds": [
+          "F_H1_pass",
+          "F5",
+          "F_VoR_ACK",
+          "F_AUDIT"
+        ],
+        "relatedStepIds": [
+          "PB1",
+          "PB2",
+          "PB3",
+          "PB4",
+          "PB5"
+        ]
       }
     },
     {
       "id": "ACT2",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Act",
       "kind": "publisher",
@@ -1139,9 +1715,18 @@
       "title": "KPI Publisher",
       "subtitle": "Publish-only; OPC UA PubSub over MQTT",
       "description": "Publish-only northbound telemetry publisher decoupled from actuation.",
-      "standardIds": ["OPC1000014", "MQTT5"],
-      "claimIds": ["C5"],
-      "tags": ["act", "telemetry-path", "publisher"],
+      "standardIds": [
+        "OPC1000014",
+        "MQTT5"
+      ],
+      "claimIds": [
+        "C5"
+      ],
+      "tags": [
+        "act",
+        "telemetry-path",
+        "publisher"
+      ],
       "parentId": "BAND_ACT",
       "width": 210,
       "height": 110,
@@ -1154,13 +1739,18 @@
       "inspector": {
         "role": "Northbound telemetry publisher",
         "rationale": "ACT2 proves that KPI publication is publish-only and decoupled from the VoR path.",
-        "relatedEdgeIds": ["F_KPI", "F7a"],
+        "relatedEdgeIds": [
+          "F_KPI",
+          "F7a"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "ACT3",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "B",
       "band": "Act",
       "kind": "audit",
@@ -1168,9 +1758,20 @@
       "title": "Audit Log",
       "subtitle": "Decision events; VoR request records; guardrail outcomes",
       "description": "Dedicated audit sink for decision, guardrail, and VoR records, separated from KPI publication.",
-      "standardIds": ["NE178", "NISTAIRMF10", "NISTAI6001"],
-      "claimIds": ["C4", "C6"],
-      "tags": ["act", "write-path", "audit"],
+      "standardIds": [
+        "NE178",
+        "NISTAIRMF10",
+        "NISTAI6001"
+      ],
+      "claimIds": [
+        "C4",
+        "C6"
+      ],
+      "tags": [
+        "act",
+        "write-path",
+        "audit"
+      ],
       "parentId": "BAND_ACT",
       "width": 210,
       "height": 110,
@@ -1183,22 +1784,36 @@
       "inspector": {
         "role": "Traceability sink",
         "rationale": "Audit records are separated from KPI telemetry so the actuation trail and guardrail trail remain explicit and reviewable.",
-        "relatedEdgeIds": ["F_AUDIT", "F_M1_out"],
-        "relatedStepIds": ["PB5"]
+        "relatedEdgeIds": [
+          "F_AUDIT",
+          "F_M1_out"
+        ],
+        "relatedStepIds": [
+          "PB5"
+        ]
       }
     },
     {
       "id": "C1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "C",
       "kind": "broker",
       "nodeType": "BrokerNode",
       "title": "MQTT Broker",
       "subtitle": "MQTT v5.0",
       "description": "Central messaging broker receiving publish-only KPI messages from the AEA.",
-      "standardIds": ["MQTT5"],
-      "claimIds": ["C5"],
-      "tags": ["telemetry-path", "broker"],
+      "standardIds": [
+        "MQTT5"
+      ],
+      "claimIds": [
+        "C5"
+      ],
+      "tags": [
+        "telemetry-path",
+        "broker"
+      ],
       "parentId": "LANE_C",
       "width": 200,
       "height": 108,
@@ -1211,13 +1826,19 @@
       "inspector": {
         "role": "Telemetry broker",
         "rationale": "The broker receives KPI publication only and never feeds a control signal back into psM+O or CPC.",
-        "relatedEdgeIds": ["F7a", "F7b", "F7_sub"],
+        "relatedEdgeIds": [
+          "F7a",
+          "F7b",
+          "F7_sub"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "C2",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "lane": "C",
       "kind": "publisher",
       "nodeType": "PublisherNode",
@@ -1225,8 +1846,13 @@
       "subtitle": "Subscribe / consume",
       "description": "Central M+O consumers subscribing to KPI streams for analytics, historian ingestion, and dashboarding.",
       "standardIds": [],
-      "claimIds": ["C5"],
-      "tags": ["telemetry-path", "analytics"],
+      "claimIds": [
+        "C5"
+      ],
+      "tags": [
+        "telemetry-path",
+        "analytics"
+      ],
       "parentId": "LANE_C",
       "width": 240,
       "height": 118,
@@ -1239,21 +1865,34 @@
       "inspector": {
         "role": "Telemetry consumer",
         "rationale": "These central consumers remain downstream of publish-only telemetry and outside the actuation control path.",
-        "relatedEdgeIds": ["F7b", "F7_sub"],
+        "relatedEdgeIds": [
+          "F7b",
+          "F7_sub"
+        ],
         "relatedStepIds": []
       }
     },
     {
       "id": "PB_AEA",
-      "panel": ["vor-sequence"],
+      "panel": [
+        "vor-sequence"
+      ],
       "kind": "container",
       "nodeType": "ContainerNode",
       "title": "AEA Return",
       "subtitle": "psM+O zone (AEA)",
       "description": "Panel B terminal representing the AEA-side recipient of non-plant-specific VoR status returns.",
-      "standardIds": ["NE178"],
-      "claimIds": ["C4"],
-      "tags": ["write-path", "sequence", "status"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "write-path",
+        "sequence",
+        "status"
+      ],
       "width": 176,
       "height": 78,
       "fixed": true,
@@ -1266,21 +1905,36 @@
       "inspector": {
         "role": "Sequence return terminal",
         "rationale": "PB_AEA makes the Panel B status-return endpoint explicit so PB_ACK terminates at the AEA side rather than looping back into Step 1.",
-        "relatedEdgeIds": ["PB_ACK", "F_VoR_ACK"],
-        "relatedStepIds": ["PB5"]
+        "relatedEdgeIds": [
+          "PB_ACK",
+          "F_VoR_ACK"
+        ],
+        "relatedStepIds": [
+          "PB5"
+        ]
       }
     },
     {
       "id": "PB_REJECT_OUT",
-      "panel": ["vor-sequence"],
+      "panel": [
+        "vor-sequence"
+      ],
       "kind": "container",
       "nodeType": "ContainerNode",
       "title": "Rejection Output",
       "subtitle": "Acceptance failure branch",
       "description": "Panel B terminal for the explicit rejection branch emitted by the acceptance stage.",
-      "standardIds": ["NE178"],
-      "claimIds": ["C4"],
-      "tags": ["write-path", "sequence", "status"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "write-path",
+        "sequence",
+        "status"
+      ],
       "width": 188,
       "height": 78,
       "fixed": true,
@@ -1293,15 +1947,22 @@
       "inspector": {
         "role": "Sequence rejection terminal",
         "rationale": "PB_REJECT must leave the main ribbon and terminate in a rejection output, not cycle back into Auth & Authorisation.",
-        "relatedEdgeIds": ["PB_REJECT", "F3f_reject"],
-        "relatedStepIds": ["PB4"]
+        "relatedEdgeIds": [
+          "PB_REJECT",
+          "F3f_reject"
+        ],
+        "relatedStepIds": [
+          "PB4"
+        ]
       }
     }
   ],
   "edges": [
     {
       "id": "F_GW1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Sense",
       "source": "A2",
       "target": "G1",
@@ -1310,9 +1971,18 @@
       "label": "OPC UA subscription (PA-DIM topics)",
       "displayLabel": "Subscribe",
       "direction": "ltr",
-      "standardIds": ["NE177", "OPC62541", "PADIM102"],
-      "claimIds": ["C2"],
-      "tags": ["telemetry-path", "gateway"],
+      "standardIds": [
+        "NE177",
+        "OPC62541",
+        "PADIM102"
+      ],
+      "claimIds": [
+        "C2"
+      ],
+      "tags": [
+        "telemetry-path",
+        "gateway"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "right",
@@ -1321,13 +1991,19 @@
       },
       "inspector": {
         "rationale": "F_GW1 is the CPC-side subscription edge that begins the NE 177 read-only chain.",
-        "notes": ["This edge carries sensing only and does not imply any write-back capability."],
-        "constraints": ["Source must remain A2."]
+        "notes": [
+          "This edge carries sensing only and does not imply any write-back capability."
+        ],
+        "constraints": [
+          "Source must remain A2."
+        ]
       }
     },
     {
       "id": "F_GW2",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Sense",
       "source": "G1",
       "target": "G2",
@@ -1336,10 +2012,20 @@
       "label": "unidirectional ingress",
       "displayLabel": "Ingress",
       "direction": "ttb",
-      "standardIds": ["NE177"],
-      "claimIds": ["C2"],
-      "tags": ["telemetry-path", "gateway", "diode"],
-      "markers": ["diode"],
+      "standardIds": [
+        "NE177"
+      ],
+      "claimIds": [
+        "C2"
+      ],
+      "tags": [
+        "telemetry-path",
+        "gateway",
+        "diode"
+      ],
+      "markers": [
+        "diode"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "bottom",
@@ -1348,13 +2034,19 @@
       },
       "inspector": {
         "rationale": "F_GW2 moves telemetry from retrieval into the diode stage of the gateway chain.",
-        "notes": ["Rendered with diode symbolism to reinforce the one-way guarantee."],
-        "constraints": ["No return path may be implied."]
+        "notes": [
+          "Rendered with diode symbolism to reinforce the one-way guarantee."
+        ],
+        "constraints": [
+          "No return path may be implied."
+        ]
       }
     },
     {
       "id": "F_GW3",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Sense",
       "source": "G2",
       "target": "G3",
@@ -1364,10 +2056,20 @@
       "displayLabel": "No return",
       "detail": "Rendered with a diode symbol to make the unidirectional guarantee visually explicit.",
       "direction": "ttb",
-      "standardIds": ["NE177"],
-      "claimIds": ["C2"],
-      "tags": ["telemetry-path", "gateway", "diode"],
-      "markers": ["diode"],
+      "standardIds": [
+        "NE177"
+      ],
+      "claimIds": [
+        "C2"
+      ],
+      "tags": [
+        "telemetry-path",
+        "gateway",
+        "diode"
+      ],
+      "markers": [
+        "diode"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "bottom",
@@ -1376,13 +2078,19 @@
       },
       "inspector": {
         "rationale": "F_GW3 explicitly encodes the NE 177 'no return path' requirement and is the core visual proof for claim C2.",
-        "notes": ["This is the data-diode guarantee, not a general gateway transfer arrow."],
-        "constraints": ["Must remain solid and diode-marked."]
+        "notes": [
+          "This is the data-diode guarantee, not a general gateway transfer arrow."
+        ],
+        "constraints": [
+          "Must remain solid and diode-marked."
+        ]
       }
     },
     {
       "id": "F1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Sense",
       "source": "G3",
       "target": "S1",
@@ -1391,9 +2099,18 @@
       "label": "PA-DIM model, read-only",
       "displayLabel": "Read PA-DIM",
       "direction": "ltr",
-      "standardIds": ["NE177", "PADIM102"],
-      "claimIds": ["C1", "C2"],
-      "tags": ["telemetry-path", "read-only"],
+      "standardIds": [
+        "NE177",
+        "PADIM102"
+      ],
+      "claimIds": [
+        "C1",
+        "C2"
+      ],
+      "tags": [
+        "telemetry-path",
+        "read-only"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "bottom",
@@ -1402,12 +2119,17 @@
       },
       "inspector": {
         "rationale": "F1 is the primary telemetry ingress into the AEA and the only solid read arrow crossing from the gateway into Lane B.",
-        "constraints": ["Must remain read-only.", "Must enter S1, not S2."]
+        "constraints": [
+          "Must remain read-only.",
+          "Must enter S1, not S2."
+        ]
       }
     },
     {
       "id": "F2",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Sense",
       "source": "S1",
       "target": "S2",
@@ -1416,9 +2138,17 @@
       "label": "normalise signals; apply IEC 61987 IRDIs",
       "displayLabel": "Normalise",
       "direction": "ltr",
-      "standardIds": ["PADIM102", "IEC61987"],
-      "claimIds": ["C2", "C3"],
-      "tags": ["telemetry-path"],
+      "standardIds": [
+        "PADIM102",
+        "IEC61987"
+      ],
+      "claimIds": [
+        "C2",
+        "C3"
+      ],
+      "tags": [
+        "telemetry-path"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "right",
@@ -1427,12 +2157,16 @@
       },
       "inspector": {
         "rationale": "F2 converts the read-only OPC UA stream into the harmonized PA-DIM-aligned telemetry snapshot used downstream.",
-        "constraints": ["Keeps sensing inside the Sense band."]
+        "constraints": [
+          "Keeps sensing inside the Sense band."
+        ]
       }
     },
     {
       "id": "F3a",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_K1",
       "target": "DEC_R0",
@@ -1441,23 +2175,38 @@
       "label": "AAS submodel retrieval (ACL-gated)",
       "displayLabel": "Gate AAS",
       "direction": "ltr",
-      "standardIds": ["IEC63278", "IDTAPART2311", "OWASPLMM25"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["policy-path"],
+      "standardIds": [
+        "IEC63278",
+        "IDTAPART2311",
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "policy-path"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB2"],
+        "relatedStepIds": [
+          "PB2"
+        ],
         "sourceHandle": "right",
         "targetHandle": "left",
         "highlightGroup": "policy"
       },
       "inspector": {
         "rationale": "F3a now terminates at the Retrieval Guard so AAS submodels pass through provenance and scope checks before the RAG stage.",
-        "constraints": ["Source must remain DEC_K1."]
+        "constraints": [
+          "Source must remain DEC_K1."
+        ]
       }
     },
     {
       "id": "F3b",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_K2",
       "target": "DEC_R0",
@@ -1466,24 +2215,39 @@
       "label": "policy context (soft grounding, ACL-gated)",
       "displayLabel": "Gate policy",
       "direction": "ltr",
-      "standardIds": ["OWASPLMM25"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["policy-path"],
+      "standardIds": [
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "policy-path"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB2"],
+        "relatedStepIds": [
+          "PB2"
+        ],
         "sourceHandle": "right",
         "targetHandle": "left",
         "highlightGroup": "policy"
       },
       "inspector": {
         "rationale": "F3b provides soft-grounding policy context, but only after the Retrieval Guard checks provenance, scope, and trust classification.",
-        "notes": ["This edge must be clearly distinguished from F3b', which is hard enforcement."],
-        "constraints": ["Soft grounding only."]
+        "notes": [
+          "This edge must be clearly distinguished from F3b', which is hard enforcement."
+        ],
+        "constraints": [
+          "Soft grounding only."
+        ]
       }
     },
     {
       "id": "F_R0_out",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_R0",
       "target": "DEC_R1",
@@ -1492,23 +2256,38 @@
       "label": "approved, provenance-tagged retrieval context",
       "displayLabel": "Pass context",
       "direction": "ltr",
-      "standardIds": ["OWASPLMM25", "IEC63278"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["policy-path", "guardrail"],
+      "standardIds": [
+        "OWASPLMM25",
+        "IEC63278"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "policy-path",
+        "guardrail"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB2"],
+        "relatedStepIds": [
+          "PB2"
+        ],
         "sourceHandle": "bottom",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
       "inspector": {
         "rationale": "F_R0_out carries only ACL-approved, provenance-tagged chunks into the RAG stage.",
-        "constraints": ["Content must carry provenance metadata before reaching DEC_R1."]
+        "constraints": [
+          "Content must carry provenance metadata before reaching DEC_R1."
+        ]
       }
     },
     {
       "id": "F3b'",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_K2",
       "target": "DEC_G1",
@@ -1517,24 +2296,41 @@
       "label": "enforcement rules (hard; non-bypassable)",
       "displayLabel": "Enforce rules",
       "direction": "ltr",
-      "standardIds": ["NISTAIRMF10"],
-      "claimIds": ["C3", "C4", "C6"],
-      "tags": ["policy-path"],
+      "standardIds": [
+        "NISTAIRMF10"
+      ],
+      "claimIds": [
+        "C3",
+        "C4",
+        "C6"
+      ],
+      "tags": [
+        "policy-path"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB4"],
+        "relatedStepIds": [
+          "PB4"
+        ],
         "sourceHandle": "right",
         "targetHandle": "left",
         "highlightGroup": "policy"
       },
       "inspector": {
         "rationale": "F3b' is the authoritative hard-enforcement path feeding deterministic policy rules directly into the Policy-Guard.",
-        "notes": ["Without F3b' the guard would have no non-bypassable policy source."],
-        "constraints": ["Must remain visually heavier than F3b.", "Hard enforcement / non-bypassable."]
+        "notes": [
+          "Without F3b' the guard would have no non-bypassable policy source."
+        ],
+        "constraints": [
+          "Must remain visually heavier than F3b.",
+          "Hard enforcement / non-bypassable."
+        ]
       }
     },
     {
       "id": "F3c",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_R1",
       "target": "DEC_G0",
@@ -1544,11 +2340,23 @@
       "displayLabel": "Deliver ctx",
       "detail": "AAS + policy summaries",
       "direction": "ltr",
-      "standardIds": ["IEC63278", "IDTAPART2311", "OWASPLMM25"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["policy-path", "guardrail"],
+      "standardIds": [
+        "IEC63278",
+        "IDTAPART2311",
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "policy-path",
+        "guardrail"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB2"],
+        "relatedStepIds": [
+          "PB2"
+        ],
         "sourceHandle": "right",
         "targetHandle": "left",
         "highlightGroup": "policy"
@@ -1559,7 +2367,9 @@
     },
     {
       "id": "F3d",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "S2",
       "target": "DEC_G0",
@@ -1568,23 +2378,40 @@
       "label": "harmonised plant state (snapshot t0) to guarded ingress",
       "displayLabel": "Load t0",
       "direction": "ttb",
-      "standardIds": ["PADIM102", "OWASPLMM25"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["policy-path", "telemetry-path", "t0", "guardrail"],
+      "standardIds": [
+        "PADIM102",
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "policy-path",
+        "telemetry-path",
+        "t0",
+        "guardrail"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB2"],
+        "relatedStepIds": [
+          "PB2"
+        ],
         "sourceHandle": "bottom",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
       "inspector": {
         "rationale": "F3d now terminates at DEC_G0 so the harmonised t0 plant-state snapshot is deterministically classified before model access.",
-        "constraints": ["Must share the same t0 snapshot group as F3h."]
+        "constraints": [
+          "Must share the same t0 snapshot group as F3h."
+        ]
       }
     },
     {
       "id": "F_G0_pol",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_K2",
       "target": "DEC_G0",
@@ -1593,9 +2420,16 @@
       "label": "refusal policy / sensitive-topic rules",
       "displayLabel": "Refusal rules",
       "direction": "ltr",
-      "standardIds": ["OWASPLMM25"],
-      "claimIds": ["C6"],
-      "tags": ["policy-path", "guardrail"],
+      "standardIds": [
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C6"
+      ],
+      "tags": [
+        "policy-path",
+        "guardrail"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "right",
@@ -1604,12 +2438,16 @@
       },
       "inspector": {
         "rationale": "F_G0_pol feeds refusal and sensitive-topic rules directly into DEC_G0 so refusal logic remains external to the model.",
-        "constraints": ["Refusal rules must be versioned external policy."]
+        "constraints": [
+          "Refusal rules must be versioned external policy."
+        ]
       }
     },
     {
       "id": "F_G0_out",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_G0",
       "target": "DEC_R2",
@@ -1618,23 +2456,37 @@
       "label": "sanitised, classified planner context",
       "displayLabel": "Guard ctx",
       "direction": "ltr",
-      "standardIds": ["OWASPLMM25"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["policy-path", "guardrail"],
+      "standardIds": [
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "policy-path",
+        "guardrail"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB2"],
+        "relatedStepIds": [
+          "PB2"
+        ],
         "sourceHandle": "bottom",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
       "inspector": {
         "rationale": "F_G0_out is the sole planner-context ingress after deterministic classification, redaction, refusal, and trust assignment.",
-        "constraints": ["No contextual data may reach DEC_R2 without traversing DEC_G0."]
+        "constraints": [
+          "No contextual data may reach DEC_R2 without traversing DEC_G0."
+        ]
       }
     },
     {
       "id": "F3e",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_R2",
       "target": "DEC_G1A",
@@ -1643,11 +2495,24 @@
       "label": "raw candidate plan object",
       "displayLabel": "Submit plan",
       "direction": "ltr",
-      "standardIds": ["OWASPLMM25"],
-      "claimIds": ["C3", "C4", "C6"],
-      "tags": ["policy-path", "write-path", "guardrail"],
+      "standardIds": [
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C3",
+        "C4",
+        "C6"
+      ],
+      "tags": [
+        "policy-path",
+        "write-path",
+        "guardrail"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB1", "PB2"],
+        "relatedStepIds": [
+          "PB1",
+          "PB2"
+        ],
         "sourceHandle": "bottom",
         "targetHandle": "left",
         "highlightGroup": "policy"
@@ -1658,7 +2523,9 @@
     },
     {
       "id": "F_G1A_pass",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_G1A",
       "target": "DEC_G1",
@@ -1667,9 +2534,19 @@
       "label": "schema-valid plan object",
       "displayLabel": "Pass schema",
       "direction": "ttb",
-      "standardIds": ["OWASPLMM25", "NISTAIRMF10"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["policy-path", "write-path", "guardrail"],
+      "standardIds": [
+        "OWASPLMM25",
+        "NISTAIRMF10"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "policy-path",
+        "write-path",
+        "guardrail"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "bottom",
@@ -1678,12 +2555,16 @@
       },
       "inspector": {
         "rationale": "F_G1A_pass carries only schema-conformant plan objects to the Policy-Guard.",
-        "constraints": ["Only structural plan fields may traverse this edge."]
+        "constraints": [
+          "Only structural plan fields may traverse this edge."
+        ]
       }
     },
     {
       "id": "F_G1A_reject",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_G1A",
       "target": "DEC_R2",
@@ -1692,9 +2573,16 @@
       "label": "schema rejection + field/error feedback",
       "displayLabel": "Schema reject",
       "direction": "rtl",
-      "standardIds": ["OWASPLMM25"],
-      "claimIds": ["C6"],
-      "tags": ["policy-path", "guardrail"],
+      "standardIds": [
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C6"
+      ],
+      "tags": [
+        "policy-path",
+        "guardrail"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "left",
@@ -1703,12 +2591,16 @@
       },
       "inspector": {
         "rationale": "F_G1A_reject returns machine-readable schema failures to the planner without exposing downstream deterministic logic as free text.",
-        "constraints": ["Reject payloads must be machine-readable and bounded."]
+        "constraints": [
+          "Reject payloads must be machine-readable and bounded."
+        ]
       }
     },
     {
       "id": "F3f",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_G1",
       "target": "DEC_G2",
@@ -1717,11 +2609,23 @@
       "label": "policy-compliant candidates",
       "displayLabel": "Pass plan",
       "direction": "ltr",
-      "standardIds": ["NISTAIRMF10", "OPC1000018"],
-      "claimIds": ["C3", "C4"],
-      "tags": ["policy-path", "write-path"],
+      "standardIds": [
+        "NISTAIRMF10",
+        "OPC1000018"
+      ],
+      "claimIds": [
+        "C3",
+        "C4"
+      ],
+      "tags": [
+        "policy-path",
+        "write-path"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB1", "PB2"],
+        "relatedStepIds": [
+          "PB1",
+          "PB2"
+        ],
         "sourceHandle": "right",
         "targetHandle": "left",
         "highlightGroup": "policy"
@@ -1732,7 +2636,9 @@
     },
     {
       "id": "F3f_reject",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_G1",
       "target": "DEC_R2",
@@ -1741,23 +2647,36 @@
       "label": "rejection + constraint feedback",
       "displayLabel": "Reject",
       "direction": "rtl",
-      "standardIds": ["NISTAIRMF10"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["policy-path"],
+      "standardIds": [
+        "NISTAIRMF10"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "policy-path"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB4"],
+        "relatedStepIds": [
+          "PB4"
+        ],
         "sourceHandle": "bottom",
         "targetHandle": "left",
         "highlightGroup": "policy"
       },
       "inspector": {
         "rationale": "F3f_reject closes the ReAct loop so the planner can observe policy rejections and revise its proposal.",
-        "constraints": ["Must remain dashed and visually below F3e."]
+        "constraints": [
+          "Must remain dashed and visually below F3e."
+        ]
       }
     },
     {
       "id": "F3g",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_K1",
       "target": "DEC_G2",
@@ -1766,24 +2685,40 @@
       "label": "property bounds + constraints",
       "displayLabel": "Provide bounds",
       "direction": "ltr",
-      "standardIds": ["IEC63278", "IDTA01001V3"],
-      "claimIds": ["C3"],
-      "tags": ["policy-path"],
+      "standardIds": [
+        "IEC63278",
+        "IDTA01001V3"
+      ],
+      "claimIds": [
+        "C3"
+      ],
+      "tags": [
+        "policy-path"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB2", "PB5"],
+        "relatedStepIds": [
+          "PB2",
+          "PB5"
+        ],
         "sourceHandle": "bottom",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
       "inspector": {
         "rationale": "F3g supplies AAS-typed property bounds, units, and constraints to deterministic validation.",
-        "notes": ["Explains AAS bounds and typed property constraints."],
-        "constraints": ["Source must remain DEC_K1."]
+        "notes": [
+          "Explains AAS bounds and typed property constraints."
+        ],
+        "constraints": [
+          "Source must remain DEC_K1."
+        ]
       }
     },
     {
       "id": "F3h",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "S2",
       "target": "DEC_G2",
@@ -1792,24 +2727,41 @@
       "label": "current values snapshot (t0)",
       "displayLabel": "Load t0 vals",
       "direction": "ttb",
-      "standardIds": ["PADIM102"],
-      "claimIds": ["C3"],
-      "tags": ["policy-path", "telemetry-path", "t0"],
+      "standardIds": [
+        "PADIM102"
+      ],
+      "claimIds": [
+        "C3"
+      ],
+      "tags": [
+        "policy-path",
+        "telemetry-path",
+        "t0"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB2", "PB5"],
+        "relatedStepIds": [
+          "PB2",
+          "PB5"
+        ],
         "sourceHandle": "right",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
       "inspector": {
         "rationale": "F3h provides the same frozen t0 values used by F3d so validation and reasoning observe the same plant snapshot.",
-        "notes": ["Shares the same t0 snapshot group as F3d."],
-        "constraints": ["Must remain synchronized with F3d."]
+        "notes": [
+          "Shares the same t0 snapshot group as F3d."
+        ],
+        "constraints": [
+          "Must remain synchronized with F3d."
+        ]
       }
     },
     {
       "id": "F3i",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "VOI",
       "target": "DEC_G2",
@@ -1818,24 +2770,41 @@
       "label": "permitted write scope / OPC UA session roles",
       "displayLabel": "Limit writes",
       "direction": "ltr",
-      "standardIds": ["NE178", "OPC1000018"],
-      "claimIds": ["C3", "C4"],
-      "tags": ["policy-path", "write-path"],
+      "standardIds": [
+        "NE178",
+        "OPC1000018"
+      ],
+      "claimIds": [
+        "C3",
+        "C4"
+      ],
+      "tags": [
+        "policy-path",
+        "write-path"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB1"],
+        "relatedStepIds": [
+          "PB1"
+        ],
         "sourceHandle": "right",
         "targetHandle": "left",
         "highlightGroup": "write"
       },
       "inspector": {
         "rationale": "F3i originates at the VoR Interface because the gateway-side enforcement point owns the permitted write scope and session role knowledge.",
-        "notes": ["This corrected source prevents the architecture from implying client-side self-asserted authorization."],
-        "constraints": ["Source must remain VOI."]
+        "notes": [
+          "This corrected source prevents the architecture from implying client-side self-asserted authorization."
+        ],
+        "constraints": [
+          "Source must remain VOI."
+        ]
       }
     },
     {
       "id": "F_T1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_T0",
       "target": "S1",
@@ -1845,9 +2814,20 @@
       "displayLabel": "Run read",
       "detail": "Observation return traverses F_T0_obs -> F_G0_out",
       "direction": "btt",
-      "standardIds": ["OPC62541", "OWASPLMM25"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["policy-path", "telemetry-path", "tool-call", "guardrail"],
+      "standardIds": [
+        "OPC62541",
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "policy-path",
+        "telemetry-path",
+        "tool-call",
+        "guardrail"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "left",
@@ -1856,12 +2836,16 @@
       },
       "inspector": {
         "rationale": "F_T1 is now dispatched only by the Tool Guard / Broker so read-only guarantees and request schemas are enforced before the OPC UA client is queried.",
-        "constraints": ["Tool calls are dotted, never dashed."]
+        "constraints": [
+          "Tool calls are dotted, never dashed."
+        ]
       }
     },
     {
       "id": "F_T2",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_T0",
       "target": "DEC_K1",
@@ -1871,9 +2855,20 @@
       "displayLabel": "Query AAS",
       "detail": "Observation return traverses F_T0_obs -> F_G0_out",
       "direction": "rtl",
-      "standardIds": ["IEC63278", "IDTAPART2311", "OWASPLMM25"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["policy-path", "tool-call", "guardrail"],
+      "standardIds": [
+        "IEC63278",
+        "IDTAPART2311",
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "policy-path",
+        "tool-call",
+        "guardrail"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "left",
@@ -1882,12 +2877,16 @@
       },
       "inspector": {
         "rationale": "F_T2 is now dispatched only by the Tool Guard / Broker so targeted AAS lookups also remain behind deterministic request validation.",
-        "constraints": ["Tool calls are dotted, never dashed."]
+        "constraints": [
+          "Tool calls are dotted, never dashed."
+        ]
       }
     },
     {
       "id": "F_T0_req",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_R2",
       "target": "DEC_T0",
@@ -1896,9 +2895,17 @@
       "label": "tool request (allowlist + schema checked)",
       "displayLabel": "Broker tools",
       "direction": "btt",
-      "standardIds": ["OWASPLMM25"],
-      "claimIds": ["C6"],
-      "tags": ["policy-path", "tool-call", "guardrail"],
+      "standardIds": [
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C6"
+      ],
+      "tags": [
+        "policy-path",
+        "tool-call",
+        "guardrail"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "top",
@@ -1907,12 +2914,16 @@
       },
       "inspector": {
         "rationale": "F_T0_req is the only path through which the planner can request external tools.",
-        "constraints": ["DEC_R2 must not source F_T1 or F_T2 directly."]
+        "constraints": [
+          "DEC_R2 must not source F_T1 or F_T2 directly."
+        ]
       }
     },
     {
       "id": "F_T0_obs",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_T0",
       "target": "DEC_G0",
@@ -1921,9 +2932,17 @@
       "label": "guarded tool observation",
       "displayLabel": "Guard obs",
       "direction": "rtl",
-      "standardIds": ["OWASPLMM25"],
-      "claimIds": ["C3", "C6"],
-      "tags": ["policy-path", "guardrail"],
+      "standardIds": [
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C3",
+        "C6"
+      ],
+      "tags": [
+        "policy-path",
+        "guardrail"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "top",
@@ -1932,12 +2951,16 @@
       },
       "inspector": {
         "rationale": "F_T0_obs forces tool observations back through the same deterministic context gate as retrieved and sensed data.",
-        "constraints": ["Tool observations may not re-enter the planner directly."]
+        "constraints": [
+          "Tool observations may not re-enter the planner directly."
+        ]
       }
     },
     {
       "id": "F4",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_G2",
       "target": "DEC_H1",
@@ -1946,9 +2969,19 @@
       "label": "validated candidate plan (approval pending)",
       "displayLabel": "Await approval",
       "direction": "rtl",
-      "standardIds": ["OWASPLMM25", "NISTAI6001", "OPC1000018"],
-      "claimIds": ["C4", "C6"],
-      "tags": ["write-path", "guardrail"],
+      "standardIds": [
+        "OWASPLMM25",
+        "NISTAI6001",
+        "OPC1000018"
+      ],
+      "claimIds": [
+        "C4",
+        "C6"
+      ],
+      "tags": [
+        "write-path",
+        "guardrail"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "bottom",
@@ -1961,7 +2994,9 @@
     },
     {
       "id": "F_H1_revalidate",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_H1",
       "target": "DEC_G2",
@@ -1970,9 +3005,19 @@
       "label": "expired approval / stale snapshot -> revalidate",
       "displayLabel": "Revalidate",
       "direction": "ltr",
-      "standardIds": ["OWASPLMM25", "NISTAI6001", "OPC1000018"],
-      "claimIds": ["C4", "C6"],
-      "tags": ["write-path", "guardrail"],
+      "standardIds": [
+        "OWASPLMM25",
+        "NISTAI6001",
+        "OPC1000018"
+      ],
+      "claimIds": [
+        "C4",
+        "C6"
+      ],
+      "tags": [
+        "write-path",
+        "guardrail"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "right",
@@ -1981,12 +3026,16 @@
       },
       "inspector": {
         "rationale": "F_H1_revalidate returns an approval-window failure to the deterministic validators so freshness and snapshot constraints are re-checked before any writeback can proceed.",
-        "constraints": ["Applies only to expired-approval or stale-snapshot outcomes."]
+        "constraints": [
+          "Applies only to expired-approval or stale-snapshot outcomes."
+        ]
       }
     },
     {
       "id": "F_H1_reject",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_H1",
       "target": "DEC_R2",
@@ -1995,9 +3044,18 @@
       "label": "operator rejected -> revise plan",
       "displayLabel": "Reject plan",
       "direction": "btt",
-      "standardIds": ["OWASPLMM25", "NISTAI6001"],
-      "claimIds": ["C4", "C6"],
-      "tags": ["write-path", "guardrail"],
+      "standardIds": [
+        "OWASPLMM25",
+        "NISTAI6001"
+      ],
+      "claimIds": [
+        "C4",
+        "C6"
+      ],
+      "tags": [
+        "write-path",
+        "guardrail"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "top",
@@ -2006,12 +3064,16 @@
       },
       "inspector": {
         "rationale": "F_H1_reject routes an explicit human rejection back to the planner so the proposal can be revised without implying any execution path.",
-        "constraints": ["Operator rejection must not bypass the replanning loop."]
+        "constraints": [
+          "Operator rejection must not bypass the replanning loop."
+        ]
       }
     },
     {
       "id": "F_H1_pass",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Act",
       "source": "DEC_H1",
       "target": "ACT1",
@@ -2020,9 +3082,18 @@
       "label": "approved plan bound to plan_hash + snapshot_id + expires_at",
       "displayLabel": "Approve plan",
       "direction": "ttb",
-      "standardIds": ["OWASPLMM25", "NISTAI6001"],
-      "claimIds": ["C4", "C6"],
-      "tags": ["write-path", "guardrail"],
+      "standardIds": [
+        "OWASPLMM25",
+        "NISTAI6001"
+      ],
+      "claimIds": [
+        "C4",
+        "C6"
+      ],
+      "tags": [
+        "write-path",
+        "guardrail"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "bottom",
@@ -2031,12 +3102,16 @@
       },
       "inspector": {
         "rationale": "F_H1_pass is the only validation edge that may enter ACT1; approval is bound to a specific plan hash, snapshot, and expiry window.",
-        "constraints": ["F_H1_pass is the only validation edge allowed to target ACT1."]
+        "constraints": [
+          "F_H1_pass is the only validation edge allowed to target ACT1."
+        ]
       }
     },
     {
       "id": "F_M1_G0",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_G0",
       "target": "DEC_M1",
@@ -2045,9 +3120,16 @@
       "label": "input/context guard events",
       "displayLabel": "Log input",
       "direction": "ltr",
-      "standardIds": ["NISTAI6001"],
-      "claimIds": ["C6"],
-      "tags": ["guardrail", "audit"],
+      "standardIds": [
+        "NISTAI6001"
+      ],
+      "claimIds": [
+        "C6"
+      ],
+      "tags": [
+        "guardrail",
+        "audit"
+      ],
       "interactive": {
         "optional": true,
         "highlightGroup": "policy"
@@ -2058,7 +3140,9 @@
     },
     {
       "id": "F_M1_R0",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_R0",
       "target": "DEC_M1",
@@ -2067,9 +3151,16 @@
       "label": "retrieval guard events",
       "displayLabel": "Log retrieval",
       "direction": "ltr",
-      "standardIds": ["NISTAI6001"],
-      "claimIds": ["C6"],
-      "tags": ["guardrail", "audit"],
+      "standardIds": [
+        "NISTAI6001"
+      ],
+      "claimIds": [
+        "C6"
+      ],
+      "tags": [
+        "guardrail",
+        "audit"
+      ],
       "interactive": {
         "optional": true,
         "highlightGroup": "policy"
@@ -2080,7 +3171,9 @@
     },
     {
       "id": "F_M1_T0",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_T0",
       "target": "DEC_M1",
@@ -2089,9 +3182,16 @@
       "label": "tool broker events",
       "displayLabel": "Log tools",
       "direction": "ltr",
-      "standardIds": ["NISTAI6001"],
-      "claimIds": ["C6"],
-      "tags": ["guardrail", "audit"],
+      "standardIds": [
+        "NISTAI6001"
+      ],
+      "claimIds": [
+        "C6"
+      ],
+      "tags": [
+        "guardrail",
+        "audit"
+      ],
       "interactive": {
         "optional": true,
         "highlightGroup": "policy"
@@ -2102,7 +3202,9 @@
     },
     {
       "id": "F_M1_G1A",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_G1A",
       "target": "DEC_M1",
@@ -2111,9 +3213,16 @@
       "label": "schema guard events",
       "displayLabel": "Log schema",
       "direction": "ltr",
-      "standardIds": ["NISTAI6001"],
-      "claimIds": ["C6"],
-      "tags": ["guardrail", "audit"],
+      "standardIds": [
+        "NISTAI6001"
+      ],
+      "claimIds": [
+        "C6"
+      ],
+      "tags": [
+        "guardrail",
+        "audit"
+      ],
       "interactive": {
         "optional": true,
         "highlightGroup": "policy"
@@ -2124,7 +3233,9 @@
     },
     {
       "id": "F_M1_H1",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Decide",
       "source": "DEC_H1",
       "target": "DEC_M1",
@@ -2133,9 +3244,16 @@
       "label": "approval gate events",
       "displayLabel": "Log approval",
       "direction": "ltr",
-      "standardIds": ["NISTAI6001"],
-      "claimIds": ["C6"],
-      "tags": ["guardrail", "audit"],
+      "standardIds": [
+        "NISTAI6001"
+      ],
+      "claimIds": [
+        "C6"
+      ],
+      "tags": [
+        "guardrail",
+        "audit"
+      ],
       "interactive": {
         "optional": true,
         "highlightGroup": "policy"
@@ -2146,7 +3264,9 @@
     },
     {
       "id": "F_M1_out",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Act",
       "source": "DEC_M1",
       "target": "ACT3",
@@ -2155,9 +3275,17 @@
       "label": "guardrail audit stream",
       "displayLabel": "Guardrail log",
       "direction": "ttb",
-      "standardIds": ["NISTAI6001", "OWASPLMM25"],
-      "claimIds": ["C6"],
-      "tags": ["guardrail", "audit"],
+      "standardIds": [
+        "NISTAI6001",
+        "OWASPLMM25"
+      ],
+      "claimIds": [
+        "C6"
+      ],
+      "tags": [
+        "guardrail",
+        "audit"
+      ],
       "interactive": {
         "sourceHandle": "bottom",
         "targetHandle": "top",
@@ -2169,7 +3297,9 @@
     },
     {
       "id": "F_KPI",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Act",
       "source": "S2",
       "target": "ACT2",
@@ -2178,9 +3308,15 @@
       "label": "KPI inputs (harmonised signals)",
       "displayLabel": "Feed KPI",
       "direction": "ttb",
-      "standardIds": ["OPC1000014"],
-      "claimIds": ["C5"],
-      "tags": ["telemetry-path"],
+      "standardIds": [
+        "OPC1000014"
+      ],
+      "claimIds": [
+        "C5"
+      ],
+      "tags": [
+        "telemetry-path"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "right",
@@ -2189,12 +3325,16 @@
       },
       "inspector": {
         "rationale": "F_KPI shows that telemetry publication derives from harmonized plant signals, not from actuation outcomes.",
-        "constraints": ["KPI publication must remain decoupled from the VoR path."]
+        "constraints": [
+          "KPI publication must remain decoupled from the VoR path."
+        ]
       }
     },
     {
       "id": "F_AUDIT",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Act",
       "source": "ACT1",
       "target": "ACT3",
@@ -2203,11 +3343,21 @@
       "label": "decision event; VoR request record",
       "displayLabel": "Record VoR",
       "direction": "ltr",
-      "standardIds": ["NE178", "NISTAIRMF10"],
-      "claimIds": ["C4"],
-      "tags": ["write-path", "audit"],
+      "standardIds": [
+        "NE178",
+        "NISTAIRMF10"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "write-path",
+        "audit"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB5"],
+        "relatedStepIds": [
+          "PB5"
+        ],
         "sourceHandle": "right",
         "targetHandle": "left",
         "highlightGroup": "write"
@@ -2218,7 +3368,9 @@
     },
     {
       "id": "F5",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Act",
       "source": "ACT1",
       "target": "VOI",
@@ -2227,24 +3379,45 @@
       "label": "VoR request (non-plant-specific, authenticated)",
       "displayLabel": "Send request",
       "direction": "rtl",
-      "standardIds": ["NE178"],
-      "claimIds": ["C1", "C4"],
-      "tags": ["write-path", "vor"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C1",
+        "C4"
+      ],
+      "tags": [
+        "write-path",
+        "vor"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB1", "PB2", "PB3", "PB4", "PB5"],
+        "relatedStepIds": [
+          "PB1",
+          "PB2",
+          "PB3",
+          "PB4",
+          "PB5"
+        ],
         "sourceHandle": "left",
         "targetHandle": "right",
         "highlightGroup": "write"
       },
       "inspector": {
         "rationale": "F5 is the exclusive write-back initiation path and therefore the only bold cross-boundary edge in the figure.",
-        "notes": ["Exclusive write-back initiation path."],
-        "constraints": ["Must remain bold.", "Must route from ACT1 to VOI only."]
+        "notes": [
+          "Exclusive write-back initiation path."
+        ],
+        "constraints": [
+          "Must remain bold.",
+          "Must route from ACT1 to VOI only."
+        ]
       }
     },
     {
       "id": "F6",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Act",
       "source": "VOI",
       "target": "A3",
@@ -2253,24 +3426,40 @@
       "label": "mapped + verified change instruction",
       "displayLabel": "Send change",
       "direction": "ltr",
-      "standardIds": ["NE178"],
-      "claimIds": ["C4"],
-      "tags": ["write-path", "vor"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "write-path",
+        "vor"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB5"],
+        "relatedStepIds": [
+          "PB5"
+        ],
         "sourceHandle": "left",
         "targetHandle": "right",
         "highlightGroup": "write"
       },
       "inspector": {
         "rationale": "F6 carries the mapped and verified instruction into the CPC Change Handler, not into the read-only CPC Data Interface.",
-        "notes": ["Non-plant-specific status is not carried here; only the change instruction is."],
-        "constraints": ["Target must remain A3.", "Implemented as solid medium, not dashed."]
+        "notes": [
+          "Non-plant-specific status is not carried here; only the change instruction is."
+        ],
+        "constraints": [
+          "Target must remain A3.",
+          "Implemented as solid medium, not dashed."
+        ]
       }
     },
     {
       "id": "F_VoR_ACK",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Act",
       "source": "VOI",
       "target": "ACT1",
@@ -2280,24 +3469,40 @@
       "displayLabel": "Status",
       "detail": "non-plant-specific; no CPC architecture disclosed",
       "direction": "rtl",
-      "standardIds": ["NE178"],
-      "claimIds": ["C4"],
-      "tags": ["write-path", "vor", "status"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "write-path",
+        "vor",
+        "status"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB5"],
+        "relatedStepIds": [
+          "PB5"
+        ],
         "sourceHandle": "right",
         "targetHandle": "left",
         "highlightGroup": "write"
       },
       "inspector": {
         "rationale": "F_VoR_ACK returns a limited, non-plant-specific status to the request composer without disclosing CPC internals.",
-        "notes": ["Non-plant-specific status semantics only."],
-        "constraints": ["Must remain dashed and below F5."]
+        "notes": [
+          "Non-plant-specific status semantics only."
+        ],
+        "constraints": [
+          "Must remain dashed and below F5."
+        ]
       }
     },
     {
       "id": "F_CPC_INT",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "source": "A3",
       "target": "A1",
       "semantic": "writeback",
@@ -2306,10 +3511,16 @@
       "displayLabel": "Execute",
       "direction": "ttb",
       "standardIds": [],
-      "claimIds": ["C4"],
-      "tags": ["write-path"],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "write-path"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB5"],
+        "relatedStepIds": [
+          "PB5"
+        ],
         "sourceHandle": "left",
         "targetHandle": "left",
         "highlightGroup": "write",
@@ -2317,12 +3528,16 @@
       },
       "inspector": {
         "rationale": "F_CPC_INT is the optional internal CPC execution edge showing how the change handler hands the verified instruction into the CPC system.",
-        "constraints": ["Optional within-lane edge."]
+        "constraints": [
+          "Optional within-lane edge."
+        ]
       }
     },
     {
       "id": "F7a",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "band": "Act",
       "source": "ACT2",
       "target": "C1",
@@ -2332,9 +3547,16 @@
       "displayLabel": "Publish MQTT",
       "detail": "MQTT mapping, Part 14",
       "direction": "ltr",
-      "standardIds": ["OPC1000014", "MQTT5"],
-      "claimIds": ["C5"],
-      "tags": ["telemetry-path"],
+      "standardIds": [
+        "OPC1000014",
+        "MQTT5"
+      ],
+      "claimIds": [
+        "C5"
+      ],
+      "tags": [
+        "telemetry-path"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "right",
@@ -2347,7 +3569,9 @@
     },
     {
       "id": "F7b",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "source": "C1",
       "target": "C2",
       "semantic": "kpi",
@@ -2355,9 +3579,15 @@
       "label": "subscribe / consume",
       "displayLabel": "Consume",
       "direction": "ltr",
-      "standardIds": ["MQTT5"],
-      "claimIds": ["C5"],
-      "tags": ["telemetry-path"],
+      "standardIds": [
+        "MQTT5"
+      ],
+      "claimIds": [
+        "C5"
+      ],
+      "tags": [
+        "telemetry-path"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "bottom",
@@ -2370,7 +3600,9 @@
     },
     {
       "id": "F7_sub",
-      "panel": ["architecture"],
+      "panel": [
+        "architecture"
+      ],
       "source": "C2",
       "target": "C1",
       "semantic": "subscription",
@@ -2378,9 +3610,16 @@
       "label": "subscribe",
       "displayLabel": "Subscribe",
       "direction": "rtl",
-      "standardIds": ["MQTT5"],
-      "claimIds": ["C5"],
-      "tags": ["telemetry-path", "subscription"],
+      "standardIds": [
+        "MQTT5"
+      ],
+      "claimIds": [
+        "C5"
+      ],
+      "tags": [
+        "telemetry-path",
+        "subscription"
+      ],
       "interactive": {
         "relatedStepIds": [],
         "sourceHandle": "top",
@@ -2394,7 +3633,9 @@
     },
     {
       "id": "PB_F1",
-      "panel": ["vor-sequence"],
+      "panel": [
+        "vor-sequence"
+      ],
       "source": "PB1",
       "target": "PB2",
       "semantic": "sequence",
@@ -2402,11 +3643,21 @@
       "label": "1 → 2",
       "displayLabel": "Authorise",
       "direction": "ltr",
-      "standardIds": ["NE178"],
-      "claimIds": ["C4"],
-      "tags": ["write-path", "sequence"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "write-path",
+        "sequence"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB1", "PB2"],
+        "relatedStepIds": [
+          "PB1",
+          "PB2"
+        ],
         "highlightGroup": "write"
       },
       "inspector": {
@@ -2415,7 +3666,9 @@
     },
     {
       "id": "PB_F2",
-      "panel": ["vor-sequence"],
+      "panel": [
+        "vor-sequence"
+      ],
       "source": "PB2",
       "target": "PB3",
       "semantic": "sequence",
@@ -2423,11 +3676,21 @@
       "label": "2 → 3",
       "displayLabel": "Map request",
       "direction": "ltr",
-      "standardIds": ["NE178"],
-      "claimIds": ["C4"],
-      "tags": ["write-path", "sequence"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "write-path",
+        "sequence"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB2", "PB3"],
+        "relatedStepIds": [
+          "PB2",
+          "PB3"
+        ],
         "highlightGroup": "write"
       },
       "inspector": {
@@ -2436,7 +3699,9 @@
     },
     {
       "id": "PB_F3",
-      "panel": ["vor-sequence"],
+      "panel": [
+        "vor-sequence"
+      ],
       "source": "PB3",
       "target": "PB4",
       "semantic": "sequence",
@@ -2444,11 +3709,21 @@
       "label": "3 → 4",
       "displayLabel": "Accept request",
       "direction": "ltr",
-      "standardIds": ["NE178"],
-      "claimIds": ["C4"],
-      "tags": ["write-path", "sequence"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "write-path",
+        "sequence"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB3", "PB4"],
+        "relatedStepIds": [
+          "PB3",
+          "PB4"
+        ],
         "highlightGroup": "write"
       },
       "inspector": {
@@ -2457,7 +3732,9 @@
     },
     {
       "id": "PB_F4",
-      "panel": ["vor-sequence"],
+      "panel": [
+        "vor-sequence"
+      ],
       "source": "PB4",
       "target": "PB5",
       "semantic": "sequence",
@@ -2465,11 +3742,21 @@
       "label": "4 → 5",
       "displayLabel": "Execute request",
       "direction": "ltr",
-      "standardIds": ["NE178"],
-      "claimIds": ["C4"],
-      "tags": ["write-path", "sequence"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "write-path",
+        "sequence"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB4", "PB5"],
+        "relatedStepIds": [
+          "PB4",
+          "PB5"
+        ],
         "highlightGroup": "write"
       },
       "inspector": {
@@ -2478,7 +3765,9 @@
     },
     {
       "id": "PB_ACK",
-      "panel": ["vor-sequence"],
+      "panel": [
+        "vor-sequence"
+      ],
       "source": "PB5",
       "target": "PB_AEA",
       "semantic": "status-ack",
@@ -2487,11 +3776,21 @@
       "displayLabel": "Return status",
       "detail": "non-plant-specific; no CPC addresses or asset IDs disclosed",
       "direction": "rtl",
-      "standardIds": ["NE178"],
-      "claimIds": ["C4"],
-      "tags": ["write-path", "sequence", "status"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "write-path",
+        "sequence",
+        "status"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB5"],
+        "relatedStepIds": [
+          "PB5"
+        ],
         "highlightGroup": "write"
       },
       "inspector": {
@@ -2500,7 +3799,9 @@
     },
     {
       "id": "PB_REJECT",
-      "panel": ["vor-sequence"],
+      "panel": [
+        "vor-sequence"
+      ],
       "source": "PB4",
       "target": "PB_REJECT_OUT",
       "semantic": "rejection",
@@ -2508,11 +3809,21 @@
       "label": "rejected → VoR Request Composer notified",
       "displayLabel": "Return rejection",
       "direction": "ttb",
-      "standardIds": ["NE178"],
-      "claimIds": ["C4"],
-      "tags": ["write-path", "sequence", "status"],
+      "standardIds": [
+        "NE178"
+      ],
+      "claimIds": [
+        "C4"
+      ],
+      "tags": [
+        "write-path",
+        "sequence",
+        "status"
+      ],
       "interactive": {
-        "relatedStepIds": ["PB4"],
+        "relatedStepIds": [
+          "PB4"
+        ],
         "highlightGroup": "write"
       },
       "inspector": {
@@ -2525,35 +3836,74 @@
       "id": "PB1",
       "title": "Auth & Authorisation",
       "summary": "Verify the AEA identity certificate and check write-scope against the permitted session role.",
-      "linkedNodeIds": ["ACT1", "VOI", "DEC_G2"],
-      "linkedEdgeIds": ["F5", "F3i", "PB_F1"],
+      "linkedNodeIds": [
+        "ACT1",
+        "VOI",
+        "DEC_G2"
+      ],
+      "linkedEdgeIds": [
+        "F5",
+        "F3i",
+        "PB_F1"
+      ],
       "order": 1,
-      "notes": ["Links to F3i and the gateway-assigned write scope."]
+      "notes": [
+        "Links to F3i and the gateway-assigned write scope."
+      ]
     },
     {
       "id": "PB2",
       "title": "Semantic Verification",
       "summary": "Validate the request payload against AAS property types, unit dimensions, and semantic identifiers.",
-      "linkedNodeIds": ["VOI", "DEC_K1", "DEC_G2"],
-      "linkedEdgeIds": ["PB_F1", "PB_F2", "F3g", "F3h"],
+      "linkedNodeIds": [
+        "VOI",
+        "DEC_K1",
+        "DEC_G2"
+      ],
+      "linkedEdgeIds": [
+        "PB_F1",
+        "PB_F2",
+        "F3g",
+        "F3h"
+      ],
       "order": 2,
-      "notes": ["Uses AAS-typed property bounds and the shared t0 snapshot."]
+      "notes": [
+        "Uses AAS-typed property bounds and the shared t0 snapshot."
+      ]
     },
     {
       "id": "PB3",
       "title": "Mapping",
       "summary": "Translate the abstract non-plant-specific request into concrete DCS or PLC addresses and asset references.",
-      "linkedNodeIds": ["VOI", "A3"],
-      "linkedEdgeIds": ["PB_F2", "PB_F3"],
+      "linkedNodeIds": [
+        "VOI",
+        "A3"
+      ],
+      "linkedEdgeIds": [
+        "PB_F2",
+        "PB_F3"
+      ],
       "order": 3,
-      "notes": ["Crosses conceptually into CPC territory before acceptance."]
+      "notes": [
+        "Crosses conceptually into CPC territory before acceptance."
+      ]
     },
     {
       "id": "PB4",
       "title": "Acceptance",
       "summary": "Evaluate whether the mapped request is accepted by the configured human or automated plausibility gate on the NE 178 / gateway side.",
-      "linkedNodeIds": ["VOI", "DEC_K2", "DEC_G1", "PB_REJECT_OUT"],
-      "linkedEdgeIds": ["PB_F3", "PB_F4", "PB_REJECT", "F3b'"],
+      "linkedNodeIds": [
+        "VOI",
+        "DEC_K2",
+        "DEC_G1",
+        "PB_REJECT_OUT"
+      ],
+      "linkedEdgeIds": [
+        "PB_F3",
+        "PB_F4",
+        "PB_REJECT",
+        "F3b'"
+      ],
       "order": 4,
       "notes": [
         "If any endpoint cannot accept the request, the entire transaction is rejected atomically.",
@@ -2564,47 +3914,120 @@
       "id": "PB5",
       "title": "Mapping Verification + Execution",
       "summary": "Verify the mapped instruction one final time, execute atomically, and generate status plus audit records.",
-      "linkedNodeIds": ["VOI", "A3", "ACT3", "PB_AEA"],
-      "linkedEdgeIds": ["PB_F4", "PB_ACK", "F6", "F_AUDIT", "F_VoR_ACK"],
+      "linkedNodeIds": [
+        "VOI",
+        "A3",
+        "ACT3",
+        "PB_AEA"
+      ],
+      "linkedEdgeIds": [
+        "PB_F4",
+        "PB_ACK",
+        "F6",
+        "F_AUDIT",
+        "F_VoR_ACK"
+      ],
       "order": 5,
-      "notes": ["PB_ACK corresponds directly to F_VoR_ACK in Panel A."]
+      "notes": [
+        "PB_ACK corresponds directly to F_VoR_ACK in Panel A."
+      ]
     }
   ],
   "interactionRules": [
     {
       "id": "RULE_VOR_CHAIN",
       "title": "VoR request chain",
-      "triggerIds": ["edge:F5", "node:ACT1", "node:VOI"],
-      "relatedNodeIds": ["node:DEC_H1", "node:ACT1", "node:VOI", "node:A3", "node:ACT3"],
-      "relatedEdgeIds": ["edge:F4", "edge:F_H1_revalidate", "edge:F_H1_reject", "edge:F_H1_pass", "edge:F5", "edge:F6", "edge:F_VoR_ACK", "edge:F_AUDIT"],
-      "relatedStepIds": ["step:PB1", "step:PB2", "step:PB3", "step:PB4", "step:PB5"],
+      "triggerIds": [
+        "edge:F5",
+        "node:ACT1",
+        "node:VOI"
+      ],
+      "relatedNodeIds": [
+        "node:DEC_H1",
+        "node:ACT1",
+        "node:VOI",
+        "node:A3",
+        "node:ACT3"
+      ],
+      "relatedEdgeIds": [
+        "edge:F4",
+        "edge:F_H1_revalidate",
+        "edge:F_H1_reject",
+        "edge:F_H1_pass",
+        "edge:F5",
+        "edge:F6",
+        "edge:F_VoR_ACK",
+        "edge:F_AUDIT"
+      ],
+      "relatedStepIds": [
+        "step:PB1",
+        "step:PB2",
+        "step:PB3",
+        "step:PB4",
+        "step:PB5"
+      ],
       "focusPath": "write"
     },
     {
       "id": "RULE_VOR_EXECUTION",
       "title": "VoR execution completion",
-      "triggerIds": ["edge:F6", "node:A3"],
-      "relatedNodeIds": ["node:VOI", "node:A3", "node:ACT3"],
-      "relatedEdgeIds": ["edge:F6", "edge:F_AUDIT", "edge:PB_F4", "edge:PB_ACK"],
-      "relatedStepIds": ["step:PB5"],
+      "triggerIds": [
+        "edge:F6",
+        "node:A3"
+      ],
+      "relatedNodeIds": [
+        "node:VOI",
+        "node:A3",
+        "node:ACT3"
+      ],
+      "relatedEdgeIds": [
+        "edge:F6",
+        "edge:F_AUDIT",
+        "edge:PB_F4",
+        "edge:PB_ACK"
+      ],
+      "relatedStepIds": [
+        "step:PB5"
+      ],
       "focusPath": "write"
     },
     {
       "id": "RULE_VOR_ACK",
       "title": "VoR acknowledgement",
-      "triggerIds": ["edge:F_VoR_ACK"],
-      "relatedNodeIds": ["node:VOI", "node:ACT1"],
-      "relatedEdgeIds": ["edge:F_VoR_ACK", "edge:PB_ACK"],
-      "relatedStepIds": ["step:PB5"],
+      "triggerIds": [
+        "edge:F_VoR_ACK"
+      ],
+      "relatedNodeIds": [
+        "node:VOI",
+        "node:ACT1"
+      ],
+      "relatedEdgeIds": [
+        "edge:F_VoR_ACK",
+        "edge:PB_ACK"
+      ],
+      "relatedStepIds": [
+        "step:PB5"
+      ],
       "focusPath": "write"
     },
     {
       "id": "RULE_VOR_REJECT",
       "title": "Acceptance rejection",
-      "triggerIds": ["edge:PB_REJECT"],
-      "relatedNodeIds": ["node:ACT1", "node:VOI", "node:DEC_G1"],
-      "relatedEdgeIds": ["edge:PB_REJECT", "edge:F3f_reject"],
-      "relatedStepIds": ["step:PB4"],
+      "triggerIds": [
+        "edge:PB_REJECT"
+      ],
+      "relatedNodeIds": [
+        "node:ACT1",
+        "node:VOI",
+        "node:DEC_G1"
+      ],
+      "relatedEdgeIds": [
+        "edge:PB_REJECT",
+        "edge:F3f_reject"
+      ],
+      "relatedStepIds": [
+        "step:PB4"
+      ],
       "focusPath": "write"
     },
     {
@@ -2653,51 +4076,51 @@
   ],
   "layoutDefaults": {
     "canvas": {
-      "width": 2480,
-      "height": 1800
+      "width": 2700,
+      "height": 1960
     },
     "viewport": {
       "x": 18,
       "y": 18,
-      "zoom": 0.52
+      "zoom": 0.47
     },
     "lanes": {
       "A": {
-        "x": 28,
-        "y": 28,
-        "width": 370,
-        "height": 1740
+        "x": 30,
+        "y": 30,
+        "width": 380,
+        "height": 1900
       },
       "B": {
-        "x": 640,
-        "y": 28,
-        "width": 1340,
-        "height": 1740
+        "x": 680,
+        "y": 30,
+        "width": 1480,
+        "height": 1900
       },
       "C": {
-        "x": 2020,
-        "y": 28,
-        "width": 370,
-        "height": 1740
+        "x": 2210,
+        "y": 30,
+        "width": 380,
+        "height": 1900
       }
     },
     "gateway": {
-      "x": 440,
-      "y": 156,
-      "width": 164,
-      "height": 1260,
-      "ne177Height": 480,
-      "ne178Height": 320
+      "x": 460,
+      "y": 164,
+      "width": 172,
+      "height": 1380,
+      "ne177Height": 520,
+      "ne178Height": 350
     },
     "aea": {
-      "x": 678,
-      "y": 144,
-      "width": 1200,
-      "height": 1440,
+      "x": 720,
+      "y": 152,
+      "width": 1340,
+      "height": 1580,
       "bandHeights": {
-        "Sense": 220,
-        "Decide": 810,
-        "Act": 220
+        "Sense": 230,
+        "Decide": 930,
+        "Act": 230
       }
     }
   }

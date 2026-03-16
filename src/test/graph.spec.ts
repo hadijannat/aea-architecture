@@ -327,14 +327,14 @@ describe('graph manifest', () => {
   })
 
   it('locks PR-corrected structural dimensions against future layoutDefaults drift', () => {
-    expect(resolveGraphNode('GW')?.height).toBe(1260)
-    expect(resolveGraphNode('BAND_DECIDE')?.height).toBe(810)
-    expect(resolveGraphNode('LANE_A')?.height).toBe(1740)
-    expect(resolveGraphNode('LANE_B')?.height).toBe(1740)
-    expect(resolveGraphNode('LANE_B')?.width).toBe(1340)
-    expect(resolveGraphNode('LANE_C')?.height).toBe(1740)
-    expect(resolveGraphNode('AEA')?.height).toBe(1440)
-    expect(resolveGraphNode('AEA')?.width).toBe(1200)
+    expect(resolveGraphNode('GW')?.height).toBe(1380)
+    expect(resolveGraphNode('BAND_DECIDE')?.height).toBe(930)
+    expect(resolveGraphNode('LANE_A')?.height).toBe(1900)
+    expect(resolveGraphNode('LANE_B')?.height).toBe(1900)
+    expect(resolveGraphNode('LANE_B')?.width).toBe(1480)
+    expect(resolveGraphNode('LANE_C')?.height).toBe(1900)
+    expect(resolveGraphNode('AEA')?.height).toBe(1580)
+    expect(resolveGraphNode('AEA')?.width).toBe(1340)
   })
 
   it('keeps the canonical connection inventory aligned with the spec', () => {
@@ -640,8 +640,8 @@ describe('graph manifest', () => {
     const state = await createState()
     const geometry = buildBoardGeometryFromPositions(state.layout.positions, graphManifest)
 
-    expect(geometry.routeChannels.gatewayApproachX).toBe(geometry.gateway.x - 34)
-    expect(geometry.routeChannels.writeY).toBe(geometry.bands.Act.y + 30)
+    expect(geometry.routeChannels.gatewayApproachX).toBe(geometry.gateway.x - 38)
+    expect(geometry.routeChannels.writeY).toBe(geometry.bands.Act.y + 34)
     expect(geometry.routeGuideYs).toContain(geometry.routeChannels.writeY)
     expect(geometry.verticalGuideXs).toContain(geometry.routeChannels.monitorSpineX)
   })
@@ -661,8 +661,8 @@ describe('graph manifest', () => {
     expect(geometry.lanes.A.y).toBe(72)
     expect(geometry.gateway.x).toBe(440)
     expect(geometry.gateway.y).toBe(160)
-    expect(geometry.routeChannels.cpcSpineX).toBe(126)
-    expect(geometry.routeChannels.gatewayApproachX).toBe(406)
+    expect(geometry.routeChannels.cpcSpineX).toBe(130)
+    expect(geometry.routeChannels.gatewayApproachX).toBe(402)
   })
 
   it('keeps architecture children inside their parent bounds with the computed board layout', async () => {
@@ -976,7 +976,7 @@ describe('exports', () => {
     expect(sequenceMermaid).toContain('PB_REJECT_OUT')
   })
 
-  it('keeps the shifted Decide columns aligned and preserves 55 px gaps across the full grid', async () => {
+  it('keeps the shifted Decide columns aligned and preserves 100 px gaps across the full grid', async () => {
     const positions = await computeBoardNodePositions(graphManifest, defaultProjectionOverrides)
     const columns = [
       ['DEC_K1', 'DEC_K2', 'DEC_H1'],
@@ -1020,8 +1020,8 @@ describe('exports', () => {
 
         expect(
           rightPosition.x - (leftPosition.x + leftNode.width),
-          `${leftId} and ${rightId} should keep a 55 px gap`,
-        ).toBe(55)
+          `${leftId} and ${rightId} should keep a 100 px gap`,
+        ).toBe(100)
       }
     }
   })
@@ -1030,88 +1030,88 @@ describe('exports', () => {
     const state = await createState()
     const expectedRoutes = {
       F3e: {
-        path: 'M 1421 914 L 1492 914 Q 1506 914 1506 900 L 1506 862 Q 1506 848 1520 848 L 1591 848',
-        labelPoint: { x: 1463.5, y: 894 },
+        path: 'M 1555 996 L 1649 996 Q 1663 996 1663 982 L 1663 944 Q 1663 930 1677 930 L 1770 930',
+        labelPoint: { x: 1609, y: 976 },
       },
       F_G1A_pass: {
-        path: 'M 1706 912 L 1706 962 Q 1706 976 1692 976 L 1435 976 Q 1421 976 1421 990 L 1421 1054',
-        labelPoint: { x: 1581.5, y: 976 },
+        path: 'M 1885 994 L 1885 1044 Q 1885 1058 1871 1058 L 1569 1058 Q 1555 1058 1555 1072 L 1555 1186',
+        labelPoint: { x: 1738, y: 1058 },
       },
       F_G1A_reject: {
-        path: 'M 1591 848 L 1591 906 Q 1591 920 1577 920 L 1550 920 Q 1536 920 1536 906 L 1536 849',
-        labelPoint: { x: 1563.5, y: 938 },
+        path: 'M 1770 930 L 1770 988 Q 1770 1002 1756 1002 L 1684 1002 Q 1670 1002 1670 988 L 1670 931',
+        labelPoint: { x: 1720, y: 1020 },
       },
       F3f_reject: {
-        path: 'M 1421 1174 L 1421 956 Q 1421 942 1407 942 L 1350 942 Q 1336 942 1336 928 L 1336 863 Q 1336 849 1322 849 L 1306 849',
-        labelPoint: { x: 1378.5, y: 960 },
+        path: 'M 1555 1306 L 1555 1038 Q 1555 1024 1541 1024 L 1484 1024 Q 1470 1024 1470 1010 L 1470 945 Q 1470 931 1456 931 L 1440 931',
+        labelPoint: { x: 1512.5, y: 1042 },
       },
       F3g: {
-        path: 'M 851 634 L 851 1118 Q 851 1132 865 1132 L 1692 1132 Q 1706 1132 1706 1118 L 1706 1054',
-        labelPoint: { x: 1278.5, y: 1104 },
+        path: 'M 895 666 L 895 1250 Q 895 1264 909 1264 L 1871 1264 Q 1885 1264 1885 1250 L 1885 1186',
+        labelPoint: { x: 1390, y: 1236 },
       },
       F3h: {
-        path: 'M 1336 318 L 1336 1028 Q 1336 1042 1350 1042 L 1664 1042 Q 1670 1042 1670 1048 L 1670 1048 Q 1670 1054 1676 1054 L 1706 1054',
-        labelPoint: { x: 1652, y: 1048 },
+        path: 'M 1418 336 L 1418 1160 Q 1418 1174 1432 1174 L 1843 1174 Q 1849 1174 1849 1180 L 1849 1180 Q 1849 1186 1855 1186 L 1885 1186',
+        labelPoint: { x: 1831, y: 1180 },
       },
       F3i: {
-        path: 'M 574 1211 L 574 1166 Q 574 1152 588 1152 L 1577 1152 Q 1591 1152 1591 1138 L 1591 1118',
-        labelPoint: { x: 1082.5, y: 1138 },
+        path: 'M 596 1309 L 596 1296.5 Q 596 1284 608.5 1284 L 1756 1284 Q 1770 1284 1770 1270 L 1770 1250',
+        labelPoint: { x: 1183, y: 1270 },
       },
       F_T0_req: {
-        path: 'M 1421 784 L 1421 723 Q 1421 709 1435 709 L 1692 709 Q 1706 709 1706 695 L 1706 634',
-        labelPoint: { x: 1421, y: 732.5 },
+        path: 'M 1555 866 L 1555 780 Q 1555 766 1569 766 L 1871 766 Q 1885 766 1885 752 L 1885 666',
+        labelPoint: { x: 1555, y: 802 },
       },
       F_T1: {
-        path: 'M 1591 574 L 1591 496 Q 1591 482 1577 482 L 724 482 Q 710 482 710 468 L 710 246 Q 710 232 724 232 L 814 232 Q 828 232 828 246 L 828 264',
-        labelPoint: { x: 710, y: 375 },
+        path: 'M 1770 606 L 1770 524 Q 1770 510 1756 510 L 768 510 Q 754 510 754 496 L 754 260 Q 754 246 768 246 L 858 246 Q 872 246 872 260 L 872 280',
+        labelPoint: { x: 754, y: 396 },
       },
       F_T2: {
-        path: 'M 1591 574 L 966 574',
-        labelPoint: { x: 1278.5, y: 560 },
+        path: 'M 1770 606 L 1010 606',
+        labelPoint: { x: 1390, y: 592 },
       },
       F_T0_obs: {
-        path: 'M 1706 514 L 1706 697 Q 1706 711 1692 711 L 1150 711 Q 1136 711 1136 725 L 1136 912',
-        labelPoint: { x: 1421, y: 669 },
+        path: 'M 1885 546 L 1885 746 Q 1885 760 1871 760 L 1239 760 Q 1225 760 1225 774 L 1225 994',
+        labelPoint: { x: 1555, y: 718 },
       },
       F4: {
-        path: 'M 1706 1182 L 1293 1182 Q 1279 1182 1279 1168 L 1279 1068 Q 1279 1054 1265 1054 L 851 1054',
-        labelPoint: { x: 1492.5, y: 1168 },
+        path: 'M 1885 1314 L 1404 1314 Q 1390 1314 1390 1300 L 1390 1200 Q 1390 1186 1376 1186 L 895 1186',
+        labelPoint: { x: 1637.5, y: 1300 },
       },
       F_H1_revalidate: {
-        path: 'M 966 1114 L 1277 1114 Q 1279 1114 1279 1116 L 1279 1116 Q 1279 1118 1281 1118 L 1591 1118',
-        labelPoint: { x: 1122.5, y: 1100 },
+        path: 'M 1010 1246 L 1388 1246 Q 1390 1246 1390 1248 L 1390 1248 Q 1390 1250 1392 1250 L 1770 1250',
+        labelPoint: { x: 1200, y: 1232 },
       },
       F_H1_reject: {
-        path: 'M 851 1054 L 851 978 Q 851 964 865 964 L 1407 964 Q 1421 964 1421 950 L 1421 914',
-        labelPoint: { x: 1136, y: 946 },
+        path: 'M 895 1186 L 895 1060 Q 895 1046 909 1046 L 1541 1046 Q 1555 1046 1555 1032 L 1555 996',
+        labelPoint: { x: 1225, y: 1028 },
       },
       F_H1_pass: {
-        path: 'M 851 1174 L 851 1214.5 Q 851 1216 852.5 1216 L 852.5 1216 Q 854 1216 854 1217.5 L 854 1368',
-        labelPoint: { x: 871, y: 1195 },
+        path: 'M 895 1306 L 895 1345.5 Q 895 1348 897.5 1348 L 897.5 1348 Q 900 1348 900 1350.5 L 900 1524',
+        labelPoint: { x: 915, y: 1327 },
       },
       F5: {
-        path: 'M 734 1428 L 712 1428 Q 698 1428 698 1414 L 698 1364 Q 698 1350 684 1350 L 616 1350 Q 602 1350 602 1336 L 602 1225 Q 602 1211 588 1211 L 574 1211',
-        labelPoint: { x: 650, y: 1374 },
+        path: 'M 780 1584 L 758 1584 Q 744 1584 744 1570 L 744 1518 Q 744 1504 730 1504 L 638 1504 Q 624 1504 624 1490 L 624 1323 Q 624 1309 610 1309 L 596 1309',
+        labelPoint: { x: 684, y: 1528 },
       },
       F6: {
-        path: 'M 464 1211 L 402 1211 Q 388 1211 388 1225 L 388 1336 Q 388 1350 374 1350 L 360 1350 Q 346 1350 346 1364 L 346 1413 Q 346 1427 332 1427 L 318 1427',
-        labelPoint: { x: 360, y: 1280.5 },
+        path: 'M 486 1309 L 416 1309 Q 402 1309 402 1323 L 402 1490 Q 402 1504 388 1504 L 366 1504 Q 352 1504 352 1518 L 352 1545 Q 352 1559 338 1559 L 324 1559',
+        labelPoint: { x: 374, y: 1406.5 },
       },
       F_VoR_ACK: {
-        path: 'M 574 1211 L 588 1211 Q 602 1211 602 1225 L 602 1288 Q 602 1302 616 1302 L 690 1302 Q 704 1302 704 1316 L 704 1414 Q 704 1428 718 1428 L 734 1428',
-        labelPoint: { x: 630, y: 1256.5 },
+        path: 'M 596 1309 L 610 1309 Q 624 1309 624 1323 L 624 1436 Q 624 1450 638 1450 L 736 1450 Q 750 1450 750 1464 L 750 1570 Q 750 1584 764 1584 L 780 1584',
+        labelPoint: { x: 652, y: 1379.5 },
       },
       F_CPC_INT: {
-        path: 'M 90 1427 L 72 1427 Q 58 1427 58 1413 L 58 293 Q 58 279 72 279 L 90 279',
-        labelPoint: { x: 74, y: 853 },
+        path: 'M 96 1559 L 78 1559 Q 64 1559 64 1545 L 64 309 Q 64 295 78 295 L 96 295',
+        labelPoint: { x: 80, y: 927 },
       },
       F7a: {
-        path: 'M 1816 1421 L 1836 1421 Q 1850 1421 1850 1407 L 1850 1348 Q 1850 1334 1864 1334 L 2042 1334 Q 2056 1334 2056 1348 L 2056 1421 Q 2056 1434 2069 1434 L 2082 1434',
-        labelPoint: { x: 1953, y: 1354 },
+        path: 'M 1958 1577 L 1978 1577 Q 1992 1577 1992 1563 L 1992 1499 Q 1992 1485 2006 1485 L 2236 1485 Q 2250 1485 2250 1499 L 2250 1551 Q 2250 1564 2263 1564 L 2276 1564',
+        labelPoint: { x: 2121, y: 1505 },
       },
       F7_sub: {
-        path: 'M 2182 1570 L 2342 1570 Q 2356 1570 2356 1556 L 2356 1502 Q 2356 1488 2342 1488 L 2182 1488',
-        labelPoint: { x: 2269, y: 1552 },
+        path: 'M 2376 1720 L 2538 1720 Q 2552 1720 2552 1706 L 2552 1632 Q 2552 1618 2538 1618 L 2376 1618',
+        labelPoint: { x: 2464, y: 1702 },
       },
     } as const
 
@@ -1192,16 +1192,16 @@ describe('exports', () => {
     const routeGw3 = buildArchitectureRoute(state, 'F_GW3')
 
     expect(routeGw2.points).toEqual([
-      { x: 520, y: 334 },
-      { x: 520, y: 386 },
+      { x: 542, y: 348 },
+      { x: 542, y: 416 },
     ])
     expect(routeGw3.points).toEqual([
-      { x: 520, y: 478 },
-      { x: 520, y: 526 },
+      { x: 542, y: 508 },
+      { x: 542, y: 570 },
     ])
-    expect(resolveBoardLabelPosition(routeGw1.label)).toEqual({ x: 400, y: 276 })
-    expect(resolveBoardLabelPosition(routeGw2.label)).toEqual({ x: 638, y: 360 })
-    expect(resolveBoardLabelPosition(routeGw3.label)).toEqual({ x: 638, y: 502 })
+    expect(resolveBoardLabelPosition(routeGw1.label)).toEqual({ x: 416, y: 290 })
+    expect(resolveBoardLabelPosition(routeGw2.label)).toEqual({ x: 670, y: 382 })
+    expect(resolveBoardLabelPosition(routeGw3.label)).toEqual({ x: 670, y: 539 })
   })
 
   it('keeps write-corridor label anchors outside nearby node boxes', async () => {
@@ -1244,9 +1244,9 @@ describe('exports', () => {
   it('keeps rejection and monitor reroutes on distinct local channels', async () => {
     const state = await createState()
     const rejectionRoutes = {
-      F_G1A_reject: 920,
-      F3f_reject: 942,
-      F_H1_reject: 964,
+      F_G1A_reject: 1002,
+      F3f_reject: 1024,
+      F_H1_reject: 1046,
     } as const
 
     for (const [edgeId, expectedY] of Object.entries(rejectionRoutes)) {
@@ -1256,14 +1256,14 @@ describe('exports', () => {
     }
 
     expect(buildArchitectureRoute(state, 'F_M1_G0').points).toEqual([
-      { x: 1251, y: 848 },
-      { x: 1251, y: 981 },
-      { x: 1021, y: 981 },
-      { x: 1021, y: 1114 },
+      { x: 1340, y: 930 },
+      { x: 1340, y: 1088 },
+      { x: 1110, y: 1088 },
+      { x: 1110, y: 1246 },
     ])
     expect(buildArchitectureRoute(state, 'F_M1_H1').points).toEqual([
-      { x: 966, y: 1114 },
-      { x: 1021, y: 1114 },
+      { x: 1010, y: 1246 },
+      { x: 1110, y: 1246 },
     ])
   })
 
