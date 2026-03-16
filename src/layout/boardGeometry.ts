@@ -75,10 +75,10 @@ const routeGuideOffsets = {
 } as const
 
 const decideRowIds = {
-  one: ['DEC_K1', 'DEC_R0', 'DEC_R1', 'DEC_T0'],
-  two: ['DEC_K2', 'DEC_G0', 'DEC_R2', 'DEC_G1A'],
-  three: ['DEC_H1', 'DEC_M1', 'DEC_G1', 'DEC_G2'],
-} as const
+  one: ['DEC_K1', 'DEC_R0', 'DEC_R1', 'DEC_T0'] as const,
+  two: ['DEC_K2', 'DEC_G0', 'DEC_R2', 'DEC_G1A'] as const,
+  three: ['DEC_H1', 'DEC_M1', 'DEC_G1', 'DEC_G2'] as const,
+}
 
 function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value))
@@ -256,6 +256,8 @@ export function buildBoardRouteChannels(
   const validator = rectMap.DEC_G2
   const rowOne = unionRects(decideRowIds.one.map((id) => rectMap[id]))
   const rowTwo = unionRects(decideRowIds.two.map((id) => rectMap[id]))
+  const rowThree = unionRects(decideRowIds.three.map((id) => rectMap[id]))
+  const bandDecide = rectMap.BAND_DECIDE ?? fallbackRects.BAND_DECIDE
 
   const telemetryY = Math.round(s1 ? centerY(s1) : bandSense.y + bandSense.height / 2)
   const policyY = rowOne && rowTwo
@@ -266,6 +268,25 @@ export function buildBoardRouteChannels(
   const validationY = validator
     ? Math.round(validator.y + validator.height - 30)
     : Math.round(bandAct.y - 184)
+
+  const col0Right = rectMap.DEC_K1 ? rectMap.DEC_K1.x + rectMap.DEC_K1.width : bandDecide.x + 262
+  const col1Left = rectMap.DEC_R0?.x ?? bandDecide.x + 362
+  const col1Right = rectMap.DEC_R0 ? rectMap.DEC_R0.x + rectMap.DEC_R0.width : bandDecide.x + 592
+  const col2Left = rectMap.DEC_R1?.x ?? bandDecide.x + 692
+  const col2Right = rectMap.DEC_R1 ? rectMap.DEC_R1.x + rectMap.DEC_R1.width : bandDecide.x + 922
+  const col3Left = rectMap.DEC_T0?.x ?? bandDecide.x + 1022
+
+  const decideCol01GapX = Math.round((col0Right + col1Left) / 2)
+  const decideCol12GapX = Math.round((col1Right + col2Left) / 2)
+  const decideCol23GapX = Math.round((col2Right + col3Left) / 2)
+
+  const decideAboveGridY = rowOne ? Math.round(rowOne.y - 20) : Math.round(bandDecide.y + 26)
+  const decideRow12GapY = rowTwo && rowThree
+    ? Math.round((bottom(rowTwo) + rowThree.y) / 2)
+    : Math.round(bandAct.y - 380)
+  const decideBelowGridY = rowThree
+    ? Math.round(bottom(rowThree) + 26)
+    : Math.round(bandAct.y - 130)
 
   return {
     gatewayApproachX: Math.round(gateway.x - routeGuideOffsets.gatewayApproach),
@@ -284,6 +305,12 @@ export function buildBoardRouteChannels(
     monitorSpineX: Math.round(laneB.x + laneB.width - routeGuideOffsets.monitorSpine),
     laneCSpineX: Math.round(laneC.x + laneC.width - routeGuideOffsets.laneCSpine),
     cpcSpineX: Math.round(laneA.x + routeGuideOffsets.cpcSpine),
+    decideCol01GapX,
+    decideCol12GapX,
+    decideCol23GapX,
+    decideAboveGridY,
+    decideRow12GapY,
+    decideBelowGridY,
   }
 }
 

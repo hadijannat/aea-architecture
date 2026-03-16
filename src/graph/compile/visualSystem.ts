@@ -138,7 +138,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#0F3F7A',
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'diamond',
-    width: 1.5,
+    width: 1.8,
     label: 'Gateway internal',
   },
   'read-only': {
@@ -146,7 +146,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#0F3F7A',
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'arrow',
-    width: 1.5,
+    width: 1.8,
     label: 'Read-only',
   },
   normalization: {
@@ -154,7 +154,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#0F3F7A',
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'arrow',
-    width: 1.5,
+    width: 1.8,
     label: 'Normalization',
   },
   retrieval: {
@@ -162,7 +162,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#0F3F7A',
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'arrow',
-    width: 1.5,
+    width: 1.8,
     label: 'Retrieval',
   },
   'policy-soft': {
@@ -171,7 +171,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'diamond',
     dash: '6 3',
-    width: 1.5,
+    width: 1.8,
     label: 'Policy soft gate',
   },
   'policy-hard': {
@@ -179,7 +179,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#4C1D95',
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'diamond',
-    width: 2,
+    width: 2.4,
     label: 'Policy hard gate',
   },
   proposal: {
@@ -187,7 +187,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#7C2D12',
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'diamond',
-    width: 2,
+    width: 2.4,
     label: 'Proposal',
   },
   validation: {
@@ -195,7 +195,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#7C2D12',
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'diamond',
-    width: 2,
+    width: 2.4,
     label: 'Validation',
   },
   'tool-call': {
@@ -203,7 +203,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#7C2D12',
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'circle',
-    width: 2,
+    width: 2.4,
     label: 'Tool call',
   },
   subscription: {
@@ -212,7 +212,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'circle',
     dash: '1 5',
-    width: 1.5,
+    width: 1.8,
     label: 'Subscription',
   },
   writeback: {
@@ -220,7 +220,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#7F1D1D',
     halo: 'rgba(255, 255, 255, 0.98)',
     marker: 'arrowclosed',
-    width: 2,
+    width: 2.4,
     label: 'Writeback',
   },
   'status-ack': {
@@ -228,7 +228,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#7F1D1D',
     halo: 'rgba(255, 255, 255, 0.98)',
     marker: 'arrow',
-    width: 2,
+    width: 2.4,
     label: 'Status acknowledgement',
   },
   rejection: {
@@ -237,7 +237,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     halo: 'rgba(255, 255, 255, 0.98)',
     marker: 'tee',
     dash: '7 4',
-    width: 1.5,
+    width: 1.8,
     label: 'Rejection',
   },
   kpi: {
@@ -246,7 +246,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'circle',
     dash: '1 5',
-    width: 1.5,
+    width: 1.8,
     label: 'KPI',
   },
   audit: {
@@ -255,7 +255,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'tee',
     dash: '1 5',
-    width: 1.5,
+    width: 1.8,
     label: 'Audit',
   },
   sequence: {
@@ -263,7 +263,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#374151',
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'arrowclosed',
-    width: 1,
+    width: 1.2,
     label: 'Sequence transition',
   },
 }

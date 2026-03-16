@@ -807,11 +807,11 @@ describe('derived projections', () => {
       d: 'M 1 1 L 1 7 M 1 4 L 9 4',
       strokeWidth: 2.3,
     })
-    expect(edgeStrokeWidth('bold', 'writeback')).toBe(2.8)
-    expect(edgeStrokeWidth('medium', 'validation')).toBe(2.2)
-    expect(edgeStrokeWidth('dashed', 'rejection')).toBe(1.6)
-    expect(edgeStrokeWidth('dotted', 'tool-call')).toBe(1.9)
-    expect(edgeStrokeWidth('thin', 'retrieval')).toBe(1.4)
+    expect(edgeStrokeWidth('bold', 'writeback')).toBe(3.2)
+    expect(edgeStrokeWidth('medium', 'validation')).toBe(2.6)
+    expect(edgeStrokeWidth('dashed', 'rejection')).toBe(1.8)
+    expect(edgeStrokeWidth('dotted', 'tool-call')).toBe(2.3)
+    expect(edgeStrokeWidth('thin', 'retrieval')).toBe(1.7)
   })
 
   it('marks optional architecture edges explicitly and animates tool-call edges', async () => {
@@ -984,7 +984,7 @@ describe('exports', () => {
     expect(architectureMermaid).toContain('subgraph GW_NE178["NE 178 VoR interface"]')
     expect(architectureMermaid).toContain('F_GW2:')
     expect(architectureMermaid).toContain('[diode, medium]')
-    expect(architectureMermaid).toContain('stroke:#EF4444,stroke-width:2.8px')
+    expect(architectureMermaid).toContain('stroke:#EF4444,stroke-width:3.2px')
     expect(sequenceMermaid).toContain('%% Canonical topology export only; schematic and not viewport/state-aware.')
     expect(sequenceMermaid).toContain('PB_AEA')
     expect(sequenceMermaid).toContain('PB_REJECT_OUT')
@@ -1044,59 +1044,59 @@ describe('exports', () => {
     const state = await createState()
     const expectedRoutes = {
       F3e: {
-        path: 'M 1555 996 L 1649 996 Q 1663 996 1663 982 L 1663 944 Q 1663 930 1677 930 L 1770 930',
+        path: 'M 1555 996 L 1641 996 Q 1663 996 1663 974 L 1663 952 Q 1663 930 1685 930 L 1770 930',
         labelPoint: { x: 1609, y: 1014 },
       },
       F_G1A_pass: {
-        path: 'M 1885 994 L 1885 1110 Q 1885 1124 1871 1124 L 1569 1124 Q 1555 1124 1555 1138 L 1555 1186',
+        path: 'M 1885 994 L 1885 1102 Q 1885 1124 1863 1124 L 1577 1124 Q 1555 1124 1555 1146 L 1555 1186',
         labelPoint: { x: 1577, y: 1155 },
       },
       F_G1A_reject: {
-        path: 'M 1770 930 L 1770 950 Q 1770 964 1756 964 L 1684 964 Q 1670 964 1670 950 L 1670 931',
+        path: 'M 1770 930 L 1770 947 Q 1770 964 1753 964 L 1686.5 964 Q 1670 964 1670 947.5 L 1670 931',
         labelPoint: { x: 1750, y: 947 },
       },
       F3f_reject: {
-        path: 'M 1555 1306 L 1555 1038 Q 1555 1024 1541 1024 L 1484 1024 Q 1470 1024 1470 1010 L 1470 945 Q 1470 931 1456 931 L 1440 931',
+        path: 'M 1555 1306 L 1555 1046 Q 1555 1024 1533 1024 L 1492 1024 Q 1470 1024 1470 1002 L 1470 946 Q 1470 931 1455 931 L 1440 931',
         labelPoint: { x: 1512.5, y: 1042 },
       },
       F3g: {
-        path: 'M 895 666 L 895 1250 Q 895 1264 909 1264 L 1871 1264 Q 1885 1264 1885 1250 L 1885 1186',
-        labelPoint: { x: 1390, y: 1236 },
+        path: 'M 895 666 L 1038 666 Q 1060 666 1060 688 L 1060 1069 Q 1060 1091 1082 1091 L 1698 1091 Q 1720 1091 1720 1113 L 1720 1164 Q 1720 1186 1742 1186 L 1885 1186',
+        labelPoint: { x: 1390, y: 1073 },
       },
       F3h: {
-        path: 'M 1418 336 L 1418 1160 Q 1418 1174 1432 1174 L 1843 1174 Q 1849 1174 1849 1180 L 1849 1180 Q 1849 1186 1855 1186 L 1885 1186',
+        path: 'M 1418 336 L 1418 1152 Q 1418 1174 1440 1174 L 1843 1174 Q 1849 1174 1849 1180 L 1849 1180 Q 1849 1186 1855 1186 L 1885 1186',
         labelPoint: { x: 1831, y: 1180 },
       },
       F3i: {
-        path: 'M 596 1309 L 596 1296.5 Q 596 1284 608.5 1284 L 1756 1284 Q 1770 1284 1770 1270 L 1770 1250',
-        labelPoint: { x: 1183, y: 1316 },
+        path: 'M 596 1309 L 596 1324.5 Q 596 1340 611.5 1340 L 1698 1340 Q 1720 1340 1720 1318 L 1720 1272 Q 1720 1250 1742 1250 L 1770 1250',
+        labelPoint: { x: 1158, y: 1358 },
       },
       F_T0_req: {
-        path: 'M 1555 866 L 1555 780 Q 1555 766 1569 766 L 1871 766 Q 1885 766 1885 752 L 1885 666',
+        path: 'M 1555 866 L 1555 788 Q 1555 766 1577 766 L 1863 766 Q 1885 766 1885 744 L 1885 666',
         labelPoint: { x: 1555, y: 802 },
       },
       F_T1: {
-        path: 'M 1770 606 L 1770 524 Q 1770 510 1756 510 L 768 510 Q 754 510 754 496 L 754 260 Q 754 246 768 246 L 858 246 Q 872 246 872 260 L 872 280',
+        path: 'M 1770 606 L 1770 532 Q 1770 510 1748 510 L 776 510 Q 754 510 754 488 L 754 268 Q 754 246 776 246 L 855 246 Q 872 246 872 263 L 872 280',
         labelPoint: { x: 754, y: 396 },
       },
       F_T2: {
-        path: 'M 1770 606 L 1010 606',
-        labelPoint: { x: 1390, y: 592 },
+        path: 'M 1770 606 L 1770 548 Q 1770 526 1748 526 L 1032 526 Q 1010 526 1010 548 L 1010 606',
+        labelPoint: { x: 1390, y: 512 },
       },
       F_T0_obs: {
-        path: 'M 1885 546 L 1885 778 Q 1885 792 1871 792 L 1239 792 Q 1225 792 1225 806 L 1225 994',
+        path: 'M 1885 546 L 1885 770 Q 1885 792 1863 792 L 1247 792 Q 1225 792 1225 814 L 1225 994',
         labelPoint: { x: 1555, y: 750 },
       },
       F4: {
-        path: 'M 1885 1314 L 1404 1314 Q 1390 1314 1390 1300 L 1390 1200 Q 1390 1186 1376 1186 L 895 1186',
-        labelPoint: { x: 1637.5, y: 1336 },
+        path: 'M 1885 1314 L 1742 1314 Q 1720 1314 1720 1292 L 1720 1113 Q 1720 1091 1698 1091 L 1082 1091 Q 1060 1091 1060 1113 L 1060 1164 Q 1060 1186 1038 1186 L 895 1186',
+        labelPoint: { x: 1390, y: 1109 },
       },
       F_H1_revalidate: {
-        path: 'M 1010 1246 L 1388 1246 Q 1390 1246 1390 1248 L 1390 1248 Q 1390 1250 1392 1250 L 1770 1250',
-        labelPoint: { x: 1580, y: 1308 },
+        path: 'M 1010 1246 L 1010 1318 Q 1010 1340 1032 1340 L 1748 1340 Q 1770 1340 1770 1318 L 1770 1250',
+        labelPoint: { x: 1390, y: 1358 },
       },
       F_H1_reject: {
-        path: 'M 895 1186 L 895 1098 Q 895 1084 909 1084 L 1541 1084 Q 1555 1084 1555 1070 L 1555 996',
+        path: 'M 895 1186 L 895 1106 Q 895 1084 917 1084 L 1533 1084 Q 1555 1084 1555 1062 L 1555 996',
         labelPoint: { x: 873, y: 1135 },
       },
       F_H1_pass: {
@@ -1104,27 +1104,27 @@ describe('exports', () => {
         labelPoint: { x: 915, y: 1327 },
       },
       F5: {
-        path: 'M 780 1584 L 758 1584 Q 744 1584 744 1570 L 744 1518 Q 744 1504 730 1504 L 638 1504 Q 624 1504 624 1490 L 624 1323 Q 624 1309 610 1309 L 596 1309',
+        path: 'M 780 1584 L 762 1584 Q 744 1584 744 1566 L 744 1526 Q 744 1504 722 1504 L 646 1504 Q 624 1504 624 1482 L 624 1323 Q 624 1309 610 1309 L 596 1309',
         labelPoint: { x: 684, y: 1528 },
       },
       F6: {
-        path: 'M 486 1309 L 416 1309 Q 402 1309 402 1323 L 402 1490 Q 402 1504 388 1504 L 366 1504 Q 352 1504 352 1518 L 352 1545 Q 352 1559 338 1559 L 324 1559',
+        path: 'M 486 1309 L 424 1309 Q 402 1309 402 1331 L 402 1482 Q 402 1504 380 1504 L 374 1504 Q 352 1504 352 1526 L 352 1545 Q 352 1559 338 1559 L 324 1559',
         labelPoint: { x: 374, y: 1406.5 },
       },
       F_VoR_ACK: {
-        path: 'M 596 1309 L 610 1309 Q 624 1309 624 1323 L 624 1436 Q 624 1450 638 1450 L 736 1450 Q 750 1450 750 1464 L 750 1570 Q 750 1584 764 1584 L 780 1584',
+        path: 'M 596 1309 L 610 1309 Q 624 1309 624 1323 L 624 1428 Q 624 1450 646 1450 L 728 1450 Q 750 1450 750 1472 L 750 1569 Q 750 1584 765 1584 L 780 1584',
         labelPoint: { x: 652, y: 1379.5 },
       },
       F_CPC_INT: {
-        path: 'M 96 1559 L 78 1559 Q 64 1559 64 1545 L 64 309 Q 64 295 78 295 L 96 295',
+        path: 'M 96 1559 L 80 1559 Q 64 1559 64 1543 L 64 311 Q 64 295 80 295 L 96 295',
         labelPoint: { x: 80, y: 927 },
       },
       F7a: {
-        path: 'M 1958 1577 L 1978 1577 Q 1992 1577 1992 1563 L 1992 1499 Q 1992 1485 2006 1485 L 2236 1485 Q 2250 1485 2250 1499 L 2250 1551 Q 2250 1564 2263 1564 L 2276 1564',
+        path: 'M 1958 1577 L 1975 1577 Q 1992 1577 1992 1560 L 1992 1507 Q 1992 1485 2014 1485 L 2228 1485 Q 2250 1485 2250 1507 L 2250 1551 Q 2250 1564 2263 1564 L 2276 1564',
         labelPoint: { x: 2121, y: 1505 },
       },
       F7_sub: {
-        path: 'M 2376 1720 L 2538 1720 Q 2552 1720 2552 1706 L 2552 1632 Q 2552 1618 2538 1618 L 2376 1618',
+        path: 'M 2376 1720 L 2530 1720 Q 2552 1720 2552 1698 L 2552 1640 Q 2552 1618 2530 1618 L 2376 1618',
         labelPoint: { x: 2464, y: 1702 },
       },
     } as const
@@ -1291,14 +1291,16 @@ describe('exports', () => {
 
     expect(buildArchitectureRoute(state, 'F3d').points).toEqual([
       { x: 1303, y: 396 },
-      { x: 1303, y: 680 },
-      { x: 1225, y: 680 },
+      { x: 1060, y: 396 },
+      { x: 1060, y: 866 },
       { x: 1225, y: 866 },
     ])
     expect(buildArchitectureRoute(state, 'F_M1_G1A').points).toEqual([
       { x: 2000, y: 930 },
       { x: 2034, y: 930 },
-      { x: 2034, y: 1246 },
+      { x: 2034, y: 1121 },
+      { x: 1080, y: 1121 },
+      { x: 1080, y: 1246 },
       { x: 1110, y: 1246 },
     ])
   })
