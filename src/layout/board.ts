@@ -38,6 +38,12 @@ export interface BoardRouteChannels {
   monitorSpineX: number
   laneCSpineX: number
   cpcSpineX: number
+  decideCol01GapX: number
+  decideCol12GapX: number
+  decideCol23GapX: number
+  decideAboveGridY: number
+  decideRow12GapY: number
+  decideBelowGridY: number
 }
 
 function point(x: number, y: number): Point {
@@ -104,28 +110,31 @@ function buildLabel(edge: EdgeSpec, points: Point[], channels: BoardRouteChannel
     case 'F_GW3':
       return gatewayGutterLabel(points, channels)
     case 'F1':
-      return segmentLabel(points, 3, 'top', 18)
+      return segmentLabel(points, 2, 'top', 18)
     case 'F2':
       return segmentLabel(points, 0, 'top', 16)
     case 'F3a':
     case 'F3f':
-    case 'F_H1_revalidate':
     case 'F_T0_req':
-    case 'F_T2':
-    case 'F4':
       return segmentLabel(points, 0, 'top', 14)
+    case 'F_T2':
+      return segmentLabel(points, 1, 'top', 14)
+    case 'F4':
+      return segmentLabel(points, 2, 'bottom', 18)
+    case 'F_H1_revalidate':
+      return segmentLabel(points, 1, 'bottom', 18)
     case 'F_G0_out':
       return segmentLabel(points, 0, 'bottom', 18)
     case 'F_R0_out':
-      return segmentLabel(points, 0, 'right', 16)
+      return segmentLabel(points, 1, 'right', 16)
     case 'F_G0_pol':
       return segmentLabel(points, 0, 'bottom', 24)
     case 'F3e':
-      return segmentLabel(points, 0, 'top', 20)
+      return segmentLabel(points, 0, 'bottom', 18)
     case 'F3c':
       return segmentLabel(points, 1, 'top', 14)
     case 'F3d':
-      return segmentLabel(points, 1, 'top', 16)
+      return segmentLabel(points, 1, 'left', 14)
     case 'F_G1A_pass':
       return segmentLabel(points, 2, 'right', 22)
     case 'F_G1A_reject':
@@ -137,23 +146,26 @@ function buildLabel(edge: EdgeSpec, points: Point[], channels: BoardRouteChannel
     case 'F_M1_G0':
       return segmentLabel(points, 1, 'bottom', 22)
     case 'F_M1_R0':
+      return segmentLabel(points, 1, 'right', 18)
     case 'F_M1_T0':
+      return segmentLabel(points, 2, 'top', 16)
     case 'F_M1_G1A':
+      return segmentLabel(points, 2, 'bottom', 16)
     case 'F_M1_H1':
     case 'F_M1_out':
       return segmentLabel(points, 0, 'top', 16)
     case 'F3b':
       return segmentLabel(points, 1, 'top', 18)
     case "F3b'":
-      return segmentLabel(points, 0, 'right', 18)
+      return segmentLabel(points, 2, 'top', 18)
     case 'F3i':
-      return segmentLabel(points, 1, 'top', 14)
+      return segmentLabel(points, 1, 'bottom', 18)
     case 'F3g':
-      return segmentLabel(points, 1, 'top', 28)
+      return segmentLabel(points, 2, 'top', 18)
     case 'F3h':
       return segmentLabel(points, 2, 'left', 18)
     case 'F3f_reject':
-      return segmentLabel(points, 2, 'left', 22)
+      return segmentLabel(points, 1, 'bottom', 18)
     case 'F_H1_reject':
       return segmentLabel(points, 0, 'left', 22)
     case 'F_T1':
@@ -221,12 +233,44 @@ export function buildBoardEdgeRoute(
     case 'F_G0_out':
     case 'F3e':
     case 'F3f':
-    case 'F_H1_revalidate':
-    case 'F_T2':
-    case 'F4':
       points = source.y === target.y || source.x === target.x ? [source, target] : doglegX(source, target)
       break
+    case 'F_T2':
+      points = [
+        source,
+        point(source.x, channels.decideAboveGridY),
+        point(target.x, channels.decideAboveGridY),
+        target,
+      ]
+      break
+    case 'F4':
+      points = [
+        source,
+        point(channels.decideCol23GapX, source.y),
+        point(channels.decideCol23GapX, channels.decideRow12GapY),
+        point(channels.decideCol01GapX, channels.decideRow12GapY),
+        point(channels.decideCol01GapX, target.y),
+        target,
+      ]
+      break
+    case 'F_H1_revalidate':
+      points = [
+        source,
+        point(source.x, channels.decideBelowGridY),
+        point(target.x, channels.decideBelowGridY),
+        target,
+      ]
+      break
     case "F3b'":
+      points = [
+        source,
+        point(channels.decideCol01GapX, source.y),
+        point(channels.decideCol01GapX, channels.decideRow12GapY),
+        point(channels.decideCol12GapX, channels.decideRow12GapY),
+        point(channels.decideCol12GapX, target.y),
+        target,
+      ]
+      break
     case 'F_AUDIT':
       points = doglegX(source, target)
       break
@@ -252,8 +296,8 @@ export function buildBoardEdgeRoute(
     case 'F3d':
       points = [
         source,
-        point(source.x, channels.policyY - 56),
-        point(target.x, channels.policyY - 56),
+        point(channels.decideCol01GapX, source.y),
+        point(channels.decideCol01GapX, target.y),
         target,
       ]
       break
@@ -293,8 +337,10 @@ export function buildBoardEdgeRoute(
     case 'F3g':
       points = [
         source,
-        point(source.x, channels.validationY - 20),
-        point(target.x, channels.validationY - 20),
+        point(channels.decideCol01GapX, source.y),
+        point(channels.decideCol01GapX, channels.decideRow12GapY),
+        point(channels.decideCol23GapX, channels.decideRow12GapY),
+        point(channels.decideCol23GapX, target.y),
         target,
       ]
       break
@@ -310,8 +356,9 @@ export function buildBoardEdgeRoute(
     case 'F3i':
       points = [
         source,
-        point(source.x, channels.validationY),
-        point(target.x, channels.validationY),
+        point(source.x, channels.decideBelowGridY),
+        point(channels.decideCol23GapX, channels.decideBelowGridY),
+        point(channels.decideCol23GapX, target.y),
         target,
       ]
       break
@@ -343,13 +390,27 @@ export function buildBoardEdgeRoute(
       points = doglegY(source, target)
       break
     case 'F_M1_R0':
-      points = doglegX(source, target, source.x + 110)
+      points = doglegX(source, target, channels.decideCol12GapX)
       break
     case 'F_M1_T0':
-      points = doglegX(source, target, channels.monitorSpineX)
+      points = [
+        source,
+        point(channels.monitorSpineX, source.y),
+        point(channels.monitorSpineX, channels.decideRow12GapY),
+        point(channels.decideCol01GapX, channels.decideRow12GapY),
+        point(channels.decideCol01GapX, target.y),
+        target,
+      ]
       break
     case 'F_M1_G1A':
-      points = doglegX(source, target, channels.monitorSpineX - 36)
+      points = [
+        source,
+        point(channels.monitorSpineX - 36, source.y),
+        point(channels.monitorSpineX - 36, channels.decideRow12GapY + 30),
+        point(channels.decideCol01GapX + 20, channels.decideRow12GapY + 30),
+        point(channels.decideCol01GapX + 20, target.y),
+        target,
+      ]
       break
     case 'F_M1_H1':
       points = [source, target]
@@ -360,8 +421,8 @@ export function buildBoardEdgeRoute(
     case 'F_KPI':
       points = [
         source,
-        point(source.x + 36, source.y),
-        point(source.x + 36, channels.actTelemetryY),
+        point(channels.decideCol12GapX, source.y),
+        point(channels.decideCol12GapX, channels.actTelemetryY),
         point(target.x - 32, channels.actTelemetryY),
         point(target.x - 32, target.y),
         target,
@@ -435,7 +496,7 @@ export function buildBoardEdgeRoute(
 
   const compactedPoints = compactOrthogonalPoints(points)
   return {
-    path: smoothOrthogonalPath(compactedPoints, 14),
+    path: smoothOrthogonalPath(compactedPoints, 22),
     points: compactedPoints,
     label: buildLabel(edge, compactedPoints, channels),
   }

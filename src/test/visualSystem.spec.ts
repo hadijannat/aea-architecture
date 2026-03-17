@@ -225,28 +225,28 @@ describe('resolveSemanticStrokeWidth', () => {
     expect(resolveSemanticStrokeWidth('thin', 'retrieval', lod)).toBe(1)
   })
 
-  it('returns the correct bold width for writeback (width=2, bold adds 0.8, min 2.6)', () => {
-    // writeback base width=2; bold: max(2+0.8, 2.6) = max(2.8, 2.6) = 2.8
-    expect(resolveSemanticStrokeWidth('bold', 'writeback')).toBe(2.8)
+  it('returns the correct bold width for writeback (width=2.4, bold adds 0.8, min 2.6)', () => {
+    // writeback base width=2.4; bold: max(2.4+0.8, 2.6) = max(3.2, 2.6) = 3.2
+    expect(resolveSemanticStrokeWidth('bold', 'writeback')).toBe(3.2)
   })
 
-  it('returns the correct medium width for validation (base=2, medium adds 0.2)', () => {
-    // validation base=2; medium: max(2+0.2, 1.9) = 2.2
-    expect(resolveSemanticStrokeWidth('medium', 'validation')).toBe(2.2)
+  it('returns the correct medium width for validation (base=2.4, medium adds 0.2)', () => {
+    // validation base=2.4; medium: max(2.4+0.2, 1.9) = 2.6
+    expect(resolveSemanticStrokeWidth('medium', 'validation')).toBe(2.6)
   })
 
-  it('returns the correct dashed width for rejection (base=1.5, dashed uses max(base, 1.6))', () => {
-    // rejection base=1.5; dashed: max(1.5, 1.6) = 1.6
-    expect(resolveSemanticStrokeWidth('dashed', 'rejection')).toBe(1.6)
+  it('returns the correct dashed width for rejection (base=1.8, dashed uses max(base, 1.6))', () => {
+    // rejection base=1.8; dashed: max(1.8, 1.6) = 1.8
+    expect(resolveSemanticStrokeWidth('dashed', 'rejection')).toBe(1.8)
   })
 
-  it('returns the correct thin width for retrieval (base=1.5, thin: max(1.5-0.1, 1.35))', () => {
-    // retrieval base=1.5; thin: max(1.5-0.1, 1.35) = max(1.4, 1.35) = 1.4
-    expect(resolveSemanticStrokeWidth('thin', 'retrieval')).toBe(1.4)
+  it('returns the correct thin width for retrieval (base=1.8, thin: max(1.8-0.1, 1.35))', () => {
+    // retrieval base=1.8; thin: max(1.8-0.1, 1.35) = max(1.7, 1.35) = 1.7
+    expect(resolveSemanticStrokeWidth('thin', 'retrieval')).toBe(1.7)
   })
 
-  it('applies the floor (1.35) for sequence edges at thin style (base=1)', () => {
-    // sequence base=1; thin: max(1-0.1, 1.35) = max(0.9, 1.35) = 1.35
+  it('applies the floor (1.35) for sequence edges at thin style (base=1.2)', () => {
+    // sequence base=1.2; thin: max(1.2-0.1, 1.35) = max(1.1, 1.35) = 1.35
     expect(resolveSemanticStrokeWidth('thin', 'sequence')).toBe(1.35)
   })
 })
