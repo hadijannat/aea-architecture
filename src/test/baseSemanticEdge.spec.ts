@@ -8,6 +8,12 @@ import { resolveGraphEdge } from '@/graph/spec/manifest'
 import { BaseSemanticEdge } from '@/ui/edges/BaseSemanticEdge'
 
 vi.mock('@xyflow/react', () => ({
+  Position: {
+    Left: 'left',
+    Right: 'right',
+    Top: 'top',
+    Bottom: 'bottom',
+  },
   BaseEdge: ({
     path,
     interactionWidth,
@@ -62,6 +68,8 @@ describe('BaseSemanticEdge', () => {
           data: {
             spec,
             ariaLabel: 'F4 test edge',
+            sourceHandle: 'bottom:validation:0',
+            targetHandle: 'top:validation:0',
             callbacks,
             optional: false,
             selected: false,

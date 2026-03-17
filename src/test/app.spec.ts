@@ -418,7 +418,7 @@ test('selected sequence edges expand from ids into human-readable action labels'
   await expect(sequenceLabel).toHaveText('PB_F1')
 })
 
-test('architecture edge labels retain ids in chip and detail modes', async ({ page }) => {
+test('architecture edge labels omit ids in chip mode and retain them in detail mode', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
   await page.waitForTimeout(700)
@@ -428,7 +428,7 @@ test('architecture edge labels retain ids in chip and detail modes', async ({ pa
 
   const edgeLabel = await ensureEdgeLabelMode(page, 'F4', 'chip', 'zoom-in')
   await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'chip')
-  await expect(edgeLabel).toHaveText('F4 · Await approval')
+  await expect(edgeLabel).toHaveText('Await approval')
 
   await page.goto('/?edge=F4')
   const detailedLabel = await ensureEdgeLabelMode(page, 'F4', 'detail', 'zoom-in')
@@ -443,7 +443,7 @@ test('diode edges use dedicated diode markers with readable labels', async ({ pa
 
   const edgeLabel = await ensureEdgeLabelMode(page, 'F_GW2', 'chip', 'zoom-in')
   await expect(edgeLabel).toHaveAttribute('data-edge-label-mode', 'chip')
-  await expect(edgeLabel).toHaveText('F_GW2 · Ingress')
+  await expect(edgeLabel).toHaveText('Ingress')
 
   const markerEnd = await architectureMainEdgePath(page, 'F_GW2').getAttribute('marker-end')
   expect(markerEnd).toMatch(/architecture-marker-gateway-internal-diode/)
@@ -879,7 +879,7 @@ test('sequence background and ribbon label follow the active theme', async ({ pa
   await expect(page.getByTestId('sequence').getByText('VoR boundary')).toBeVisible()
   await expect
     .poll(() => sequenceBackground.evaluate((element) => getComputedStyle(element).fill))
-    .toBe('rgb(255, 249, 241)')
+    .toBe('rgb(250, 251, 255)')
 
   await page.getByRole('button', { name: 'Analysis theme' }).click()
   await expect

@@ -21,8 +21,8 @@ import { projectionOverridesSchema } from '@/graph/spec/schema'
 import { resolveBoardLabelPosition } from '@/layout/board'
 import { validateGraphManifest } from '@/graph/spec/validators'
 import { computeBoardNodePositions } from '@/layout/boardLayout'
-import { buildBoardEdgeRouteFromPositions, buildBoardGeometryFromPositions } from '@/layout/boardGeometry'
-import { resolveEdgeHandles } from '@/layout/ports'
+import { anchorPointForRect, buildBoardEdgeRouteFromPositions, buildBoardGeometryFromPositions } from '@/layout/boardGeometry'
+import { compareHandleIds, normalizeHandleId, parseHandleId, resolveEdgeHandles } from '@/layout/ports'
 import { useDiagramStore, type DiagramStore } from '@/state/diagramStore'
 import { buildUiSearchParams, parseUiSearchParams } from '@/state/urlState'
 
@@ -690,6 +690,9 @@ describe('graph manifest', () => {
 
     for (const { childId, parentId } of containmentPairs) {
       const childBounds = nodeBounds(state, childId)
+      if (!parentId) {
+        throw new Error(`Missing parentId for ${childId}`)
+      }
       const parentBounds = nodeBounds(state, parentId)
       expect(
         containsBounds(parentBounds, childBounds),
@@ -1060,16 +1063,16 @@ describe('exports', () => {
         labelPoint: { x: 1512.5, y: 1042 },
       },
       F3g: {
-        path: 'M 895 666 L 1038 666 Q 1060 666 1060 688 L 1060 1069 Q 1060 1091 1082 1091 L 1698 1091 Q 1720 1091 1720 1113 L 1720 1164 Q 1720 1186 1742 1186 L 1885 1186',
-        labelPoint: { x: 1390, y: 1073 },
+        path: 'M 879 666 L 879 678 L 879 1051 Q 879 1073 901 1073 L 1847 1073 Q 1869 1073 1869 1095 L 1869 1174 L 1869 1186',
+        labelPoint: { x: 1374, y: 1055 },
       },
       F3h: {
-        path: 'M 1418 336 L 1418 1152 Q 1418 1174 1440 1174 L 1843 1174 Q 1849 1174 1849 1180 L 1849 1180 Q 1849 1186 1855 1186 L 1885 1186',
-        labelPoint: { x: 1831, y: 1180 },
+        path: 'M 1418 352 L 1424 352 Q 1430 352 1430 358 L 1430 1087 Q 1430 1109 1452 1109 L 1879 1109 Q 1901 1109 1901 1131 L 1901 1174 L 1901 1186',
+        labelPoint: { x: 1665.5, y: 1091 },
       },
       F3i: {
-        path: 'M 596 1309 L 596 1324.5 Q 596 1340 611.5 1340 L 1698 1340 Q 1720 1340 1720 1318 L 1720 1272 Q 1720 1250 1742 1250 L 1770 1250',
-        labelPoint: { x: 1158, y: 1358 },
+        path: 'M 596 1277 L 602 1277 Q 608 1277 608 1271 L 608 1077 Q 608 1055 630 1055 L 1736 1055 Q 1758 1055 1758 1077 L 1758 1212 Q 1758 1218 1764 1218 L 1770 1218',
+        labelPoint: { x: 1183, y: 1037 },
       },
       F_T0_req: {
         path: 'M 1555 866 L 1555 788 Q 1555 766 1577 766 L 1863 766 Q 1885 766 1885 744 L 1885 666',
@@ -1088,8 +1091,8 @@ describe('exports', () => {
         labelPoint: { x: 1555, y: 750 },
       },
       F4: {
-        path: 'M 1885 1314 L 1742 1314 Q 1720 1314 1720 1292 L 1720 1113 Q 1720 1091 1698 1091 L 1082 1091 Q 1060 1091 1060 1113 L 1060 1164 Q 1060 1186 1038 1186 L 895 1186',
-        labelPoint: { x: 1390, y: 1109 },
+        path: 'M 1885 1314 L 1885 1326 L 1885 1305 Q 1885 1284 1864 1284 L 917 1284 Q 895 1284 895 1262 L 895 1174 L 895 1186',
+        labelPoint: { x: 1390, y: 1266 },
       },
       F_H1_revalidate: {
         path: 'M 1010 1246 L 1010 1318 Q 1010 1340 1032 1340 L 1748 1340 Q 1770 1340 1770 1318 L 1770 1250',
@@ -1104,16 +1107,16 @@ describe('exports', () => {
         labelPoint: { x: 915, y: 1327 },
       },
       F5: {
-        path: 'M 780 1584 L 762 1584 Q 744 1584 744 1566 L 744 1526 Q 744 1504 722 1504 L 646 1504 Q 624 1504 624 1482 L 624 1323 Q 624 1309 610 1309 L 596 1309',
-        labelPoint: { x: 684, y: 1528 },
+        path: 'M 780 1568 L 774 1568 Q 768 1568 768 1562 L 768 1508 Q 768 1486 746 1486 L 630 1486 Q 608 1486 608 1464 L 608 1299 Q 608 1293 602 1293 L 596 1293',
+        labelPoint: { x: 688, y: 1510 },
       },
       F6: {
-        path: 'M 486 1309 L 424 1309 Q 402 1309 402 1331 L 402 1482 Q 402 1504 380 1504 L 374 1504 Q 352 1504 352 1526 L 352 1545 Q 352 1559 338 1559 L 324 1559',
-        labelPoint: { x: 374, y: 1406.5 },
+        path: 'M 486 1325 L 480 1325 Q 474 1325 474 1331 L 474 1500 Q 474 1522 452 1522 L 358 1522 Q 336 1522 336 1544 L 336 1569 Q 336 1575 330 1575 L 324 1575',
+        labelPoint: { x: 405, y: 1546 },
       },
       F_VoR_ACK: {
-        path: 'M 596 1309 L 610 1309 Q 624 1309 624 1323 L 624 1428 Q 624 1450 646 1450 L 728 1450 Q 750 1450 750 1472 L 750 1569 Q 750 1584 765 1584 L 780 1584',
-        labelPoint: { x: 652, y: 1379.5 },
+        path: 'M 596 1309 L 602 1309 Q 608 1309 608 1315 L 608 1428 Q 608 1450 630 1450 L 746 1450 Q 768 1450 768 1472 L 768 1578 Q 768 1584 774 1584 L 780 1584',
+        labelPoint: { x: 688, y: 1430 },
       },
       F_CPC_INT: {
         path: 'M 96 1559 L 80 1559 Q 64 1559 64 1543 L 64 311 Q 64 295 80 295 L 96 295',
@@ -1189,16 +1192,16 @@ describe('exports', () => {
     }
 
     expect(resolveEdgeHandles(fGw1, state.projection.edgeHandles)).toEqual({
-      sourceHandle: 'right',
-      targetHandle: 'left',
+      sourceHandle: 'right:gateway:0',
+      targetHandle: 'left:gateway:0',
     })
     expect(resolveEdgeHandles(fGw2, state.projection.edgeHandles)).toEqual({
-      sourceHandle: 'bottom',
-      targetHandle: 'top',
+      sourceHandle: 'bottom:gateway:0',
+      targetHandle: 'top:gateway:0',
     })
     expect(resolveEdgeHandles(fGw3, state.projection.edgeHandles)).toEqual({
-      sourceHandle: 'bottom',
-      targetHandle: 'top',
+      sourceHandle: 'bottom:gateway:0',
+      targetHandle: 'top:gateway:0',
     })
 
     const routeGw1 = buildArchitectureRoute(state, 'F_GW1')
@@ -1290,10 +1293,12 @@ describe('exports', () => {
     ])
 
     expect(buildArchitectureRoute(state, 'F3d').points).toEqual([
-      { x: 1303, y: 396 },
-      { x: 1060, y: 396 },
-      { x: 1060, y: 866 },
-      { x: 1225, y: 866 },
+      { x: 1319, y: 396 },
+      { x: 1319, y: 408 },
+      { x: 1319, y: 810 },
+      { x: 1241, y: 810 },
+      { x: 1241, y: 854 },
+      { x: 1241, y: 866 },
     ])
     expect(buildArchitectureRoute(state, 'F_M1_G1A').points).toEqual([
       { x: 2000, y: 930 },
@@ -1381,6 +1386,8 @@ describe('exports', () => {
     expect(publicationDocument.svg).toContain('id="marker-gateway-internal-diode"')
     expect(publicationDocument.svg).toContain('id="sequence-edge-PB_ACK"')
     expect(publicationDocument.svg).toContain('VoR Domain-Transition Sequence')
+    expect(publicationDocument.svg).toContain('F5 · VoR request (non-plant-specific, authenticated)')
+    expect(publicationDocument.svg).toContain('F4 · validated candidate plan (approval pending)')
     expect(publicationF5Path).toContain('Q')
     expect(publicationF5Path).not.toBe(route.path)
     expect(Number(publicationStart?.[1])).toBeCloseTo(start.x * scale, 2)
@@ -1475,5 +1482,46 @@ describe('exports', () => {
     useDiagramStore.setState(initialState)
   })
 
+  it('normalizes slot handles while preserving bare-side compatibility', () => {
+    expect(parseHandleId('left')).toEqual({
+      raw: 'left:default:0',
+      side: 'left',
+      family: 'default',
+      index: 0,
+      legacy: true,
+    })
+    expect(parseHandleId('right:policy:2')).toEqual({
+      raw: 'right:policy:2',
+      side: 'right',
+      family: 'policy',
+      index: 2,
+      legacy: false,
+    })
+    expect(normalizeHandleId('top')).toBe('top:default:0')
+    expect(compareHandleIds('right:policy:1', 'right:policy:2')).toBeLessThan(0)
 
+    const f5 = resolveGraphEdge('F5')
+    const f3b = resolveGraphEdge('F3b')
+    if (!f5 || !f3b) {
+      throw new Error('Expected F5 and F3b edge specs to exist')
+    }
+
+    expect(resolveEdgeHandles(f3b, {})).toEqual({
+      sourceHandle: 'right:policy:1',
+      targetHandle: 'left:policy:1',
+    })
+    expect(resolveEdgeHandles(f5, { F5: { sourceHandle: 'top', targetHandle: 'bottom' } })).toEqual({
+      sourceHandle: 'top:default:0',
+      targetHandle: 'bottom:default:0',
+    })
+  })
+
+  it('anchors slot handles away from the side midpoint without crossing node corners', () => {
+    const rect = { x: 100, y: 200, width: 120, height: 80 }
+
+    expect(anchorPointForRect(rect, 'right:default:0')).toEqual({ x: 220, y: 240 })
+    expect(anchorPointForRect(rect, 'right:policy:1')).toEqual({ x: 220, y: 224 })
+    expect(anchorPointForRect(rect, 'bottom:writeback:2')).toEqual({ x: 176, y: 280 })
+    expect(anchorPointForRect(rect, 'left:validation:3')).toEqual({ x: 100, y: 214 })
+  })
 })

@@ -10,38 +10,60 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
 } from 'react'
-import { Handle, useViewport, type NodeProps } from '@xyflow/react'
+import { Handle, Position, useViewport, type NodeProps } from '@xyflow/react'
 import clsx from 'clsx'
 
 import type { DiagramFlowNode } from '@/graph/compile/toReactFlow'
 import { nodeEntityKey } from '@/graph/spec/manifest'
 import type { ClaimId, NodeSpec } from '@/graph/spec/schema'
 import { focusRingClassName } from '@/a11y/focus'
-import { getHandlePosition, type HandleId } from '@/layout/ports'
+import { getHandleOffset, getHandlePosition, type HandleId } from '@/layout/ports'
 
-const handleIds: HandleId[] = ['left', 'right', 'top', 'bottom']
+function handleStyle(handleId: HandleId) {
+  const position = getHandlePosition(handleId)
+  const offset = getHandleOffset(handleId)
+  const base = { opacity: 0, width: 10, height: 10 } satisfies CSSProperties
 
-function NodeHandles() {
+  if (position === Position.Left || position === Position.Right) {
+    return {
+      ...base,
+      top: `calc(50% + ${offset}px)`,
+    } satisfies CSSProperties
+  }
+
+  return {
+    ...base,
+    left: `calc(50% + ${offset}px)`,
+  } satisfies CSSProperties
+}
+
+function NodeHandles({
+  sourceHandleIds,
+  targetHandleIds,
+}: {
+  sourceHandleIds: HandleId[]
+  targetHandleIds: HandleId[]
+}) {
   return (
     <>
-      {handleIds.map((handleId) => (
+      {sourceHandleIds.map((handleId) => (
         <Handle
           key={`source-${handleId}`}
           id={handleId}
           type="source"
           position={getHandlePosition(handleId)}
           isConnectable={false}
-          style={{ opacity: 0, width: 10, height: 10 }}
+          style={handleStyle(handleId)}
         />
       ))}
-      {handleIds.map((handleId) => (
+      {targetHandleIds.map((handleId) => (
         <Handle
           key={`target-${handleId}`}
           id={handleId}
           type="target"
           position={getHandlePosition(handleId)}
           isConnectable={false}
-          style={{ opacity: 0, width: 10, height: 10 }}
+          style={handleStyle(handleId)}
         />
       ))}
     </>
@@ -294,7 +316,9 @@ export const BaseNodeCard = memo(function BaseNodeCard({
       onFocusCapture={handleMouseEnter}
       onBlurCapture={handleBlur}
     >
-      {!isStructural && !showCollapsed ? <NodeHandles /> : null}
+      {!isStructural && !showCollapsed ? (
+        <NodeHandles sourceHandleIds={data.sourceHandleIds} targetHandleIds={data.targetHandleIds} />
+      ) : null}
 
       {showIconMode ? (
         <div className="node-card__icon-tile">

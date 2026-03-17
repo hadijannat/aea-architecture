@@ -15,7 +15,7 @@ import {
   resolveSequenceStep,
 } from '@/graph/spec/manifest'
 import type { ClaimId, EdgeSpec, EntityKey, GraphManifest, NodeSpec } from '@/graph/spec/schema'
-import { resolveEdgeHandles } from '@/layout/ports'
+import { compareHandleIds, resolveEdgeHandles, type HandleId } from '@/layout/ports'
 import { buildBoardGeometryFromPositions } from '@/layout/boardGeometry'
 import type { DiagramStore } from '@/state/diagramStore'
 import {
@@ -55,6 +55,8 @@ export interface CompiledNodeData extends Record<string, unknown> {
   collapsed: boolean
   renderMode: ReturnType<typeof resolveNodeRenderMode>
   notesExpanded: boolean
+  sourceHandleIds: HandleId[]
+  targetHandleIds: HandleId[]
   callbacks: CompileCallbacks
 }
 
@@ -75,6 +77,8 @@ export interface CompiledEdgeData extends Record<string, unknown> {
   highlightGroup?: string
   canvasLod: ReturnType<typeof resolveCanvasLod>
   labelMode: ReturnType<typeof resolveEdgeLabelMode>
+  sourceHandle: HandleId
+  targetHandle: HandleId
   callbacks: CompileCallbacks
 }
 
@@ -504,12 +508,33 @@ function edgeTypeForSpec(edge: EdgeSpec) {
   return 'ReadEdge'
 }
 
+function collectArchitectureHandleMaps(
+  state: DiagramStore,
+  manifest: GraphManifest,
+) {
+  const sourceHandleIds = new Map<string, Set<HandleId>>()
+  const targetHandleIds = new Map<string, Set<HandleId>>()
+
+  for (const edge of manifest.edges.filter((candidate) => candidate.panel.includes('architecture'))) {
+    const { sourceHandle, targetHandle } = resolveEdgeHandles(edge, state.projection.edgeHandles)
+    sourceHandleIds.set(edge.source, new Set([...(sourceHandleIds.get(edge.source) ?? []), sourceHandle]))
+    targetHandleIds.set(edge.target, new Set([...(targetHandleIds.get(edge.target) ?? []), targetHandle]))
+  }
+
+  return {
+    sourceHandleIds,
+    targetHandleIds,
+  }
+}
+
 export function compileArchitectureNodes(
   state: DiagramStore,
   callbacks: CompileCallbacks,
   derivedState: DerivedDiagramState,
   manifest: GraphManifest = graphManifest,
 ): DiagramFlowNode[] {
+  const handleMaps = collectArchitectureHandleMaps(state, manifest)
+
   return manifest.nodes
     .filter((node) => node.panel.includes('architecture'))
     .map((node) => {
@@ -550,6 +575,8 @@ export function compileArchitectureNodes(
           collapsed,
           renderMode: resolveNodeRenderMode(node, state.ui.viewport.zoom, selected, collapsed),
           notesExpanded: state.projection.expandedNoteIds.includes(node.id),
+          sourceHandleIds: [...(handleMaps.sourceHandleIds.get(node.id) ?? [])].sort(compareHandleIds),
+          targetHandleIds: [...(handleMaps.targetHandleIds.get(node.id) ?? [])].sort(compareHandleIds),
           callbacks,
         },
         style: {
@@ -627,6 +654,8 @@ export function compileArchitectureEdges(
           highlightGroup: edge.interactive.highlightGroup,
           canvasLod,
           labelMode,
+          sourceHandle,
+          targetHandle,
           callbacks,
         },
       }

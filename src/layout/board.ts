@@ -1,4 +1,5 @@
 import type { EdgeSpec } from '@/graph/spec/schema'
+import { parseHandleId, type HandleId } from '@/layout/ports'
 import { compactOrthogonalPoints, smoothOrthogonalPath } from '@/layout/pathGeometry'
 
 export interface Point {
@@ -19,6 +20,11 @@ export interface RoutedBoardEdge {
   path: string
   points: Point[]
   label: RoutedBoardLabel
+}
+
+export interface BoardRouteHandles {
+  sourceHandle: HandleId
+  targetHandle: HandleId
 }
 
 export interface BoardRouteChannels {
@@ -102,7 +108,174 @@ function gatewayGutterLabel(points: Point[], channels: BoardRouteChannels): Rout
   return anchoredLabel(channels.gatewayLabelX, midpoint(start, end).y, 'right', 0)
 }
 
-function buildLabel(edge: EdgeSpec, points: Point[], channels: BoardRouteChannels): RoutedBoardLabel {
+function findLongestSegmentIndex(points: Point[], axis: 'horizontal' | 'vertical'): number {
+  let selectedIndex = 0
+  let selectedLength = -1
+
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const start = points[index]
+    const end = points[index + 1]
+    const matchesAxis =
+      axis === 'horizontal'
+        ? start.y === end.y && start.x !== end.x
+        : start.x === end.x && start.y !== end.y
+
+    if (!matchesAxis) {
+      continue
+    }
+
+    const length = Math.abs(start.x - end.x) + Math.abs(start.y - end.y)
+    if (length > selectedLength) {
+      selectedIndex = index
+      selectedLength = length
+    }
+  }
+
+  return selectedIndex
+}
+
+function routeStub(anchor: Point, handle: HandleId, distance = 12): Point {
+  const parsed = parseHandleId(handle)
+  if (!parsed) {
+    return anchor
+  }
+
+  switch (parsed.side) {
+    case 'left':
+      return point(anchor.x - distance, anchor.y)
+    case 'right':
+      return point(anchor.x + distance, anchor.y)
+    case 'top':
+      return point(anchor.x, anchor.y - distance)
+    case 'bottom':
+      return point(anchor.x, anchor.y + distance)
+  }
+}
+
+function corridorTrackOffset(priority = 0) {
+  if (priority <= 0) {
+    return 0
+  }
+
+  const magnitude = Math.ceil(priority / 2) * 18
+  return priority % 2 === 1 ? -magnitude : magnitude
+}
+
+function routeViaHorizontalCorridor(
+  source: Point,
+  target: Point,
+  handles: BoardRouteHandles,
+  corridorY: number,
+) {
+  const sourceStub = routeStub(source, handles.sourceHandle)
+  const targetStub = routeStub(target, handles.targetHandle)
+
+  return compactOrthogonalPoints([
+    source,
+    sourceStub,
+    point(sourceStub.x, corridorY),
+    point(targetStub.x, corridorY),
+    targetStub,
+    target,
+  ])
+}
+
+function routeViaVerticalCorridor(
+  source: Point,
+  target: Point,
+  handles: BoardRouteHandles,
+  corridorX: number,
+) {
+  const sourceStub = routeStub(source, handles.sourceHandle)
+  const targetStub = routeStub(target, handles.targetHandle)
+
+  return compactOrthogonalPoints([
+    source,
+    sourceStub,
+    point(corridorX, sourceStub.y),
+    point(corridorX, targetStub.y),
+    targetStub,
+    target,
+  ])
+}
+
+function buildRoutingLabel(edge: EdgeSpec, points: Point[], channels: BoardRouteChannels): RoutedBoardLabel {
+  if (edge.routing?.labelPlacement === 'gutter') {
+    return gatewayGutterLabel(points, channels)
+  }
+
+  if (edge.id === 'F_GW1') {
+    return anchoredLabel(channels.gatewayApproachX - 6, points.at(-2)?.y ?? 0, 'top', 14)
+  }
+
+  const corridor = edge.routing?.corridor
+  const axis = corridor === 'gateway' ? 'vertical' : 'horizontal'
+  const segmentIndex = findLongestSegmentIndex(points, axis)
+
+  switch (corridor) {
+    case 'writeback':
+      return segmentLabel(points, segmentIndex, 'bottom', 24)
+    case 'ack':
+      return segmentLabel(points, segmentIndex, 'top', 20)
+    case 'gateway':
+      return segmentLabel(points, segmentIndex, 'right', 16)
+    case 'policy':
+    case 'runtime':
+    case 'validation':
+    default:
+      return segmentLabel(points, segmentIndex, 'top', 18)
+  }
+}
+
+function buildCorridorPoints(
+  edge: EdgeSpec,
+  source: Point,
+  target: Point,
+  channels: BoardRouteChannels,
+  handles: BoardRouteHandles,
+): Point[] | null {
+  if (!edge.routing) {
+    return null
+  }
+
+  const offset = corridorTrackOffset(edge.routing.priority)
+
+  switch (edge.routing.corridor) {
+    case 'gateway':
+      if (edge.id === 'F_GW2' || edge.id === 'F_GW3') {
+        return compactOrthogonalPoints([source, target])
+      }
+      return routeViaVerticalCorridor(source, target, handles, channels.gatewayApproachX + offset)
+    case 'policy':
+      return routeViaHorizontalCorridor(source, target, handles, channels.policyY + offset)
+    case 'runtime':
+      return routeViaHorizontalCorridor(source, target, handles, channels.contextY + offset)
+    case 'validation':
+      return routeViaHorizontalCorridor(
+        source,
+        target,
+        handles,
+        (edge.source === 'DEC_G2' ? channels.validationY : channels.decideRow12GapY) + offset,
+      )
+    case 'writeback':
+      return routeViaHorizontalCorridor(source, target, handles, channels.writeY + offset)
+    case 'ack':
+      return routeViaHorizontalCorridor(source, target, handles, channels.ackY + offset)
+    default:
+      return null
+  }
+}
+
+function buildLabel(
+  edge: EdgeSpec,
+  points: Point[],
+  channels: BoardRouteChannels,
+  handles?: BoardRouteHandles,
+): RoutedBoardLabel {
+  if (edge.routing && handles) {
+    return buildRoutingLabel(edge, points, channels)
+  }
+
   switch (edge.id) {
     case 'F_GW1':
       return anchoredLabel(channels.gatewayApproachX - 6, points.at(-2)?.y ?? 0, 'top', 14)
@@ -198,8 +371,20 @@ export function buildBoardEdgeRoute(
   source: Point,
   target: Point,
   channels: BoardRouteChannels,
+  handles?: BoardRouteHandles,
 ): RoutedBoardEdge {
   let points: Point[]
+
+  if (edge.routing && handles) {
+    const routedPoints = buildCorridorPoints(edge, source, target, channels, handles)
+    if (routedPoints) {
+      return {
+        path: smoothOrthogonalPath(routedPoints, 22),
+        points: routedPoints,
+        label: buildLabel(edge, routedPoints, channels, handles),
+      }
+    }
+  }
 
   switch (edge.id) {
     case 'F_GW1':
@@ -498,6 +683,6 @@ export function buildBoardEdgeRoute(
   return {
     path: smoothOrthogonalPath(compactedPoints, 22),
     points: compactedPoints,
-    label: buildLabel(edge, compactedPoints, channels),
+    label: buildLabel(edge, compactedPoints, channels, handles),
   }
 }

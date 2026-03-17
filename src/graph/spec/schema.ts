@@ -60,7 +60,35 @@ export const edgeSemanticFamilySchema = z.enum([
 ])
 export const edgeStyleSchema = z.enum(['bold', 'medium', 'thin', 'dashed', 'dotted'])
 export const claimIdSchema = z.enum(['C1', 'C2', 'C3', 'C4', 'C5', 'C6'])
-export const handlePositionSchema = z.enum(['left', 'right', 'top', 'bottom'])
+export const handleSideSchema = z.enum(['left', 'right', 'top', 'bottom'])
+export const corridorIdSchema = z.enum([
+  'gateway',
+  'telemetry',
+  'policy',
+  'runtime',
+  'validation',
+  'writeback',
+  'feedback',
+  'ack',
+])
+const handleFamilyValues = ['default', ...corridorIdSchema.options] as const
+const handleIdPattern = new RegExp(
+  `^(${handleSideSchema.options.join('|')})(?::(${handleFamilyValues.join('|')}):(\\d+))?$`,
+)
+
+export const handlePositionSchema = z.string().refine((value) => {
+  const match = handleIdPattern.exec(value)
+  if (!match) {
+    return false
+  }
+
+  if (typeof match[3] !== 'string') {
+    return true
+  }
+
+  return Number.isInteger(Number.parseInt(match[3], 10))
+}, 'Handle positions must be a side or side:family:index value')
+export const routeLabelPlacementSchema = z.enum(['segment', 'gutter', 'tap'])
 export const projectionThemeSchema = z.enum(['default', 'analysis'])
 
 export const standardRefSchema = z.object({
@@ -167,6 +195,13 @@ export const edgeSpecSchema = z.object({
     highlightGroup: z.string().optional(),
     optional: z.boolean().default(false),
   }),
+  routing: z.object({
+    corridor: corridorIdSchema,
+    sourceHandle: handlePositionSchema.optional(),
+    targetHandle: handlePositionSchema.optional(),
+    labelPlacement: routeLabelPlacementSchema.default('segment'),
+    priority: z.number().int().nonnegative().optional(),
+  }).optional(),
   inspector: edgeInspectorSchema,
 })
 
@@ -288,6 +323,7 @@ export type LaneId = z.infer<typeof laneIdSchema>
 export type BandId = z.infer<typeof bandIdSchema>
 export type NodeKind = z.infer<typeof nodeKindSchema>
 export type NodeType = z.infer<typeof nodeTypeSchema>
+export type CorridorId = z.infer<typeof corridorIdSchema>
 export type EdgeSemantic = z.infer<typeof edgeSemanticSchema>
 export type EdgeSemanticFamily = z.infer<typeof edgeSemanticFamilySchema>
 export type EdgeStyle = z.infer<typeof edgeStyleSchema>
