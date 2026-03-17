@@ -2,8 +2,8 @@ import { graphManifest, resolveGraphNode } from '@/graph/spec/manifest'
 import type { EdgeSpec, GraphManifest } from '@/graph/spec/schema'
 import { BAND_INSET_X, BAND_INSET_Y, BAND_SPACING } from '@/layout/boardLayout'
 import type { NodePositionMap } from '@/layout/boardLayout'
-import { buildBoardEdgeRoute, type BoardRouteChannels, type Point, type RoutedBoardEdge } from '@/layout/board'
-import type { HandleId } from '@/layout/ports'
+import { buildBoardEdgeRoute, type BoardRouteChannels, type BoardRouteHandles, type Point, type RoutedBoardEdge } from '@/layout/board'
+import { getHandleOffset, parseHandleId, type HandleId } from '@/layout/ports'
 
 export interface BoardRect {
   x: number
@@ -187,7 +187,7 @@ function boundsFromPoints(points: Point[]) {
 }
 
 function isHandleId(value?: string | null): value is HandleId {
-  return value === 'left' || value === 'right' || value === 'top' || value === 'bottom'
+  return parseHandleId(value)?.raw !== undefined
 }
 
 export function buildBoardRectMapFromNodes(
@@ -228,15 +228,30 @@ export function buildBoardRectMapFromPositions(
 }
 
 export function anchorPointForRect(rect: BoardRect, handleId: HandleId): Point {
-  switch (handleId) {
+  const parsed = parseHandleId(handleId)
+  const offset = getHandleOffset(handleId)
+
+  switch (parsed?.side ?? 'right') {
     case 'left':
-      return { x: rect.x, y: rect.y + rect.height / 2 }
+      return {
+        x: rect.x,
+        y: clamp(rect.y + rect.height / 2 + offset, rect.y + 14, rect.y + rect.height - 14),
+      }
     case 'right':
-      return { x: rect.x + rect.width, y: rect.y + rect.height / 2 }
+      return {
+        x: rect.x + rect.width,
+        y: clamp(rect.y + rect.height / 2 + offset, rect.y + 14, rect.y + rect.height - 14),
+      }
     case 'top':
-      return { x: rect.x + rect.width / 2, y: rect.y }
+      return {
+        x: clamp(rect.x + rect.width / 2 + offset, rect.x + 14, rect.x + rect.width - 14),
+        y: rect.y,
+      }
     case 'bottom':
-      return { x: rect.x + rect.width / 2, y: rect.y + rect.height }
+      return {
+        x: clamp(rect.x + rect.width / 2 + offset, rect.x + 14, rect.x + rect.width - 14),
+        y: rect.y + rect.height,
+      }
   }
 }
 
@@ -337,6 +352,10 @@ function buildFlowRoute(
     anchorPointForRect(sourceRect, edge.sourceHandle),
     anchorPointForRect(targetRect, edge.targetHandle),
     channels,
+    {
+      sourceHandle: edge.sourceHandle,
+      targetHandle: edge.targetHandle,
+    },
   )
 }
 
@@ -467,7 +486,7 @@ export function buildBoardEdgeRouteFromPositions(
   edge: EdgeSpec,
   positions: NodePositionMap,
   manifest: GraphManifest = graphManifest,
-  edgeHandles?: { sourceHandle: HandleId; targetHandle: HandleId },
+  edgeHandles?: BoardRouteHandles,
 ): RoutedBoardEdge {
   const rectMap = buildBoardRectMapFromPositions(positions, manifest)
   const sourceRect = rectMap[edge.source]
@@ -482,5 +501,6 @@ export function buildBoardEdgeRouteFromPositions(
     anchorPointForRect(sourceRect, edgeHandles.sourceHandle),
     anchorPointForRect(targetRect, edgeHandles.targetHandle),
     buildBoardRouteChannels(rectMap, manifest),
+    edgeHandles,
   )
 }

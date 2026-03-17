@@ -1989,6 +1989,13 @@
         "targetHandle": "left",
         "highlightGroup": "telemetry"
       },
+      "routing": {
+        "corridor": "gateway",
+        "sourceHandle": "right:gateway:0",
+        "targetHandle": "left:gateway:0",
+        "labelPlacement": "segment",
+        "priority": 0
+      },
       "inspector": {
         "rationale": "F_GW1 is the CPC-side subscription edge that begins the NE 177 read-only chain.",
         "notes": [
@@ -2031,6 +2038,13 @@
         "sourceHandle": "bottom",
         "targetHandle": "top",
         "highlightGroup": "telemetry"
+      },
+      "routing": {
+        "corridor": "gateway",
+        "sourceHandle": "bottom:gateway:0",
+        "targetHandle": "top:gateway:0",
+        "labelPlacement": "gutter",
+        "priority": 0
       },
       "inspector": {
         "rationale": "F_GW2 moves telemetry from retrieval into the diode stage of the gateway chain.",
@@ -2075,6 +2089,13 @@
         "sourceHandle": "bottom",
         "targetHandle": "top",
         "highlightGroup": "telemetry"
+      },
+      "routing": {
+        "corridor": "gateway",
+        "sourceHandle": "bottom:gateway:0",
+        "targetHandle": "top:gateway:0",
+        "labelPlacement": "gutter",
+        "priority": 0
       },
       "inspector": {
         "rationale": "F_GW3 explicitly encodes the NE 177 'no return path' requirement and is the core visual proof for claim C2.",
@@ -2195,6 +2216,13 @@
         "targetHandle": "left",
         "highlightGroup": "policy"
       },
+      "routing": {
+        "corridor": "policy",
+        "sourceHandle": "right:policy:1",
+        "targetHandle": "left:policy:1",
+        "labelPlacement": "segment",
+        "priority": 1
+      },
       "inspector": {
         "rationale": "F3a now terminates at the Retrieval Guard so AAS submodels pass through provenance and scope checks before the RAG stage.",
         "constraints": [
@@ -2232,6 +2260,13 @@
         "sourceHandle": "right",
         "targetHandle": "left",
         "highlightGroup": "policy"
+      },
+      "routing": {
+        "corridor": "policy",
+        "sourceHandle": "right:policy:1",
+        "targetHandle": "left:policy:1",
+        "labelPlacement": "segment",
+        "priority": 1
       },
       "inspector": {
         "rationale": "F3b provides soft-grounding policy context, but only after the Retrieval Guard checks provenance, scope, and trust classification.",
@@ -2315,6 +2350,13 @@
         "targetHandle": "left",
         "highlightGroup": "policy"
       },
+      "routing": {
+        "corridor": "policy",
+        "sourceHandle": "right:policy:2",
+        "targetHandle": "left:policy:2",
+        "labelPlacement": "segment",
+        "priority": 2
+      },
       "inspector": {
         "rationale": "F3b' is the authoritative hard-enforcement path feeding deterministic policy rules directly into the Policy-Guard.",
         "notes": [
@@ -2361,6 +2403,13 @@
         "targetHandle": "left",
         "highlightGroup": "policy"
       },
+      "routing": {
+        "corridor": "runtime",
+        "sourceHandle": "right:runtime:1",
+        "targetHandle": "left:runtime:1",
+        "labelPlacement": "segment",
+        "priority": 1
+      },
       "inspector": {
         "rationale": "F3c now terminates at the Input / Context Guard so retrieved context cannot bypass deterministic classification before reaching the planner."
       }
@@ -2399,6 +2448,13 @@
         "sourceHandle": "bottom",
         "targetHandle": "top",
         "highlightGroup": "policy"
+      },
+      "routing": {
+        "corridor": "runtime",
+        "sourceHandle": "bottom:runtime:2",
+        "targetHandle": "top:runtime:2",
+        "labelPlacement": "segment",
+        "priority": 2
       },
       "inspector": {
         "rationale": "F3d now terminates at DEC_G0 so the harmonised t0 plant-state snapshot is deterministically classified before model access.",
@@ -2704,6 +2760,13 @@
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
+      "routing": {
+        "corridor": "validation",
+        "sourceHandle": "bottom:validation:1",
+        "targetHandle": "top:validation:1",
+        "labelPlacement": "segment",
+        "priority": 1
+      },
       "inspector": {
         "rationale": "F3g supplies AAS-typed property bounds, units, and constraints to deterministic validation.",
         "notes": [
@@ -2747,6 +2810,13 @@
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
+      "routing": {
+        "corridor": "validation",
+        "sourceHandle": "right:validation:2",
+        "targetHandle": "top:validation:2",
+        "labelPlacement": "segment",
+        "priority": 2
+      },
       "inspector": {
         "rationale": "F3h provides the same frozen t0 values used by F3d so validation and reasoning observe the same plant snapshot.",
         "notes": [
@@ -2789,6 +2859,13 @@
         "sourceHandle": "right",
         "targetHandle": "left",
         "highlightGroup": "write"
+      },
+      "routing": {
+        "corridor": "validation",
+        "sourceHandle": "right:validation:3",
+        "targetHandle": "left:validation:3",
+        "labelPlacement": "segment",
+        "priority": 3
       },
       "inspector": {
         "rationale": "F3i originates at the VoR Interface because the gateway-side enforcement point owns the permitted write scope and session role knowledge.",
@@ -2987,6 +3064,13 @@
         "sourceHandle": "bottom",
         "targetHandle": "top",
         "highlightGroup": "write"
+      },
+      "routing": {
+        "corridor": "validation",
+        "sourceHandle": "bottom:validation:0",
+        "targetHandle": "top:validation:0",
+        "labelPlacement": "segment",
+        "priority": 0
       },
       "inspector": {
         "rationale": "F4 now terminates at the Human Approval Gate so validator-passed plans still require explicit operator approval before VoR composition."
@@ -3402,6 +3486,13 @@
         "targetHandle": "right",
         "highlightGroup": "write"
       },
+      "routing": {
+        "corridor": "writeback",
+        "sourceHandle": "left:writeback:1",
+        "targetHandle": "right:writeback:1",
+        "labelPlacement": "tap",
+        "priority": 1
+      },
       "inspector": {
         "rationale": "F5 is the exclusive write-back initiation path and therefore the only bold cross-boundary edge in the figure.",
         "notes": [
@@ -3443,6 +3534,13 @@
         "sourceHandle": "left",
         "targetHandle": "right",
         "highlightGroup": "write"
+      },
+      "routing": {
+        "corridor": "writeback",
+        "sourceHandle": "left:writeback:2",
+        "targetHandle": "right:writeback:2",
+        "labelPlacement": "tap",
+        "priority": 2
       },
       "inspector": {
         "rationale": "F6 carries the mapped and verified instruction into the CPC Change Handler, not into the read-only CPC Data Interface.",
@@ -3487,6 +3585,13 @@
         "sourceHandle": "right",
         "targetHandle": "left",
         "highlightGroup": "write"
+      },
+      "routing": {
+        "corridor": "ack",
+        "sourceHandle": "right:ack:0",
+        "targetHandle": "left:ack:0",
+        "labelPlacement": "tap",
+        "priority": 0
       },
       "inspector": {
         "rationale": "F_VoR_ACK returns a limited, non-plant-specific status to the request composer without disclosing CPC internals.",

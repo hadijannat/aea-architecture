@@ -35,6 +35,10 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
             { x: sourceX, y: sourceY },
             { x: targetX, y: targetY },
             data.routeChannels,
+            {
+              sourceHandle: data.sourceHandle,
+              targetHandle: data.targetHandle,
+            },
           )
         : null,
     [data, sourceX, sourceY, targetX, targetY],
@@ -120,7 +124,7 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
   const labelText =
     labelMode === 'detail'
       ? `${data.spec.id} · ${detailText}${data.optional ? ' (optional)' : ''}`
-      : `${data.spec.id} · ${displayLabel}`
+      : displayLabel
   const showT0Badge = isT0Edge && labelMode !== 'hidden'
   const markerKind = data.spec.markers.includes('diode') ? 'diode' : presentation.marker
   const writePathActive =
