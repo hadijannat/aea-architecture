@@ -39,6 +39,7 @@ export interface BoardRouteChannels {
   gatewayLabelX: number
   laneReturnX: number
   telemetryY: number
+  ceilingY: number
   policyY: number
   contextY: number
   rejectionY: number
@@ -49,6 +50,7 @@ export interface BoardRouteChannels {
   writeY: number
   ackY: number
   monitorSpineX: number
+  monitorDropY: number
   laneCSpineX: number
   cpcSpineX: number
   decideCol01GapX: number
@@ -141,6 +143,23 @@ function findLongestSegmentIndex(points: Point[], axis: 'horizontal' | 'vertical
   return selectedIndex
 }
 
+function findTapSegmentIndex(points: Point[], axis: 'horizontal' | 'vertical'): number {
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const start = points[index]
+    const end = points[index + 1]
+    const matchesAxis =
+      axis === 'horizontal'
+        ? start.y === end.y && start.x !== end.x
+        : start.x === end.x && start.y !== end.y
+
+    if (matchesAxis && Math.abs(start.x - end.x) + Math.abs(start.y - end.y) > 18) {
+      return index
+    }
+  }
+
+  return findLongestSegmentIndex(points, axis)
+}
+
 function routeStub(anchor: Point, handle: HandleId, distance = 12): Point {
   const parsed = parseHandleId(handle)
   if (!parsed) {
@@ -170,6 +189,14 @@ function corridorTrackOffset(priority = 0) {
 
 function corridorBranchDistance(offset: number) {
   return 30 + Math.round(Math.abs(offset) / 3)
+}
+
+function ceilingCorridorOffset(priority = 0) {
+  return -priority * 18
+}
+
+function feedbackCorridorOffset(priority = 0) {
+  return priority * 28
 }
 
 function routeViaHorizontalCorridor(
@@ -232,6 +259,83 @@ function routeViaVerticalCorridor(
   ])
 }
 
+function routeViaCeilingCorridor(
+  source: Point,
+  target: Point,
+  handles: BoardRouteHandles,
+  channels: BoardRouteChannels,
+  corridorY: number,
+  priority = 0,
+) {
+  const sourceStub = routeStub(source, handles.sourceHandle)
+  const targetStub = routeStub(target, handles.targetHandle)
+  const branchY = corridorY + ceilingCorridorOffset(priority)
+  const descentX =
+    targetStub.x >= channels.decideCol23GapX
+      ? channels.decideCol23GapX
+      : targetStub.x >= channels.decideCol12GapX
+        ? channels.decideCol12GapX
+        : channels.decideCol01GapX
+
+  return compactOrthogonalPoints([
+    source,
+    sourceStub,
+    point(sourceStub.x, branchY),
+    point(descentX, branchY),
+    point(descentX, targetStub.y),
+    targetStub,
+    target,
+  ])
+}
+
+function routeViaFeedbackCorridor(
+  source: Point,
+  target: Point,
+  handles: BoardRouteHandles,
+  corridorY: number,
+  priority = 0,
+) {
+  const sourceStub = routeStub(source, handles.sourceHandle)
+  const targetStub = routeStub(target, handles.targetHandle)
+  const branchY = corridorY + feedbackCorridorOffset(priority)
+  const direction = sourceStub.x <= targetStub.x ? 1 : -1
+  const branchDistance = 28 + priority * 10
+  const sourceJoinX = sourceStub.x + direction * branchDistance
+  const targetJoinX = targetStub.x - direction * branchDistance
+
+  return compactOrthogonalPoints([
+    source,
+    sourceStub,
+    point(sourceStub.x, branchY),
+    point(sourceJoinX, branchY),
+    point(targetJoinX, branchY),
+    point(targetStub.x, branchY),
+    targetStub,
+    target,
+  ])
+}
+
+function routeViaMonitorCorridor(
+  source: Point,
+  target: Point,
+  handles: BoardRouteHandles,
+  spineX: number,
+  dropY: number,
+) {
+  const sourceStub = routeStub(source, handles.sourceHandle)
+  const targetStub = routeStub(target, handles.targetHandle)
+
+  return compactOrthogonalPoints([
+    source,
+    sourceStub,
+    point(spineX, sourceStub.y),
+    point(spineX, dropY),
+    point(targetStub.x, dropY),
+    targetStub,
+    target,
+  ])
+}
+
 function buildRoutingLabel(edge: EdgeSpec, points: Point[], channels: BoardRouteChannels): RoutedBoardLabel {
   if (edge.routing?.labelPlacement === 'gutter') {
     return gatewayGutterLabel(points, channels)
@@ -242,12 +346,27 @@ function buildRoutingLabel(edge: EdgeSpec, points: Point[], channels: BoardRoute
   }
 
   const corridor = edge.routing?.corridor
-  const axis = corridor === 'gateway' ? 'vertical' : 'horizontal'
-  const segmentIndex = findLongestSegmentIndex(points, axis)
+  const useTapSegment = edge.routing?.labelPlacement === 'tap' && corridor === 'monitor'
+  const axis =
+    useTapSegment
+      ? 'horizontal'
+      : corridor === 'gateway' || corridor === 'monitor'
+        ? 'vertical'
+        : 'horizontal'
+  const segmentIndex =
+    useTapSegment
+      ? findTapSegmentIndex(points, axis)
+      : findLongestSegmentIndex(points, axis)
 
   switch (corridor) {
+    case 'ceiling':
+      return segmentLabel(points, segmentIndex, 'top', 18)
+    case 'feedback':
+      return segmentLabel(points, segmentIndex, 'bottom', 18)
+    case 'monitor':
+      return segmentLabel(points, segmentIndex, 'top', 16)
     case 'writeback':
-      return segmentLabel(points, segmentIndex, 'bottom', 24)
+      return segmentLabel(points, segmentIndex, 'top', 28)
     case 'ack':
       return segmentLabel(points, segmentIndex, 'top', 20)
     case 'gateway':
@@ -281,6 +400,8 @@ function buildCorridorPoints(
       return routeViaHorizontalCorridor(source, target, handles, channels.policyY, edge.routing.priority)
     case 'runtime':
       return routeViaHorizontalCorridor(source, target, handles, channels.contextY, edge.routing.priority)
+    case 'ceiling':
+      return routeViaCeilingCorridor(source, target, handles, channels, channels.ceilingY, edge.routing.priority)
     case 'validation':
       return routeViaHorizontalCorridor(
         source,
@@ -289,8 +410,12 @@ function buildCorridorPoints(
         edge.source === 'DEC_G2' ? channels.validationY : channels.decideRow12GapY,
         edge.routing.priority,
       )
+    case 'monitor':
+      return routeViaMonitorCorridor(source, target, handles, channels.monitorSpineX, channels.monitorDropY)
     case 'writeback':
       return routeViaHorizontalCorridor(source, target, handles, channels.writeY, edge.routing.priority)
+    case 'feedback':
+      return routeViaFeedbackCorridor(source, target, handles, channels.rejectionY, edge.routing.priority)
     case 'ack':
       return routeViaHorizontalCorridor(source, target, handles, channels.ackY, edge.routing.priority)
     default:
@@ -331,7 +456,7 @@ function buildLabel(
     case 'F_G0_out':
       return segmentLabel(points, 0, 'bottom', 18)
     case 'F_R0_out':
-      return segmentLabel(points, 1, 'right', 16)
+      return segmentLabel(points, 0, 'top', 16)
     case 'F_G0_pol':
       return segmentLabel(points, 0, 'bottom', 24)
     case 'F3e':
@@ -529,65 +654,12 @@ export function buildBoardEdgeRoute(
         target,
       ]
       break
-    case 'F_G1A_reject':
-      points = [
-        source,
-        point(source.x, channels.rejectionY - 60),
-        point(target.x, channels.rejectionY - 60),
-        target,
-      ]
-      break
-    case 'F3f_reject':
-      points = [
-        source,
-        point(source.x, channels.rejectionY),
-        point(target.x + 30, channels.rejectionY),
-        point(target.x + 30, target.y),
-        target,
-      ]
-      break
-    case 'F_G2_reject':
-      points = [
-        source,
-        point(source.x, channels.rejectionY + 120),
-        point(target.x + 60, channels.rejectionY + 120),
-        point(target.x + 60, target.y),
-        target,
-      ]
-      break
-    case 'F_H1_reject':
-      points = [
-        source,
-        point(source.x, channels.rejectionY + 60),
-        point(target.x, channels.rejectionY + 60),
-        target,
-      ]
-      break
-    case 'F3g':
-      points = [
-        source,
-        point(channels.decideCol01GapX, source.y),
-        point(channels.decideCol01GapX, channels.decideRow12GapY),
-        point(channels.decideCol23GapX, channels.decideRow12GapY),
-        point(channels.decideCol23GapX, target.y),
-        target,
-      ]
-      break
     case 'F3h':
       points = [
         source,
         point(source.x, target.y - 12),
         point(target.x - 36, target.y - 12),
         point(target.x - 36, target.y),
-        target,
-      ]
-      break
-    case 'F3i':
-      points = [
-        source,
-        point(source.x, channels.decideBelowGridY),
-        point(channels.decideCol23GapX, channels.decideBelowGridY),
-        point(channels.decideCol23GapX, target.y),
         target,
       ]
       break
@@ -614,35 +686,6 @@ export function buildBoardEdgeRoute(
       break
     case 'F_H1_pass':
       points = doglegY(source, target, source.y + 42)
-      break
-    case 'F_M1_G0':
-      points = doglegY(source, target)
-      break
-    case 'F_M1_R0':
-      points = doglegX(source, target, channels.decideCol12GapX)
-      break
-    case 'F_M1_T0':
-      points = [
-        source,
-        point(channels.monitorSpineX, source.y),
-        point(channels.monitorSpineX, channels.decideRow12GapY),
-        point(channels.decideCol01GapX, channels.decideRow12GapY),
-        point(channels.decideCol01GapX, target.y),
-        target,
-      ]
-      break
-    case 'F_M1_G1A':
-      points = [
-        source,
-        point(channels.monitorSpineX - 36, source.y),
-        point(channels.monitorSpineX - 36, channels.decideRow12GapY + 30),
-        point(channels.decideCol01GapX + 20, channels.decideRow12GapY + 30),
-        point(channels.decideCol01GapX + 20, target.y),
-        target,
-      ]
-      break
-    case 'F_M1_H1':
-      points = [source, target]
       break
     case 'F_M1_out':
       points = doglegY(source, target, source.y + 58)
@@ -769,14 +812,20 @@ function bridgePriority(edge: EdgeSpec) {
   switch (edge.routing?.corridor) {
     case 'writeback':
       return 500
+    case 'ceiling':
+      return 440
     case 'validation':
       return 420
     case 'policy':
       return 340
     case 'runtime':
       return 240
+    case 'monitor':
+      return 160
     case 'gateway':
       return 220
+    case 'feedback':
+      return 95
     case 'ack':
       return 120
     default:

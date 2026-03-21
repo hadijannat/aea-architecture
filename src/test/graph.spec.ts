@@ -1139,36 +1139,85 @@ describe('exports', () => {
     const state = await createState()
     const expectedRoutes = {
       F3e: {
-        path: 'M 1555 996 L 1641 996 Q 1663 996 1663 974 L 1663 952 Q 1663 930 1685 930 L 1770 930',
-        labelPoint: { x: 1609, y: 1014 },
+        points: [
+          { x: 1670, y: 931 },
+          { x: 1720, y: 931 },
+          { x: 1720, y: 930 },
+          { x: 1770, y: 930 },
+        ],
+        labelPoint: { x: 1695, y: 949 },
       },
       F_G1A_pass: {
-        path: 'M 1885 994 L 1885 1102 Q 1885 1124 1863 1124 L 1577 1124 Q 1555 1124 1555 1146 L 1555 1186',
-        labelPoint: { x: 1577, y: 1155 },
+        points: [
+          { x: 1885, y: 994 },
+          { x: 1885, y: 1130 },
+          { x: 1555, y: 1130 },
+          { x: 1555, y: 1186 },
+        ],
+        labelPoint: { x: 1577, y: 1158 },
       },
       F_G1A_reject: {
-        path: 'M 1770 930 L 1770 947 Q 1770 964 1753 964 L 1686.5 964 Q 1670 964 1670 947.5 L 1670 931',
-        labelPoint: { x: 1750, y: 947 },
+        points: [
+          { x: 1885, y: 994 },
+          { x: 1885, y: 1006 },
+          { x: 1885, y: 1030 },
+          { x: 1857, y: 1030 },
+          { x: 1583, y: 1030 },
+          { x: 1555, y: 1030 },
+          { x: 1555, y: 1008 },
+          { x: 1555, y: 996 },
+        ],
+        labelPoint: { x: 1720, y: 1048 },
       },
       F3f_reject: {
-        path: 'M 1555 1306 L 1555 1046 Q 1555 1024 1533 1024 L 1492 1024 Q 1470 1024 1470 1002 L 1470 946 Q 1470 931 1455 931 L 1440 931',
-        labelPoint: { x: 1512.5, y: 1042 },
+        points: [
+          { x: 1539, y: 1186 },
+          { x: 1539, y: 1174 },
+          { x: 1539, y: 1058 },
+          { x: 1577, y: 1058 },
+          { x: 1501, y: 1058 },
+          { x: 1539, y: 1058 },
+          { x: 1539, y: 1008 },
+          { x: 1539, y: 996 },
+        ],
+        labelPoint: { x: 1539, y: 1076 },
       },
       F3g: {
-        path: 'M 879 666 L 879 678 L 879 1050.5 Q 879 1069 897.5 1069 L 905 1069 Q 916 1069 916 1080 L 916 1080 Q 916 1091 927 1091 L 1821 1091 Q 1832 1091 1832 1080 L 1832 1080 Q 1832 1069 1843 1069 L 1850.5 1069 Q 1869 1069 1869 1087.5 L 1869 1174 L 1869 1186',
-        labelPoint: { x: 1374, y: 1073 },
+        points: [
+          { x: 895, y: 546 },
+          { x: 895, y: 534 },
+          { x: 895, y: 518 },
+          { x: 1720, y: 518 },
+          { x: 1720, y: 1174 },
+          { x: 1885, y: 1174 },
+          { x: 1885, y: 1186 },
+        ],
+        labelPoint: { x: 1307.5, y: 500 },
       },
       F3h: {
         path: 'M 1418 352 L 1424 352 Q 1430 352 1430 358 L 1430 1094.5 Q 1430 1113 1448.5 1113 L 1456 1113 Q 1467 1113 1467 1102 L 1467 1102 Q 1467 1091 1478 1091 L 1853 1091 Q 1864 1091 1864 1102 L 1864 1102 Q 1864 1113 1875 1113 L 1882.5 1113 Q 1901 1113 1901 1131.5 L 1901 1174 L 1901 1186',
         labelPoint: { x: 1665.5, y: 1073 },
       },
       F3i: {
-        path: 'M 596 1277 L 602 1277 Q 608 1277 608 1271 L 608 1069 Q 608 1047 630 1047 L 631 1047 Q 653 1047 653 1069 L 653 1069 Q 653 1091 675 1091 L 1691 1091 Q 1713 1091 1713 1069 L 1713 1069 Q 1713 1047 1735 1047 L 1736 1047 Q 1758 1047 1758 1069 L 1758 1212 Q 1758 1218 1764 1218 L 1770 1218',
-        labelPoint: { x: 1183, y: 1073 },
+        points: [
+          { x: 596, y: 1293 },
+          { x: 608, y: 1293 },
+          { x: 608, y: 500 },
+          { x: 1720, y: 500 },
+          { x: 1720, y: 1174 },
+          { x: 1869, y: 1174 },
+          { x: 1869, y: 1186 },
+        ],
+        labelPoint: { x: 1164, y: 482 },
       },
       F_T0_req: {
-        path: 'M 1555 866 L 1555 788 Q 1555 766 1577 766 L 1863 766 Q 1885 766 1885 744 L 1885 666',
-        labelPoint: { x: 1555, y: 802 },
+        points: [
+          { x: 1670, y: 931 },
+          { x: 1670, y: 799 },
+          { x: 1885, y: 799 },
+          { x: 1885, y: 666 },
+        ],
+        labelPoint: { x: 1670, y: 851 },
       },
       F_T1: {
         path: 'M 1770 606 L 1770 532 Q 1770 510 1748 510 L 776 510 Q 754 510 754 488 L 754 268 Q 754 246 776 246 L 855 246 Q 872 246 872 263 L 872 280',
@@ -1195,20 +1244,29 @@ describe('exports', () => {
         labelPoint: { x: 1692.5, y: 1162 },
       },
       F_H1_reject: {
-        path: 'M 895 1186 L 895 1106 Q 895 1084 917 1084 L 1533 1084 Q 1555 1084 1555 1062 L 1555 996',
-        labelPoint: { x: 873, y: 1135 },
+        points: [
+          { x: 911, y: 1186 },
+          { x: 911, y: 1174 },
+          { x: 911, y: 1086 },
+          { x: 959, y: 1086 },
+          { x: 1523, y: 1086 },
+          { x: 1571, y: 1086 },
+          { x: 1571, y: 1008 },
+          { x: 1571, y: 996 },
+        ],
+        labelPoint: { x: 1241, y: 1104 },
       },
       F_H1_pass: {
         path: 'M 895 1306 L 895 1345.5 Q 895 1348 897.5 1348 L 897.5 1348 Q 900 1348 900 1350.5 L 900 1524',
         labelPoint: { x: 915, y: 1327 },
       },
       F5: {
-        path: 'M 780 1568 L 774 1568 Q 768 1568 768 1562 L 768 1500.5 Q 768 1482 749.5 1482 L 742 1482 Q 731 1482 731 1493 L 731 1493 Q 731 1504 720 1504 L 656 1504 Q 645 1504 645 1493 L 645 1493 Q 645 1482 634 1482 L 626.5 1482 Q 608 1482 608 1463.5 L 608 1299 Q 608 1293 602 1293 L 596 1293',
-        labelPoint: { x: 688, y: 1528 },
+        path: 'M 780 1568 L 774 1568 Q 768 1568 768 1562 L 768 1502 Q 768 1486 752 1486 L 745 1486 Q 736 1486 736 1495 L 736 1495 Q 736 1504 727 1504 L 649 1504 Q 640 1504 640 1495 L 640 1495 Q 640 1486 631 1486 L 624 1486 Q 608 1486 608 1470 L 608 1299 Q 608 1293 602 1293 L 596 1293',
+        labelPoint: { x: 688, y: 1476 },
       },
       F6: {
-        path: 'M 486 1325 L 480 1325 Q 474 1325 474 1331 L 474 1507.5 Q 474 1526 455.5 1526 L 448 1526 Q 437 1526 437 1515 L 437 1515 Q 437 1504 426 1504 L 384 1504 Q 373 1504 373 1515 L 373 1515 Q 373 1526 362 1526 L 354.5 1526 Q 336 1526 336 1544.5 L 336 1569 Q 336 1575 330 1575 L 324 1575',
-        labelPoint: { x: 405, y: 1528 },
+        path: 'M 486 1325 L 480 1325 Q 474 1325 474 1331 L 474 1506 Q 474 1522 458 1522 L 451 1522 Q 442 1522 442 1513 L 442 1513 Q 442 1504 433 1504 L 377 1504 Q 368 1504 368 1513 L 368 1513 Q 368 1522 359 1522 L 352 1522 Q 336 1522 336 1538 L 336 1569 Q 336 1575 330 1575 L 324 1575',
+        labelPoint: { x: 405, y: 1476 },
       },
       F_VoR_ACK: {
         path: 'M 596 1309 L 602 1309 Q 608 1309 608 1315 L 608 1435 Q 608 1450 623 1450 L 638 1450 L 738 1450 L 753 1450 Q 768 1450 768 1465 L 768 1578 Q 768 1584 774 1584 L 780 1584',
@@ -1230,7 +1288,11 @@ describe('exports', () => {
 
     for (const [edgeId, expected] of Object.entries(expectedRoutes)) {
       const route = buildArchitectureRoute(state, edgeId)
-      expect(route.path).toBe(expected.path)
+      if ('points' in expected) {
+        expect(route.points).toEqual(expected.points)
+      } else {
+        expect(route.path).toBe(expected.path)
+      }
       expect(resolveBoardLabelPosition(route.label)).toEqual(expected.labelPoint)
     }
   })
@@ -1367,37 +1429,46 @@ describe('exports', () => {
 
   it('keeps rejection and monitor reroutes on distinct local channels', async () => {
     const state = await createState()
+    const geometry = buildBoardGeometryFromPositions(state.layout.positions, graphManifest)
     const rejectionRoutes = {
-      F_G1A_reject: 964,
-      F3f_reject: 1024,
-      F_G2_reject: 1144,
-      F_H1_reject: 1084,
+      F_G1A_reject: { trenchY: geometry.routeChannels.rejectionY + 0, targetHandle: 'bottom:feedback:0' },
+      F3f_reject: { trenchY: geometry.routeChannels.rejectionY + 28, targetHandle: 'bottom:feedback:1' },
+      F_H1_reject: { trenchY: geometry.routeChannels.rejectionY + 56, targetHandle: 'bottom:feedback:2' },
+      F_G2_reject: { trenchY: geometry.routeChannels.rejectionY + 84, targetHandle: 'bottom:feedback:3' },
     } as const
 
-    for (const [edgeId, expectedY] of Object.entries(rejectionRoutes)) {
+    for (const [edgeId, expected] of Object.entries(rejectionRoutes)) {
+      const edge = resolveGraphEdge(edgeId)
+      if (!edge) {
+        throw new Error(`Expected rejection edge ${edgeId} to exist`)
+      }
+
+      const handles = resolveEdgeHandles(edge, state.projection.edgeHandles)
       const route = buildArchitectureRoute(state, edgeId)
-      expect(route.points[1]?.y).toBe(expectedY)
-      expect(route.points[2]?.y).toBe(expectedY)
+
+      expect(handles.targetHandle).toBe(expected.targetHandle)
+      expect(route.points[2]?.y).toBe(expected.trenchY)
+      expect(route.points[3]?.y).toBe(expected.trenchY)
+      expect(route.points[4]?.y).toBe(expected.trenchY)
+      expect((route.points.at(-2)?.y ?? 0) > (route.points.at(-1)?.y ?? 0), `${edgeId} should enter DEC_R2 from below`).toBe(true)
     }
 
-    expect(buildArchitectureRoute(state, 'F_G2_reject').points).toEqual([
-      { x: 1770, y: 1250 },
-      { x: 1770, y: 1144 },
-      { x: 1615, y: 1144 },
-      { x: 1615, y: 996 },
-      { x: 1555, y: 996 },
-    ])
+    const monitorEdgeIds = ['F_M1_G0', 'F_M1_R0', 'F_M1_T0', 'F_M1_G1A', 'F_M1_H1'] as const
+    for (const edgeId of monitorEdgeIds) {
+      const edge = resolveGraphEdge(edgeId)
+      if (!edge) {
+        throw new Error(`Expected monitor edge ${edgeId} to exist`)
+      }
 
-    expect(buildArchitectureRoute(state, 'F_M1_G0').points).toEqual([
-      { x: 1340, y: 930 },
-      { x: 1340, y: 1088 },
-      { x: 1110, y: 1088 },
-      { x: 1110, y: 1246 },
-    ])
-    expect(buildArchitectureRoute(state, 'F_M1_H1').points).toEqual([
-      { x: 1010, y: 1246 },
-      { x: 1110, y: 1246 },
-    ])
+      const handles = resolveEdgeHandles(edge, state.projection.edgeHandles)
+      const route = buildArchitectureRoute(state, edgeId)
+
+      expect(handles.targetHandle).toBe('top:monitor:0')
+      expect(route.points[2]?.x).toBe(geometry.routeChannels.monitorSpineX)
+      expect(route.points[3]?.x).toBe(geometry.routeChannels.monitorSpineX)
+      expect(route.points[3]?.y).toBe(geometry.routeChannels.monitorDropY)
+      expect(route.points[4]?.y).toBe(geometry.routeChannels.monitorDropY)
+    }
 
     expect(buildArchitectureRoute(state, 'F3d').points).toEqual([
       { x: 1319, y: 396 },
@@ -1411,14 +1482,8 @@ describe('exports', () => {
       { x: 1241, y: 854 },
       { x: 1241, y: 866 },
     ])
-    expect(buildArchitectureRoute(state, 'F_M1_G1A').points).toEqual([
-      { x: 2000, y: 930 },
-      { x: 2034, y: 930 },
-      { x: 2034, y: 1121 },
-      { x: 1080, y: 1121 },
-      { x: 1080, y: 1246 },
-      { x: 1110, y: 1246 },
-    ])
+    expect(buildArchitectureRoute(state, 'F3g').points[3]?.y).toBe(geometry.routeChannels.ceilingY)
+    expect(buildArchitectureRoute(state, 'F3i').points[3]?.y).toBe(geometry.routeChannels.ceilingY - 18)
   })
 
   it('keeps Panel B acknowledgement and rejection routes on the shared sequence geometry', async () => {
@@ -1608,13 +1673,29 @@ describe('exports', () => {
       index: 2,
       legacy: false,
     })
+    expect(parseHandleId('top:ceiling:1')).toEqual({
+      raw: 'top:ceiling:1',
+      side: 'top',
+      family: 'ceiling',
+      index: 1,
+      legacy: false,
+    })
+    expect(parseHandleId('right:monitor:3')).toEqual({
+      raw: 'right:monitor:3',
+      side: 'right',
+      family: 'monitor',
+      index: 3,
+      legacy: false,
+    })
     expect(normalizeHandleId('top')).toBe('top:default:0')
     expect(compareHandleIds('right:policy:1', 'right:policy:2')).toBeLessThan(0)
 
     const f5 = resolveGraphEdge('F5')
     const f3b = resolveGraphEdge('F3b')
-    if (!f5 || !f3b) {
-      throw new Error('Expected F5 and F3b edge specs to exist')
+    const f3g = resolveGraphEdge('F3g')
+    const fM1G0 = resolveGraphEdge('F_M1_G0')
+    if (!f5 || !f3b || !f3g || !fM1G0) {
+      throw new Error('Expected F5, F3b, F3g, and F_M1_G0 edge specs to exist')
     }
 
     expect(resolveEdgeHandles(f3b, {})).toEqual({
@@ -1625,6 +1706,35 @@ describe('exports', () => {
       sourceHandle: 'top:default:0',
       targetHandle: 'bottom:default:0',
     })
+    expect(resolveEdgeHandles(f3g, {})).toEqual({
+      sourceHandle: 'top:ceiling:0',
+      targetHandle: 'top:ceiling:0',
+    })
+    expect(resolveEdgeHandles(fM1G0, {})).toEqual({
+      sourceHandle: 'right:monitor:0',
+      targetHandle: 'top:monitor:0',
+    })
+  })
+
+  it('keeps DEC_R2 on strict ingress, egress, and rejection handle families', () => {
+    const edgeIds = {
+      F_G0_out: { sourceHandle: 'right:default:0', targetHandle: 'top:default:0' },
+      F3e: { sourceHandle: 'right:default:0', targetHandle: 'left:default:0' },
+      F_T0_req: { sourceHandle: 'right:default:0', targetHandle: 'bottom:default:0' },
+      F_G1A_reject: { sourceHandle: 'bottom:feedback:0', targetHandle: 'bottom:feedback:0' },
+      F3f_reject: { sourceHandle: 'top:feedback:1', targetHandle: 'bottom:feedback:1' },
+      F_H1_reject: { sourceHandle: 'top:feedback:2', targetHandle: 'bottom:feedback:2' },
+      F_G2_reject: { sourceHandle: 'top:feedback:3', targetHandle: 'bottom:feedback:3' },
+    } as const
+
+    for (const [edgeId, expected] of Object.entries(edgeIds)) {
+      const edge = resolveGraphEdge(edgeId)
+      if (!edge) {
+        throw new Error(`Expected ${edgeId} to exist`)
+      }
+
+      expect(resolveEdgeHandles(edge, {})).toEqual(expected)
+    }
   })
 
   it('anchors slot handles away from the side midpoint without crossing node corners', () => {

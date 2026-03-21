@@ -275,14 +275,20 @@ export function buildBoardRouteChannels(
   const bandDecide = rectMap.BAND_DECIDE ?? fallbackRects.BAND_DECIDE
 
   const telemetryY = Math.round(s1 ? centerY(s1) : bandSense.y + bandSense.height / 2)
+  const ceilingY = rowOne
+    ? Math.round(Math.max(bandDecide.y + 18, rowOne.y - 28))
+    : Math.round(bandDecide.y + 18)
   const policyY = rowOne && rowTwo
     ? Math.round(bottom(rowOne) + Math.max(18, (rowTwo.y - bottom(rowOne)) * 0.35))
     : Math.round(bandSense.y + bandSense.height + 215)
   const contextY = policyY + 56
-  const rejectionY = rowTwo ? Math.round(bottom(rowTwo) + 28) : Math.round(policyY + 200)
+  const rejectionY = rowTwo ? Math.round(bottom(rowTwo) + 34) : Math.round(policyY + 200)
   const validationY = validator
     ? Math.round(validator.y + validator.height - 30)
     : Math.round(bandAct.y - 184)
+  const monitorDropY = rectMap.DEC_M1
+    ? Math.round(rectMap.DEC_M1.y - 12)
+    : Math.round(bandDecide.y + bandDecide.height - 120)
 
   const col0Right = rectMap.DEC_K1 ? rectMap.DEC_K1.x + rectMap.DEC_K1.width : bandDecide.x + 262
   const col1Left = rectMap.DEC_R0?.x ?? bandDecide.x + 362
@@ -308,6 +314,7 @@ export function buildBoardRouteChannels(
     gatewayLabelX: Math.round(gateway.x + gateway.width + routeGuideOffsets.gatewayLabel),
     laneReturnX: Math.round(gateway.x - routeGuideOffsets.laneReturn),
     telemetryY,
+    ceilingY,
     policyY,
     contextY,
     rejectionY,
@@ -318,6 +325,7 @@ export function buildBoardRouteChannels(
     writeY: Math.round(bandAct.y + routeGuideOffsets.write),
     ackY: Math.round(bandAct.y - routeGuideOffsets.ack),
     monitorSpineX: Math.round(laneB.x + laneB.width - routeGuideOffsets.monitorSpine),
+    monitorDropY,
     laneCSpineX: Math.round(laneC.x + laneC.width - routeGuideOffsets.laneCSpine),
     cpcSpineX: Math.round(laneA.x + routeGuideOffsets.cpcSpine),
     decideCol01GapX,
@@ -429,9 +437,11 @@ export function buildBoardGeometry(
       Math.round(bands.Act.y - routeGuideOffsets.divider),
     ],
     routeGuideYs: [
+      routeChannels.ceilingY,
       routeChannels.telemetryY,
       routeChannels.policyY,
       routeChannels.rejectionY,
+      routeChannels.monitorDropY,
       routeChannels.validationY,
       routeChannels.writeY,
     ],
