@@ -43,51 +43,51 @@ Generated from `src/graph/spec/architecture.graph.json`. Scope is `Panel A` only
 
 ## Connections
 
-`flow direction` is the rendered orientation from the manifest: `left-to-right`, `right-to-left`, `top-to-bottom`, or `bottom-to-top`.
+`flow direction` is simplified from the rendered orientation in the manifest: `A-to-B` means forward rendered flow (`left-to-right` or `top-to-bottom`), and `B-to-A` means reverse rendered flow (`right-to-left` or `bottom-to-top`).
 
 | id | source | target | flow direction | description |
 | --- | --- | --- | --- | --- |
-| F_GW1 | CPC Data Interface | G1 | left-to-right | OPC UA subscription (PA-DIM topics) |
-| F_GW2 | G1 | G2 | top-to-bottom | unidirectional ingress |
-| F_GW3 | G2 | G3 | top-to-bottom | "no return path" — Rendered with a diode symbol to make the unidirectional guarantee visually explicit. |
-| F1 | G3 | OPC UA Client | left-to-right | PA-DIM model, read-only |
-| F2 | OPC UA Client | PA-DIM Harmonizer | left-to-right | normalise signals; apply IEC 61987 IRDIs |
-| F3a | AAS Repository | Retrieval Guard | left-to-right | AAS submodel retrieval (ACL-gated) |
-| F3b | Policy Store | Retrieval Guard | left-to-right | policy context (soft grounding, ACL-gated) |
-| F_R0_out | Retrieval Guard | RAG / Knowledge Retrieval | left-to-right | approved, provenance-tagged retrieval context |
-| F3b' | Policy Store | Policy-Guard | left-to-right | enforcement rules (hard; non-bypassable) |
-| F3c | RAG / Knowledge Retrieval | Input / Context Guard | left-to-right | retrieved context (untrusted until classified) — AAS + policy summaries |
-| F3d | PA-DIM Harmonizer | Input / Context Guard | top-to-bottom | harmonised plant state (snapshot t0) to guarded ingress |
-| F_G0_pol | Policy Store | Input / Context Guard | left-to-right | refusal policy / sensitive-topic rules |
-| F_G0_out | Input / Context Guard | LLM Agent / Planner | left-to-right | sanitised, classified planner context |
-| F3e | LLM Agent / Planner | Output Guard / Schema Checker | left-to-right | raw candidate plan object |
-| F_G1A_pass | Output Guard / Schema Checker | Policy-Guard | top-to-bottom | schema-valid plan object |
-| F_G1A_reject | Output Guard / Schema Checker | LLM Agent / Planner | right-to-left | schema rejection + field/error feedback |
-| F3f | Policy-Guard | Deterministic Validators | left-to-right | policy-compliant candidates |
-| F3f_reject | Policy-Guard | LLM Agent / Planner | right-to-left | rejection + constraint feedback |
-| F3g | AAS Repository | Deterministic Validators | left-to-right | property bounds + constraints |
-| F3h | PA-DIM Harmonizer | Deterministic Validators | top-to-bottom | current values snapshot (t0) |
-| F3i | VoR Interface | Deterministic Validators | left-to-right | permitted write scope / OPC UA session roles |
-| F_T1 | Tool Guard / Broker | OPC UA Client | bottom-to-top | tool call: opcua.read — Observation return traverses F_T0_obs -> F_G0_out |
-| F_T2 | Tool Guard / Broker | AAS Repository | bottom-to-top | tool call: aas.query — Observation return traverses F_T0_obs -> F_G0_out |
-| F_T0_req | LLM Agent / Planner | Tool Guard / Broker | bottom-to-top | tool request (allowlist + schema checked) |
-| F_T0_obs | Tool Guard / Broker | Input / Context Guard | top-to-bottom | guarded tool observation |
-| F4 | Deterministic Validators | Human Approval Gate | left-to-right | validated candidate plan (approval pending) |
-| F_H1_revalidate | Human Approval Gate | Deterministic Validators | bottom-to-top | expired approval / stale snapshot -> revalidate |
-| F_H1_reject | Human Approval Gate | LLM Agent / Planner | right-to-left | operator rejected -> revise plan |
-| F_H1_pass | Human Approval Gate | VoR Request Composer | left-to-right | approved plan bound to plan_hash + snapshot_id + expires_at |
-| F_M1_G0 | Input / Context Guard | Guardrail Monitor / Evals | bottom-to-top | input/context guard events |
-| F_M1_R0 | Retrieval Guard | Guardrail Monitor / Evals | bottom-to-top | retrieval guard events |
-| F_M1_T0 | Tool Guard / Broker | Guardrail Monitor / Evals | bottom-to-top | tool broker events |
-| F_M1_G1A | Output Guard / Schema Checker | Guardrail Monitor / Evals | bottom-to-top | schema guard events |
-| F_M1_H1 | Human Approval Gate | Guardrail Monitor / Evals | bottom-to-top | approval gate events |
-| F_M1_out | Guardrail Monitor / Evals | Audit Log | left-to-right | guardrail audit stream |
-| F_KPI | PA-DIM Harmonizer | KPI Publisher | bottom-to-top | KPI inputs (harmonised signals) |
-| F_AUDIT | VoR Request Composer | Audit Log | left-to-right | decision event; VoR request record |
-| F5 | VoR Request Composer | VoR Interface | right-to-left | VoR request (non-plant-specific, authenticated) |
-| F6 | VoR Interface | CPC Change Handler | right-to-left | mapped + verified change instruction |
-| F_VoR_ACK | VoR Interface | VoR Request Composer | right-to-left | status: accepted \| rejected \| executed — non-plant-specific; no CPC architecture disclosed |
-| F_CPC_INT | CPC Change Handler | CPC System | bottom-to-top | execute verified change |
-| F7a | KPI Publisher | MQTT Broker | left-to-right | OPC UA PubSub over MQTT — MQTT mapping, Part 14 |
-| F7b | MQTT Broker | Central Analytics · Historians · Dashboards | left-to-right | subscribe / consume |
-| F7_sub | Central Analytics · Historians · Dashboards | MQTT Broker | right-to-left | subscribe |
+| F_GW1 | CPC Data Interface | G1 | A-to-B | OPC UA subscription (PA-DIM topics) |
+| F_GW2 | G1 | G2 | A-to-B | unidirectional ingress |
+| F_GW3 | G2 | G3 | A-to-B | "no return path" — Rendered with a diode symbol to make the unidirectional guarantee visually explicit. |
+| F1 | G3 | OPC UA Client | A-to-B | PA-DIM model, read-only |
+| F2 | OPC UA Client | PA-DIM Harmonizer | A-to-B | normalise signals; apply IEC 61987 IRDIs |
+| F3a | AAS Repository | Retrieval Guard | A-to-B | AAS submodel retrieval (ACL-gated) |
+| F3b | Policy Store | Retrieval Guard | A-to-B | policy context (soft grounding, ACL-gated) |
+| F_R0_out | Retrieval Guard | RAG / Knowledge Retrieval | A-to-B | approved, provenance-tagged retrieval context |
+| F3b' | Policy Store | Policy-Guard | A-to-B | enforcement rules (hard; non-bypassable) |
+| F3c | RAG / Knowledge Retrieval | Input / Context Guard | A-to-B | retrieved context (untrusted until classified) — AAS + policy summaries |
+| F3d | PA-DIM Harmonizer | Input / Context Guard | A-to-B | harmonised plant state (snapshot t0) to guarded ingress |
+| F_G0_pol | Policy Store | Input / Context Guard | A-to-B | refusal policy / sensitive-topic rules |
+| F_G0_out | Input / Context Guard | LLM Agent / Planner | A-to-B | sanitised, classified planner context |
+| F3e | LLM Agent / Planner | Output Guard / Schema Checker | A-to-B | raw candidate plan object |
+| F_G1A_pass | Output Guard / Schema Checker | Policy-Guard | A-to-B | schema-valid plan object |
+| F_G1A_reject | Output Guard / Schema Checker | LLM Agent / Planner | B-to-A | schema rejection + field/error feedback |
+| F3f | Policy-Guard | Deterministic Validators | A-to-B | policy-compliant candidates |
+| F3f_reject | Policy-Guard | LLM Agent / Planner | B-to-A | rejection + constraint feedback |
+| F3g | AAS Repository | Deterministic Validators | A-to-B | property bounds + constraints |
+| F3h | PA-DIM Harmonizer | Deterministic Validators | A-to-B | current values snapshot (t0) |
+| F3i | VoR Interface | Deterministic Validators | A-to-B | permitted write scope / OPC UA session roles |
+| F_T1 | Tool Guard / Broker | OPC UA Client | B-to-A | tool call: opcua.read — Observation return traverses F_T0_obs -> F_G0_out |
+| F_T2 | Tool Guard / Broker | AAS Repository | B-to-A | tool call: aas.query — Observation return traverses F_T0_obs -> F_G0_out |
+| F_T0_req | LLM Agent / Planner | Tool Guard / Broker | B-to-A | tool request (allowlist + schema checked) |
+| F_T0_obs | Tool Guard / Broker | Input / Context Guard | A-to-B | guarded tool observation |
+| F4 | Deterministic Validators | Human Approval Gate | A-to-B | validated candidate plan (approval pending) |
+| F_H1_revalidate | Human Approval Gate | Deterministic Validators | B-to-A | expired approval / stale snapshot -> revalidate |
+| F_H1_reject | Human Approval Gate | LLM Agent / Planner | B-to-A | operator rejected -> revise plan |
+| F_H1_pass | Human Approval Gate | VoR Request Composer | A-to-B | approved plan bound to plan_hash + snapshot_id + expires_at |
+| F_M1_G0 | Input / Context Guard | Guardrail Monitor / Evals | B-to-A | input/context guard events |
+| F_M1_R0 | Retrieval Guard | Guardrail Monitor / Evals | B-to-A | retrieval guard events |
+| F_M1_T0 | Tool Guard / Broker | Guardrail Monitor / Evals | B-to-A | tool broker events |
+| F_M1_G1A | Output Guard / Schema Checker | Guardrail Monitor / Evals | B-to-A | schema guard events |
+| F_M1_H1 | Human Approval Gate | Guardrail Monitor / Evals | B-to-A | approval gate events |
+| F_M1_out | Guardrail Monitor / Evals | Audit Log | A-to-B | guardrail audit stream |
+| F_KPI | PA-DIM Harmonizer | KPI Publisher | B-to-A | KPI inputs (harmonised signals) |
+| F_AUDIT | VoR Request Composer | Audit Log | A-to-B | decision event; VoR request record |
+| F5 | VoR Request Composer | VoR Interface | B-to-A | VoR request (non-plant-specific, authenticated) |
+| F6 | VoR Interface | CPC Change Handler | B-to-A | mapped + verified change instruction |
+| F_VoR_ACK | VoR Interface | VoR Request Composer | B-to-A | status: accepted \| rejected \| executed — non-plant-specific; no CPC architecture disclosed |
+| F_CPC_INT | CPC Change Handler | CPC System | B-to-A | execute verified change |
+| F7a | KPI Publisher | MQTT Broker | A-to-B | OPC UA PubSub over MQTT — MQTT mapping, Part 14 |
+| F7b | MQTT Broker | Central Analytics · Historians · Dashboards | A-to-B | subscribe / consume |
+| F7_sub | Central Analytics · Historians · Dashboards | MQTT Broker | B-to-A | subscribe |
