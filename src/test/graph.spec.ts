@@ -572,7 +572,7 @@ describe('graph manifest', () => {
     const validatorReject = graphManifest.edges.find((edge) => edge.id === 'F_G2_reject')
     expect(f3i?.source).toBe('VOI')
     expect(validatorNode?.aliases).toContain('DEC3')
-    expect(validatorReject?.interactive.sourceHandle).toBe('left')
+    expect(validatorReject?.interactive.sourceHandle).toBe('top')
     expect(validatorReject?.interactive.targetHandle).toBe('bottom')
   })
 
@@ -1240,8 +1240,8 @@ describe('exports', () => {
         labelPoint: { x: 1390, y: 1358 },
       },
       F_G2_reject: {
-        path: 'M 1770 1250 L 1770 1166 Q 1770 1144 1748 1144 L 1637 1144 Q 1615 1144 1615 1122 L 1615 1018 Q 1615 996 1593 996 L 1555 996',
-        labelPoint: { x: 1692.5, y: 1162 },
+        path: 'M 1853 1186 L 1853 1174 L 1853 1136 Q 1853 1114 1831 1114 L 1795 1114 L 1581 1114 L 1545 1114 Q 1523 1114 1523 1092 L 1523 1008 L 1523 996',
+        labelPoint: { x: 1688, y: 1132 },
       },
       F_H1_reject: {
         points: [
@@ -1261,11 +1261,11 @@ describe('exports', () => {
         labelPoint: { x: 915, y: 1327 },
       },
       F5: {
-        path: 'M 780 1568 L 774 1568 Q 768 1568 768 1562 L 768 1502 Q 768 1486 752 1486 L 745 1486 Q 736 1486 736 1495 L 736 1495 Q 736 1504 727 1504 L 649 1504 Q 640 1504 640 1495 L 640 1495 Q 640 1486 631 1486 L 624 1486 Q 608 1486 608 1470 L 608 1299 Q 608 1293 602 1293 L 596 1293',
+        path: 'M 780 1568 L 774 1568 Q 768 1568 768 1562 L 768 1500.5 Q 768 1482 749.5 1482 L 742 1482 Q 731 1482 731 1493 L 731 1493 Q 731 1504 720 1504 L 656 1504 Q 645 1504 645 1493 L 645 1493 Q 645 1482 634 1482 L 626.5 1482 Q 608 1482 608 1463.5 L 608 1299 Q 608 1293 602 1293 L 596 1293',
         labelPoint: { x: 688, y: 1476 },
       },
       F6: {
-        path: 'M 486 1325 L 480 1325 Q 474 1325 474 1331 L 474 1506 Q 474 1522 458 1522 L 451 1522 Q 442 1522 442 1513 L 442 1513 Q 442 1504 433 1504 L 377 1504 Q 368 1504 368 1513 L 368 1513 Q 368 1522 359 1522 L 352 1522 Q 336 1522 336 1538 L 336 1569 Q 336 1575 330 1575 L 324 1575',
+        path: 'M 486 1325 L 480 1325 Q 474 1325 474 1331 L 474 1507.5 Q 474 1526 455.5 1526 L 448 1526 Q 437 1526 437 1515 L 437 1515 Q 437 1504 426 1504 L 384 1504 Q 373 1504 373 1515 L 373 1515 Q 373 1526 362 1526 L 354.5 1526 Q 336 1526 336 1544.5 L 336 1569 Q 336 1575 330 1575 L 324 1575',
         labelPoint: { x: 405, y: 1476 },
       },
       F_VoR_ACK: {
