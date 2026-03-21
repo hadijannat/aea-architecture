@@ -254,7 +254,7 @@ The decide band is the most complex part of the figure. Organise it as a **left-
 **Block DEC_K1 — AAS Repository**  
 Label: AAS Repository  
 Subtitle: *submodel templates; device configurations; operational constraints*  
-Badge: **IEC 63278-1:2023** *(also IDTA-01001-3-0 V3.0 for the metamodel)*  
+Badge: **IEC 63278-1:2023** *(also cite IDTA AAS Part 1 Metamodel, Release 25-01 / v3.1)*  
 Note: This is the primary semantic context source. It holds AAS submodel instances for all assets in scope, exposing typed properties with explicit min/max bounds, units, and IEC CDD semantic IDs.
 
 **Block DEC_K2 — Policy Store**  
@@ -690,7 +690,7 @@ All badges placed inside component blocks must use these exact version strings. 
 | Component | Badge text | Standard | Version note |
 |---|---|---|---|
 | PA-DIM Harmonizer | OPC 30081 PA-DIM v1.02 | OPC Foundation / PI / NAMUR | Released 2026-01-24; replaces v1.01 |
-| AAS Repository | IEC 63278-1:2023 | IEC / IDTA | Also cite IDTA-01001-3-0 V3.0 in references |
+| AAS Repository | IEC 63278-1:2023 | IEC / IDTA | Also cite IDTA AAS Part 1 Metamodel, Release 25-01 / v3.1 in references |
 | RAG / Knowledge Retrieval | IDTA Part 2 API v3.1.1 | IDTA | July 2025; replaces v3.0 |
 | Policy-Guard | NIST AI RMF 1.0 | NIST | NIST AI 100-1, January 2023 |
 | Deterministic Validators | OPC 10000-18 v1.05.06 | OPC Foundation | Released 2025-10-31 |

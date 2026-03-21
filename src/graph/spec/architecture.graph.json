@@ -69,8 +69,8 @@
       "label": "OPC 30081 PA-DIM",
       "version": "v1.02",
       "sourceUrl": "https://opcfoundation.org/developer-tools/documents/view/254",
-      "releaseDate": "2026",
-      "lastReviewed": "2026-03-08"
+      "releaseDate": "2026-01-24",
+      "lastReviewed": "2026-03-21"
     },
     "IEC63278": {
       "id": "IEC63278",
@@ -80,13 +80,14 @@
       "releaseDate": "2023",
       "lastReviewed": "2026-03-08"
     },
-    "IDTA01001V3": {
-      "id": "IDTA01001V3",
-      "label": "IDTA-01001-3-0",
-      "version": "V3.0",
-      "sourceUrl": "https://industrialdigitaltwin.org/en/content-hub/aasspecifications/idta-01001-3-0-specification-of-the-asset-administration-shell-part-1-metamodel",
-      "releaseDate": "2023",
-      "lastReviewed": "2026-03-08"
+    "IDTA01001R2501": {
+      "id": "IDTA01001R2501",
+      "label": "IDTA AAS Part 1 Metamodel",
+      "version": "Release 25-01 / v3.1",
+      "url": "https://industrialdigitaltwin.org/wp-content/uploads/2025/06/IDTA_01001-25-01_AAS-Specification_Part1_Metamodel.pdf",
+      "sourceUrl": "https://industrialdigitaltwin.org/en/content-hub/aasspecifications",
+      "releaseDate": "2025-06-10",
+      "lastReviewed": "2026-03-21"
     },
     "IDTAPART2311": {
       "id": "IDTAPART2311",
@@ -1045,7 +1046,7 @@
       "description": "Primary semantic context source containing typed AAS submodels, units, bounds, and operational constraints.",
       "standardIds": [
         "IEC63278",
-        "IDTA01001V3"
+        "IDTA01001R2501"
       ],
       "claimIds": [
         "C3"
@@ -2743,7 +2744,7 @@
       "direction": "ltr",
       "standardIds": [
         "IEC63278",
-        "IDTA01001V3"
+        "IDTA01001R2501"
       ],
       "claimIds": [
         "C3"
