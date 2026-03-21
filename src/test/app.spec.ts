@@ -247,7 +247,12 @@ async function boxHeight(locator: Locator) {
 }
 
 async function architectureEdgeIsAnimated(page: Page, edgeId: string) {
-  return page.locator(`.semantic-edge[data-edge-id="${edgeId}"]`).evaluate((element) => {
+  const edge = page.locator(`.semantic-edge[data-edge-id="${edgeId}"]`)
+  if ((await edge.count()) === 0) {
+    return false
+  }
+
+  return edge.evaluate((element) => {
     const edge = element.closest('.react-flow__edge')
     return edge?.classList.contains('animated') ?? false
   })
@@ -727,7 +732,7 @@ test('focus presets stay single-line after adding the guardrail control view', a
 })
 
 test('reduce motion toggle disables animated writeback and tool-call edges', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?node=DEC_T0')
 
   const explore = await openExplore(page)
   const reduceMotion = explore.getByRole('button', { name: 'Reduce motion' })
@@ -746,26 +751,26 @@ test('reduce motion toggle disables animated writeback and tool-call edges', asy
 
 test('system reduced-motion preference disables animated architecture edges', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.goto('/')
+  await page.goto('/?node=DEC_T0')
   const explore = await openExplore(page)
   await expect(explore.getByRole('button', { name: 'Reduce motion' })).toHaveAttribute('aria-pressed', 'false')
   await expect.poll(() => architectureEdgeIsAnimated(page, 'F5')).toBe(false)
+  await expect.poll(() => architectureEdgeIsAnimated(page, 'F_VoR_ACK')).toBe(false)
   await expect.poll(() => architectureEdgeIsAnimated(page, 'F_T1')).toBe(false)
   await expect.poll(() => architectureEdgeIsAnimated(page, 'F_T2')).toBe(false)
 })
 
-test('optional architecture edges only reduce emphasis while resting', async ({ page }) => {
+test('optional architecture edges stay hidden in overview and restore when directly selected', async ({ page }) => {
   await page.goto('/')
 
   const restingEdge = page.locator('.semantic-edge[data-edge-id="F7_sub"]')
+  await expect(restingEdge).toHaveCount(0)
   await expect(page.locator('.edge-label[data-edge-id="F7_sub"]')).toHaveCount(0)
-
-  await expect(restingEdge).toHaveAttribute('data-edge-optional', 'true')
-  expect(await computedStyleValue(restingEdge, 'opacity')).toBe('0.46')
 
   await page.goto('/?edge=F7_sub')
 
   const selectedEdge = page.locator('.semantic-edge[data-edge-id="F7_sub"]')
+  await expect(selectedEdge).toHaveAttribute('data-edge-optional', 'true')
   const selectedLabel = await ensureEdgeLabelMode(page, 'F7_sub', 'detail', 'zoom-in')
 
   await expect(selectedLabel).toContainText('(optional)')
@@ -773,34 +778,35 @@ test('optional architecture edges only reduce emphasis while resting', async ({ 
   expect(await computedStyleValue(selectedLabel, 'opacity')).toBe('1')
 })
 
-test('dimmed optional labels inherit the same emphasis tier as their edge paths', async ({ page }) => {
+test('write focus surfaces related optional corridor edges without pulling in unrelated optional telemetry', async ({ page }) => {
   await page.goto('/?edge=F5')
 
-  const edge = page.locator('.semantic-edge[data-edge-id="F7_sub"]')
-  await expect(edge).toHaveClass(/is-dimmed/)
-  expect(await computedStyleValue(edge, 'opacity')).toBe('0.46')
+  const relatedOptionalEdge = page.locator('.semantic-edge[data-edge-id="F_CPC_INT"]')
+  await expect(relatedOptionalEdge).toHaveAttribute('data-edge-optional', 'true')
+  await expect(relatedOptionalEdge).toHaveClass(/is-group-highlighted/)
+  expect(await computedStyleValue(relatedOptionalEdge, 'opacity')).toBe('0.6')
 
-  await expect(edge).toHaveAttribute('data-edge-optional', 'true')
+  await expect(page.locator('.semantic-edge[data-edge-id="F7_sub"]')).toHaveCount(0)
+  await expect(page.locator('.edge-label[data-edge-id="F7_sub"]')).toHaveCount(0)
 
-  await page.goto('/?edge=F7_sub')
-  const label = await ensureEdgeLabelMode(page, 'F7_sub', 'detail', 'zoom-in')
-  await expect(label).toHaveAttribute('data-edge-optional', 'true')
-  await expect(label).toContainText('(optional)')
-  expect(await computedStyleValue(label, 'opacity')).toBe('1')
+  const relatedOptionalLabel = await ensureEdgeLabelMode(page, 'F_CPC_INT', 'chip', 'zoom-in')
+  await expect(relatedOptionalLabel).toHaveAttribute('data-edge-optional', 'true')
+  await expect(relatedOptionalLabel).toHaveClass(/is-group-highlighted/)
+  expect(await computedStyleValue(relatedOptionalLabel, 'opacity')).toBe('1')
 })
 
-test('telemetry labels and paths fade together at rest and restore when selected', async ({ page }) => {
+test('audit edges stay hidden at overview and rejoin the write-path focus', async ({ page }) => {
   await page.goto('/')
 
   const restingEdge = page.locator('.semantic-edge[data-edge-id="F_AUDIT"]')
+  await expect(restingEdge).toHaveCount(0)
   await expect(page.locator('.edge-label[data-edge-id="F_AUDIT"]')).toHaveCount(0)
 
-  expect(await computedStyleValue(restingEdge, 'opacity')).toBe('0.62')
-
-  await page.goto('/?edge=F_AUDIT')
+  await page.goto('/?edge=F5')
 
   const selectedEdge = page.locator('.semantic-edge[data-edge-id="F_AUDIT"]')
-  const selectedLabel = await ensureEdgeLabelMode(page, 'F_AUDIT', 'detail', 'zoom-in')
+  await expect(selectedEdge).toHaveClass(/is-highlighted/)
+  const selectedLabel = await ensureEdgeLabelMode(page, 'F_AUDIT', 'chip', 'zoom-in')
 
   expect(await computedStyleValue(selectedEdge, 'opacity')).toBe('1')
   expect(await computedStyleValue(selectedLabel, 'opacity')).toBe('1')

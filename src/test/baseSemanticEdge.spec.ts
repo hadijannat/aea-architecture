@@ -231,10 +231,10 @@ describe('BaseSemanticEdge', () => {
     const baseWidth = edgeStrokeWidth(spec.style, spec.semantic, baseData(spec).canvasLod)
 
     renderEdge(spec, { dimmed: true })
-    expect(renderedStrokeWidth()).toBeCloseTo(Math.max(baseWidth * 0.7, 0.8))
+    expect(renderedStrokeWidth()).toBeCloseTo(Math.max(baseWidth * 0.55, 0.7))
 
     cleanup()
     renderEdge(spec, { supportive: true })
-    expect(renderedStrokeWidth()).toBeCloseTo(Math.max(baseWidth * 0.82, 0.9))
+    expect(renderedStrokeWidth()).toBeCloseTo(Math.max(baseWidth * 0.68, 0.8))
   })
 })

@@ -293,9 +293,9 @@ export function buildBoardRouteChannels(
   const col0Right = rectMap.DEC_K1 ? rectMap.DEC_K1.x + rectMap.DEC_K1.width : bandDecide.x + 262
   const col1Left = rectMap.DEC_R0?.x ?? bandDecide.x + 362
   const col1Right = rectMap.DEC_R0 ? rectMap.DEC_R0.x + rectMap.DEC_R0.width : bandDecide.x + 592
-  const col2Left = rectMap.DEC_R1?.x ?? bandDecide.x + 692
-  const col2Right = rectMap.DEC_R1 ? rectMap.DEC_R1.x + rectMap.DEC_R1.width : bandDecide.x + 922
-  const col3Left = rectMap.DEC_T0?.x ?? bandDecide.x + 1022
+  const col2Left = rectMap.DEC_R1?.x ?? bandDecide.x + 708
+  const col2Right = rectMap.DEC_R1 ? rectMap.DEC_R1.x + rectMap.DEC_R1.width : bandDecide.x + 938
+  const col3Left = rectMap.DEC_T0?.x ?? bandDecide.x + 1054
 
   const decideCol01GapX = Math.round((col0Right + col1Left) / 2)
   const decideCol12GapX = Math.round((col1Right + col2Left) / 2)

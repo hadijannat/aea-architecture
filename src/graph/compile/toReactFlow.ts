@@ -232,8 +232,9 @@ function isLodHidden(
   highlighted: boolean,
   groupHighlighted: boolean,
   hovered: boolean,
+  searchMatched: boolean,
 ): boolean {
-  if (selected || highlighted || groupHighlighted || hovered) {
+  if (selected || highlighted || groupHighlighted || hovered || searchMatched) {
     return false
   }
 
@@ -728,7 +729,7 @@ export function compileArchitectureEdges(
         sourceHandle,
         targetHandle,
         hidden: !derivedState.visibleEdgeIds.has(edge.id)
-          || isLodHidden(canvasLod, supportive, selected, highlighted, groupHighlighted, hovered),
+          || isLodHidden(canvasLod, supportive, selected, highlighted, groupHighlighted, hovered, searchMatched),
         selectable: true,
         focusable: true,
         ariaLabel: buildEdgeAriaLabel(edge, manifest),
