@@ -806,7 +806,7 @@ The figure is only defensible if the manuscript states the following operating a
 
 2. **Bound replanning loops.** The planner must enforce a local `max_iterations` circuit breaker spanning `F_G1A_reject`, `F3f_reject`, `F_G2_reject`, and `F_H1_reject`. Once the bound is reached, the cycle aborts, records the failure in `ACT3`, and emits no VoR request.
 
-3. **State the actuation-confirmation model.** `F_VoR_ACK` returns only to `ACT1` and `ACT3`; the LLM Agent does **not** receive direct success/failure confirmation. The manuscript must say that actuation outcome is inferred from the next PA-DIM cycle (`t1`) rather than from a planner-visible acknowledgement, which prevents the model from hallucinating execution success before the plant confirms it.
+3. **State the actuation-confirmation model.** `F_VoR_ACK` returns only to `ACT1`; `ACT3` receives the durable audit trail via `F_AUDIT` and `F_M1_out`. The LLM Agent does **not** receive direct success/failure confirmation. The manuscript must say that actuation outcome is inferred from the next PA-DIM cycle (`t1`) rather than from a planner-visible acknowledgement, which prevents the model from hallucinating execution success before the plant confirms it.
 
 ---
 

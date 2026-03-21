@@ -57,13 +57,13 @@
       "version": "2023",
       "sourceUrl": "https://www.namur.net/en/recommendations/ne-recommendations/detail/ne-179.html",
       "releaseDate": "2023",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "OPC62541": {
       "id": "OPC62541",
       "label": "OPC UA IEC 62541",
       "sourceUrl": "https://opcfoundation.org/developer-tools/documents/view/160",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "PADIM102": {
       "id": "PADIM102",
@@ -79,7 +79,7 @@
       "version": "2023",
       "sourceUrl": "https://www.iec.ch/dyn/www/f?p=103:38:0::::FSP_ORG_ID,FSP_APEX_PAGE,FSP_PROJECT_ID:1250,23,103615",
       "releaseDate": "2023",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "IDTA01001R2501": {
       "id": "IDTA01001R2501",
@@ -105,7 +105,7 @@
       "version": "1.0",
       "sourceUrl": "https://airc.nist.gov/RMF/Docs",
       "releaseDate": "2023-01",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "NISTAI6001": {
       "id": "NISTAI6001",
@@ -114,7 +114,7 @@
       "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf",
       "sourceUrl": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf",
       "releaseDate": "2024-07",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "OWASPLMM25": {
       "id": "OWASPLMM25",
@@ -123,7 +123,7 @@
       "url": "https://genai.owasp.org/llm-top-10/",
       "sourceUrl": "https://genai.owasp.org/llm-top-10/",
       "releaseDate": "2025",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "OPC1000018": {
       "id": "OPC1000018",
@@ -147,13 +147,13 @@
       "version": "v5.0",
       "sourceUrl": "https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html",
       "releaseDate": "2019-03",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "IEC61987": {
       "id": "IEC61987",
       "label": "IEC 61987 IRDI",
       "sourceUrl": "https://www.iec.ch/dyn/www/f?p=103:38:0::::FSP_ORG_ID,FSP_APEX_PAGE,FSP_PROJECT_ID:1250,23,100438",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     }
   },
   "claims": {
@@ -893,7 +893,7 @@
       "nodeType": "GatewayInterfaceNode",
       "title": "VoR Interface",
       "subtitle": "NE 178 interface",
-      "description": "Separate security function handling authentication, authorisation, semantic validation, mapping, audit logging, and non-plant-specific status feedback for write-back.",
+      "description": "Separate security function handling authentication, authorisation, semantic validation, mapping, audit event emission, and non-plant-specific status feedback for write-back.",
       "standardIds": [
         "NE178"
       ],
@@ -919,7 +919,7 @@
         "role": "NE 178 write-back interface",
         "rationale": "VOI is distinct from the NE 177 read-only chain and is the only CPC boundary service allowed to receive F5 write requests.",
         "notes": [
-          "VOI enforces authentication, authorisation, semantic validation, mapping, and audit logging.",
+          "VOI enforces authentication, authorisation, semantic validation, mapping, and emits audit events for ACT3 to persist.",
           "Status feedback is intentionally non-plant-specific."
         ],
         "relatedEdgeIds": [
@@ -4195,6 +4195,7 @@
         "node:DEC_R0",
         "node:DEC_T0",
         "node:DEC_G1A",
+        "node:DEC_G2",
         "node:DEC_H1",
         "node:DEC_M1"
       ],

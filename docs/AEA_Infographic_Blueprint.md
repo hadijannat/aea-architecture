@@ -12,7 +12,7 @@
 - *A clear map of the AEA architecture, its guardrails, and the single controlled path into CPC*
 
 **The "Hook":**
-- **Exactly 1** bold writeback path can enter CPC.
+- **Exactly 1** exclusive writeback corridor can reach CPC.
 - **Exactly 1** dashed status path can return.
 - **Exactly 0** direct agent writes bypass the VoR interface.
 
@@ -35,8 +35,8 @@
 
 **3. Decide Guardrails**
 - **Stack** Retrieval. Context. Schema. Policy. Validators. Human approval.
-- **Grounding** AAS Release 25-01 spans **5 parts**.
-- **Update** Part 4 Security added **2025-06-10**.
+- **Grounding** AAS Part 1 and Part 2 run at **v3.1.1**.
+- **Update** Metamodel and API references refreshed in **July 2025**.
 - **Principle** Safety controls stay deterministic and external to the model.
 
 **4. Actuation / VoR**
@@ -94,7 +94,7 @@
 - **6 architecture claims:** **radial claim wheel** with each claim tied to its dominant lane or corridor.
 - **17 standards anchors:** **domain-grouped dot matrix** arranged by NOA / OPC / IDTA / AI safety families.
 - **PA-DIM v1.02 released 2026-01-24:** left rung of a **dual release ladder** with a date chip and small “replaces prior harmonizer baseline” note.
-- **AAS Release 25-01 / 5 parts / Part 4 Security added 2025-06-10:** right rung of the **dual release ladder** with five stacked capsules and the Part 4 capsule accented.
+- **AAS Part 1 + Part 2 v3.1.1 / July 2025:** right rung of the **dual release ladder** with paired metamodel/API capsules and both capsules accented.
 - **5 VoR steps:** **numbered sequence ribbon** with rectangular stations and a dashed rejection/ACK branch.
 - **NE 178 and OPC UA 1.05.06 release dates:** **labeled timeline footer** with compact date pins.
 - **NIST + OWASP microdata:** **compact lollipop callouts** in the footer, split into “governance” and “community scale” columns.

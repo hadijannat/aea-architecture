@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import { buildSearchResults } from '@/graph/compile/searchIndex'
@@ -164,7 +164,32 @@ function expectedStructuralSizes() {
   } as const
 }
 
-const masterSpecMarkdown = readFileSync(resolve(process.cwd(), 'docs/AEA_Figure_Specification.md'), 'utf8')
+function findRepoRoot(startDir: string) {
+  let current = startDir
+
+  while (true) {
+    if (
+      existsSync(resolve(current, 'package.json')) &&
+      existsSync(resolve(current, 'docs/AEA_Figure_Specification.md')) &&
+      existsSync(resolve(current, 'src/test/graph.spec.ts'))
+    ) {
+      return current
+    }
+
+    const parent = resolve(current, '..')
+    if (parent === current) {
+      return startDir
+    }
+    current = parent
+  }
+}
+
+const repoRoot = findRepoRoot(process.cwd())
+const readRepoText = (relativePath: string) => readFileSync(resolve(repoRoot, relativePath), 'utf8')
+
+const masterSpecMarkdown = readRepoText('docs/AEA_Figure_Specification.md')
+const infographicBlueprintMarkdown = readRepoText('docs/AEA_Infographic_Blueprint.md')
+const readmeMarkdown = readRepoText('README.md')
 
 const canonicalSpecCriticalEdgeIds = [
   'F_G0_pol',
@@ -188,18 +213,23 @@ describe('graph manifest', () => {
     expect(issues).toEqual([])
   })
 
-  it('keeps the master specification aligned on claim count, style count, ACK semantics, and stale framing', () => {
-    expect(masterSpecMarkdown).toContain('six independent architectural claims')
-    expect(masterSpecMarkdown).toContain('one or more of these six claims')
-    expect(masterSpecMarkdown).toContain('five distinct arrow styles')
+  it('keeps published docs aligned on counts, ACK semantics, and the writeback model', () => {
+    expect(masterSpecMarkdown).toMatch(/six independent architectural claims/i)
+    expect(masterSpecMarkdown).toMatch(/five distinct arrow styles/i)
     expect(masterSpecMarkdown).toContain('0.75 pt dotted')
     expect(masterSpecMarkdown).toContain('status: {accepted | rejected | executed | timeout}')
     expect(masterSpecMarkdown).toContain('max_iterations')
     expect(masterSpecMarkdown).toContain('t1')
-    expect(masterSpecMarkdown).not.toContain('five independent architectural claims')
-    expect(masterSpecMarkdown).not.toContain('exactly one of these five claims')
-    expect(masterSpecMarkdown).not.toContain('four distinct arrow styles')
-    expect(masterSpecMarkdown).not.toContain('March 2025')
+    expect(masterSpecMarkdown).toContain('`F_VoR_ACK` returns only to `ACT1`; `ACT3` receives the durable audit trail')
+
+    expect(readmeMarkdown).toContain(
+      '36 nodes, 51 edges, 5 sequence steps, 6 architectural claims, and 17 standards anchors.',
+    )
+
+    expect(infographicBlueprintMarkdown).toMatch(/\*\*Exactly 1\*\* exclusive writeback corridor can reach CPC\./)
+    expect(infographicBlueprintMarkdown).toContain('accepted | rejected | executed | timeout')
+    expect(infographicBlueprintMarkdown).toContain('AAS Part 1 and Part 2 run at **v3.1.1**.')
+    expect(infographicBlueprintMarkdown).toContain('Metamodel and API references refreshed in **July 2025**.')
   })
 
   it('documents every critical manifest-backed edge in the master specification', () => {
@@ -436,6 +466,7 @@ describe('graph manifest', () => {
       F5: { source: 'ACT1', target: 'VOI', semantic: 'writeback', style: 'bold', direction: 'rtl' },
       F6: { source: 'VOI', target: 'A3', semantic: 'writeback', style: 'medium', direction: 'ltr' },
       F_VoR_ACK: { source: 'VOI', target: 'ACT1', semantic: 'status-ack', style: 'dashed', direction: 'rtl' },
+      F_CPC_INT: { source: 'A3', target: 'A1', semantic: 'writeback', style: 'thin', direction: 'ttb' },
       F7a: { source: 'ACT2', target: 'C1', semantic: 'kpi', style: 'medium', direction: 'ltr' },
       F7b: { source: 'C1', target: 'C2', semantic: 'kpi', style: 'medium', direction: 'ltr' },
       F7_sub: { source: 'C2', target: 'C1', semantic: 'subscription', style: 'dotted', direction: 'rtl' },
@@ -538,8 +569,17 @@ describe('graph manifest', () => {
   it('keeps F3i sourced from VOI and DEC_G2 aliased from DEC3', () => {
     const f3i = graphManifest.edges.find((edge) => edge.id === 'F3i')
     const validatorNode = graphManifest.nodes.find((node) => node.id === 'DEC_G2')
+    const validatorReject = graphManifest.edges.find((edge) => edge.id === 'F_G2_reject')
     expect(f3i?.source).toBe('VOI')
     expect(validatorNode?.aliases).toContain('DEC3')
+    expect(validatorReject?.interactive.sourceHandle).toBe('left')
+    expect(validatorReject?.interactive.targetHandle).toBe('bottom')
+  })
+
+  it('keeps VoR interface copy aligned with the audit-event model', () => {
+    const voi = resolveGraphNode('VOI')
+    expect(voi?.description).toContain('audit event emission')
+    expect(voi?.inspector.notes.some((note) => note.includes('emits audit events for ACT3 to persist.'))).toBe(true)
   })
 
   it('enforces guardrail node presence and kinds', () => {
@@ -613,6 +653,7 @@ describe('graph manifest', () => {
 
     const rule = graphManifest.interactionRules.find((candidate) => candidate.id === 'RULE_GUARDRAIL_LAYER')
     expect(rule).toBeDefined()
+    expect(rule?.triggerIds).toContain('node:DEC_G2')
     expect(rule?.relatedNodeIds).toContain('node:DEC_G2')
     expect(rule?.relatedEdgeIds).toContain('edge:F_G2_reject')
     expect(rule?.triggerIds.every((id) => id.startsWith('node:'))).toBe(true)
@@ -765,6 +806,9 @@ describe('graph manifest', () => {
       label: 'NAMUR NE 179',
       releaseDate: '2023',
     })
+    for (const standardId of ['IEC63278', 'NISTAIRMF10', 'NISTAI6001', 'OWASPLMM25', 'MQTT5', 'IEC61987'] as const) {
+      expect(graphManifest.standards[standardId]?.lastReviewed).toBe('2026-03-21')
+    }
 
     expect(
       buildSearchResults('NAMUR NE 176', graphManifest).some(
@@ -1146,6 +1190,10 @@ describe('exports', () => {
         path: 'M 1010 1246 L 1010 1318 Q 1010 1340 1032 1340 L 1748 1340 Q 1770 1340 1770 1318 L 1770 1250',
         labelPoint: { x: 1390, y: 1358 },
       },
+      F_G2_reject: {
+        path: 'M 1770 1250 L 1770 1166 Q 1770 1144 1748 1144 L 1637 1144 Q 1615 1144 1615 1122 L 1615 1018 Q 1615 996 1593 996 L 1555 996',
+        labelPoint: { x: 1692.5, y: 1162 },
+      },
       F_H1_reject: {
         path: 'M 895 1186 L 895 1106 Q 895 1084 917 1084 L 1533 1084 Q 1555 1084 1555 1062 L 1555 996',
         labelPoint: { x: 873, y: 1135 },
@@ -1295,6 +1343,7 @@ describe('exports', () => {
       { edgeId: 'F3f_reject', nodes: ['DEC_R2', 'DEC_G1A'] },
       { edgeId: 'F3i', nodes: ['DEC_H1', 'DEC_M1', 'DEC_G1'] },
       { edgeId: 'F4', nodes: ['DEC_G1', 'DEC_G2', 'DEC_M1'] },
+      { edgeId: 'F_G2_reject', nodes: ['DEC_R2', 'DEC_G2'] },
       { edgeId: 'F_G1A_pass', nodes: ['DEC_G1A', 'DEC_G1', 'DEC_M1'] },
       { edgeId: 'F_T1', nodes: ['S1', 'S2', 'DEC_T0'] },
       { edgeId: 'F_T0_obs', nodes: ['DEC_T0', 'DEC_G0', 'DEC_R2'] },
@@ -1330,6 +1379,14 @@ describe('exports', () => {
       expect(route.points[1]?.y).toBe(expectedY)
       expect(route.points[2]?.y).toBe(expectedY)
     }
+
+    expect(buildArchitectureRoute(state, 'F_G2_reject').points).toEqual([
+      { x: 1770, y: 1250 },
+      { x: 1770, y: 1144 },
+      { x: 1615, y: 1144 },
+      { x: 1615, y: 996 },
+      { x: 1555, y: 996 },
+    ])
 
     expect(buildArchitectureRoute(state, 'F_M1_G0').points).toEqual([
       { x: 1340, y: 930 },
