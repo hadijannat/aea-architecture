@@ -47,6 +47,7 @@ interface ExportTokens {
   stepTitleSize: string
   stepSummarySize: string
   eyebrowSize: string
+  fontFamily: string
   strokeWidths: Record<EdgeSpec['style'], number>
 }
 
@@ -278,6 +279,7 @@ function viewportTokens(): ExportTokens {
     stepTitleSize: '15',
     stepSummarySize: '12',
     eyebrowSize: '11',
+    fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
     strokeWidths: {
       bold: 3.6,
       medium: 2.7,
@@ -299,6 +301,7 @@ function publicationTokens(): ExportTokens {
     stepTitleSize: '6.5pt',
     stepSummarySize: '5.5pt',
     eyebrowSize: '5pt',
+    fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
     strokeWidths: {
       bold: 1.7,
       medium: 1.2,
@@ -344,10 +347,10 @@ function renderArchitectureNodes(
     <title>${esc(node.id)}: ${esc(node.title)}</title>
     <desc>${esc(node.description)}</desc>
     <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${Math.max(4, (isStructural ? 20 : 16) * transform.scale)}" fill="${visual.fill}" stroke="${visual.border}" stroke-width="${isStructural ? 1.1 : 1.3}" />
-    <text x="${x + 16 * transform.scale}" y="${y + 15 * transform.scale}" fill="${visual.accent}" font-size="${tokens.badgeSize}" font-family="Arial, sans-serif" font-weight="700">${esc(visual.badgeText)}</text>
-    <text x="${x + 16 * transform.scale}" y="${titleY}" fill="#1f2937" font-size="${isStructural ? tokens.structuralTitleSize : tokens.nodeTitleSize}" font-family="Arial, sans-serif" font-weight="700">${esc(node.id === node.title ? node.title : `${node.id} · ${node.title}`)}</text>
-    ${node.subtitle ? `<text x="${x + 16 * transform.scale}" y="${subtitleY}" fill="#4b5563" font-size="${tokens.subtitleSize}" font-family="Arial, sans-serif">${esc(node.subtitle)}</text>` : ''}
-    ${standards ? `<text x="${x + 16 * transform.scale}" y="${badgeY}" fill="${visual.accent}" font-size="${tokens.badgeSize}" font-family="Arial, sans-serif">${esc(standards)}</text>` : ''}
+    <text x="${x + 16 * transform.scale}" y="${y + 15 * transform.scale}" fill="${visual.accent}" font-size="${tokens.badgeSize}" font-family="${tokens.fontFamily}" font-weight="700">${esc(visual.badgeText)}</text>
+    <text x="${x + 16 * transform.scale}" y="${titleY}" fill="#1f2937" font-size="${isStructural ? tokens.structuralTitleSize : tokens.nodeTitleSize}" font-family="${tokens.fontFamily}" font-weight="700">${esc(node.id === node.title ? node.title : `${node.id} · ${node.title}`)}</text>
+    ${node.subtitle ? `<text x="${x + 16 * transform.scale}" y="${subtitleY}" fill="#4b5563" font-size="${tokens.subtitleSize}" font-family="${tokens.fontFamily}">${esc(node.subtitle)}</text>` : ''}
+    ${standards ? `<text x="${x + 16 * transform.scale}" y="${badgeY}" fill="${visual.accent}" font-size="${tokens.badgeSize}" font-family="${tokens.fontFamily}">${esc(standards)}</text>` : ''}
   </g>`
     })
     .join('\n')
@@ -371,7 +374,7 @@ function renderArchitectureEdges(
     <title>${esc(edge.id)}: ${esc(edge.label)}</title>
     <desc>${esc(edge.inspector.rationale)}</desc>
     <path d="${translateScaledPath(route.path, transform)}" fill="none" stroke="${edgeStroke(edge)}" stroke-width="${edgeWidth(edge, tokens)}" ${edgeDash(edge)} marker-end="url(#${edgeMarker(edge)})" />
-    <text id="edge-label-${edge.id}" x="${labelPoint.x}" y="${labelPoint.y}" text-anchor="middle" fill="${edgeStroke(edge)}" font-size="${tokens.edgeLabelSize}" font-family="Arial, sans-serif">${esc(architectureEdgeLabel(edge))}</text>
+    <text id="edge-label-${edge.id}" x="${labelPoint.x}" y="${labelPoint.y}" text-anchor="middle" fill="${edgeStroke(edge)}" font-size="${tokens.edgeLabelSize}" font-family="${tokens.fontFamily}">${esc(architectureEdgeLabel(edge))}</text>
   </g>`
     })
     .join('\n')
@@ -440,11 +443,11 @@ function renderSequenceBoard(
     <title>${esc(terminal.node.id)}: ${esc(terminal.node.title)}</title>
     <desc>${esc(terminal.node.description)}</desc>
     <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${Math.max(4, 18 * transform.scale)}" fill="${visual.fill}" stroke="${visual.border}" stroke-width="1.2" />
-    <text x="${x + 14 * transform.scale}" y="${y + 22 * transform.scale}" fill="${visual.accent}" font-size="${tokens.eyebrowSize}" font-family="Arial, sans-serif" letter-spacing="0.16em">${esc(terminal.node.id)}</text>
-    <text x="${x + 14 * transform.scale}" y="${y + 42 * transform.scale}" fill="#1f2937" font-size="${tokens.stepTitleSize}" font-family="Arial, sans-serif" font-weight="700">${esc(terminal.node.title)}</text>
+    <text x="${x + 14 * transform.scale}" y="${y + 22 * transform.scale}" fill="${visual.accent}" font-size="${tokens.eyebrowSize}" font-family="${tokens.fontFamily}" letter-spacing="0.16em">${esc(terminal.node.id)}</text>
+    <text x="${x + 14 * transform.scale}" y="${y + 42 * transform.scale}" fill="#1f2937" font-size="${tokens.stepTitleSize}" font-family="${tokens.fontFamily}" font-weight="700">${esc(terminal.node.title)}</text>
     ${
       subtitleLines.length > 0
-        ? `<text x="${x + 14 * transform.scale}" y="${y + 58 * transform.scale}" fill="#4b5563" font-size="${tokens.stepSummarySize}" font-family="Arial, sans-serif">${subtitleLines
+        ? `<text x="${x + 14 * transform.scale}" y="${y + 58 * transform.scale}" fill="#4b5563" font-size="${tokens.stepSummarySize}" font-family="${tokens.fontFamily}">${subtitleLines
             .map(
               (line, index) =>
                 `<tspan x="${x + 14 * transform.scale}" dy="${index === 0 ? 0 : 11 * transform.scale}">${esc(line)}</tspan>`,
@@ -473,9 +476,9 @@ function renderSequenceBoard(
     <title>${esc(step.step.id)}: ${esc(step.step.title)}</title>
     <desc>${esc(step.step.summary)}</desc>
     <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${Math.max(4, 22 * transform.scale)}" fill="#fffdf9" stroke="#d7a16d" stroke-width="1.2" />
-    <text x="${x + 18 * transform.scale}" y="${y + 22 * transform.scale}" fill="#7c5a32" font-size="${tokens.eyebrowSize}" font-family="Arial, sans-serif" letter-spacing="0.16em">${esc(step.step.id)}</text>
-    <text x="${x + 18 * transform.scale}" y="${y + 46 * transform.scale}" fill="#1f2937" font-size="${tokens.stepTitleSize}" font-family="Arial, sans-serif" font-weight="700">${esc(step.step.title)}</text>
-    <text x="${x + 18 * transform.scale}" y="${y + 68 * transform.scale}" fill="#4b5563" font-size="${tokens.stepSummarySize}" font-family="Arial, sans-serif">${summaryLines
+    <text x="${x + 18 * transform.scale}" y="${y + 22 * transform.scale}" fill="#7c5a32" font-size="${tokens.eyebrowSize}" font-family="${tokens.fontFamily}" letter-spacing="0.16em">${esc(step.step.id)}</text>
+    <text x="${x + 18 * transform.scale}" y="${y + 46 * transform.scale}" fill="#1f2937" font-size="${tokens.stepTitleSize}" font-family="${tokens.fontFamily}" font-weight="700">${esc(step.step.title)}</text>
+    <text x="${x + 18 * transform.scale}" y="${y + 68 * transform.scale}" fill="#4b5563" font-size="${tokens.stepSummarySize}" font-family="${tokens.fontFamily}">${summaryLines
       .map(
         (line, index) =>
           `<tspan x="${x + 18 * transform.scale}" dy="${index === 0 ? 0 : 12 * transform.scale}">${esc(line)}</tspan>`,
@@ -501,7 +504,7 @@ function renderSequenceBoard(
     <title>${esc(edge.edge.id)}: ${esc(edge.edge.label)}</title>
     <desc>${esc(edge.edge.inspector.rationale)}</desc>
     <path d="${translateScaledPath(edge.path, transform)}" fill="none" stroke="${semanticStroke}" stroke-width="${edgeWidth(edge.edge, tokens)}" ${edgeDash(edge.edge)} marker-end="url(#${edgeMarker(edge.edge)})" />
-    <text x="${labelPoint.x}" y="${labelY}" text-anchor="middle" fill="${semanticStroke}" font-size="${tokens.edgeLabelSize}" font-family="Arial, sans-serif">${esc(edge.edge.id)}</text>
+    <text x="${labelPoint.x}" y="${labelY}" text-anchor="middle" fill="${semanticStroke}" font-size="${tokens.edgeLabelSize}" font-family="${tokens.fontFamily}">${esc(edge.edge.id)}</text>
   </g>`
     })
     .join('\n')
@@ -608,7 +611,7 @@ function buildPublicationSvgDocument(
   )}</desc>
   ${renderMarkerDefs('export-publication', manifest)}
   <rect x="0" y="0" width="${figureWidthPt}" height="${totalHeightPt}" fill="${palette.pageBackground}" />
-  <text x="9" y="18" fill="#1f2937" font-size="${tokens.titleSize}" font-family="Arial, sans-serif" font-weight="700">(a) Architecture Across NOA Zones</text>
+  <text x="9" y="18" fill="#1f2937" font-size="${tokens.titleSize}" font-family="${tokens.fontFamily}" font-weight="700">(a) Architecture Across NOA Zones</text>
   ${renderArchitectureNodes(
     effectiveState,
     manifest,
@@ -623,7 +626,7 @@ function buildPublicationSvgDocument(
     { offsetX: 0, offsetY: architectureFrameY, scale: architectureScale },
     tokens,
   )}
-  <text x="9" y="${sequenceTitleY}" fill="#1f2937" font-size="${tokens.titleSize}" font-family="Arial, sans-serif" font-weight="700">(b) VoR Domain-Transition Sequence (NE 178, 2025)</text>
+  <text x="9" y="${sequenceTitleY}" fill="#1f2937" font-size="${tokens.titleSize}" font-family="${tokens.fontFamily}" font-weight="700">(b) VoR Domain-Transition Sequence (NE 178, 2025)</text>
   <rect x="0" y="${sequenceFrameY - 8}" width="${figureWidthPt}" height="${sequenceHeightPt + 12}" fill="${palette.sequenceBackground}" />
   ${renderSequenceBoard(
     boardModel,

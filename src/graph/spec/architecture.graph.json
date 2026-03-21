@@ -2314,7 +2314,7 @@
         "relatedStepIds": [
           "PB2"
         ],
-        "sourceHandle": "bottom",
+        "sourceHandle": "right",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
@@ -2452,7 +2452,7 @@
         "relatedStepIds": [
           "PB2"
         ],
-        "sourceHandle": "bottom",
+        "sourceHandle": "right",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
@@ -2534,7 +2534,7 @@
         "relatedStepIds": [
           "PB2"
         ],
-        "sourceHandle": "bottom",
+        "sourceHandle": "right",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
@@ -2576,7 +2576,7 @@
           "PB1",
           "PB2"
         ],
-        "sourceHandle": "bottom",
+        "sourceHandle": "right",
         "targetHandle": "left",
         "highlightGroup": "policy"
       },
@@ -2648,9 +2648,16 @@
       ],
       "interactive": {
         "relatedStepIds": [],
-        "sourceHandle": "left",
-        "targetHandle": "right",
+        "sourceHandle": "bottom",
+        "targetHandle": "bottom",
         "highlightGroup": "policy"
+      },
+      "routing": {
+        "corridor": "feedback",
+        "sourceHandle": "bottom:feedback:0",
+        "targetHandle": "bottom:feedback:0",
+        "labelPlacement": "segment",
+        "priority": 0
       },
       "inspector": {
         "rationale": "F_G1A_reject returns machine-readable schema failures to the planner without exposing downstream deterministic logic as free text.",
@@ -2724,9 +2731,16 @@
         "relatedStepIds": [
           "PB4"
         ],
-        "sourceHandle": "bottom",
-        "targetHandle": "left",
+        "sourceHandle": "top",
+        "targetHandle": "bottom",
         "highlightGroup": "policy"
+      },
+      "routing": {
+        "corridor": "feedback",
+        "sourceHandle": "top:feedback:1",
+        "targetHandle": "bottom:feedback:1",
+        "labelPlacement": "segment",
+        "priority": 1
       },
       "inspector": {
         "rationale": "F3f_reject closes the ReAct loop so the planner can observe policy rejections and revise its proposal.",
@@ -2763,16 +2777,16 @@
           "PB2",
           "PB5"
         ],
-        "sourceHandle": "bottom",
+        "sourceHandle": "top",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },
       "routing": {
-        "corridor": "validation",
-        "sourceHandle": "bottom:validation:1",
-        "targetHandle": "top:validation:1",
+        "corridor": "ceiling",
+        "sourceHandle": "top:ceiling:0",
+        "targetHandle": "top:ceiling:0",
         "labelPlacement": "segment",
-        "priority": 1
+        "priority": 0
       },
       "inspector": {
         "rationale": "F3g supplies AAS-typed property bounds, units, and constraints to deterministic validation.",
@@ -2864,15 +2878,15 @@
           "PB1"
         ],
         "sourceHandle": "right",
-        "targetHandle": "left",
+        "targetHandle": "top",
         "highlightGroup": "write"
       },
       "routing": {
-        "corridor": "validation",
-        "sourceHandle": "right:validation:3",
-        "targetHandle": "left:validation:3",
+        "corridor": "ceiling",
+        "sourceHandle": "right:ceiling:1",
+        "targetHandle": "top:ceiling:1",
         "labelPlacement": "segment",
-        "priority": 3
+        "priority": 1
       },
       "inspector": {
         "rationale": "F3i originates at the VoR Interface because the gateway-side enforcement point owns the permitted write scope and session role knowledge.",
@@ -2914,9 +2928,16 @@
       ],
       "interactive": {
         "relatedStepIds": [],
-        "sourceHandle": "left",
+        "sourceHandle": "top",
         "targetHandle": "bottom",
         "highlightGroup": "write"
+      },
+      "routing": {
+        "corridor": "feedback",
+        "sourceHandle": "top:feedback:3",
+        "targetHandle": "bottom:feedback:3",
+        "labelPlacement": "segment",
+        "priority": 3
       },
       "inspector": {
         "rationale": "F_G2_reject returns deterministic validator failures to the planner so bounds, scope, or stale-snapshot violations are observable and revisable.",
@@ -3037,7 +3058,7 @@
       ],
       "interactive": {
         "relatedStepIds": [],
-        "sourceHandle": "top",
+        "sourceHandle": "right",
         "targetHandle": "bottom",
         "highlightGroup": "policy"
       },
@@ -3198,6 +3219,13 @@
         "targetHandle": "bottom",
         "highlightGroup": "write"
       },
+      "routing": {
+        "corridor": "feedback",
+        "sourceHandle": "top:feedback:2",
+        "targetHandle": "bottom:feedback:2",
+        "labelPlacement": "segment",
+        "priority": 2
+      },
       "inspector": {
         "rationale": "F_H1_reject routes an explicit human rejection back to the planner so the proposal can be revised without implying any execution path.",
         "constraints": [
@@ -3267,8 +3295,17 @@
         "audit"
       ],
       "interactive": {
+        "sourceHandle": "right",
+        "targetHandle": "top",
         "optional": true,
         "highlightGroup": "policy"
+      },
+      "routing": {
+        "corridor": "monitor",
+        "sourceHandle": "right:monitor:0",
+        "targetHandle": "top:monitor:0",
+        "labelPlacement": "tap",
+        "priority": 0
       },
       "inspector": {
         "rationale": "F_M1_G0 emits classification, redaction, refusal, and snapshot-consistency events from the Input / Context Guard."
@@ -3298,8 +3335,17 @@
         "audit"
       ],
       "interactive": {
+        "sourceHandle": "right",
+        "targetHandle": "top",
         "optional": true,
         "highlightGroup": "policy"
+      },
+      "routing": {
+        "corridor": "monitor",
+        "sourceHandle": "right:monitor:1",
+        "targetHandle": "top:monitor:0",
+        "labelPlacement": "tap",
+        "priority": 1
       },
       "inspector": {
         "rationale": "F_M1_R0 emits provenance, ACL, and denied-source events from the Retrieval Guard."
@@ -3329,8 +3375,17 @@
         "audit"
       ],
       "interactive": {
+        "sourceHandle": "right",
+        "targetHandle": "top",
         "optional": true,
         "highlightGroup": "policy"
+      },
+      "routing": {
+        "corridor": "monitor",
+        "sourceHandle": "right:monitor:2",
+        "targetHandle": "top:monitor:0",
+        "labelPlacement": "tap",
+        "priority": 2
       },
       "inspector": {
         "rationale": "F_M1_T0 emits allowlist, schema, rate-limit, and read-only enforcement events from the Tool Guard / Broker."
@@ -3360,8 +3415,17 @@
         "audit"
       ],
       "interactive": {
+        "sourceHandle": "right",
+        "targetHandle": "top",
         "optional": true,
         "highlightGroup": "policy"
+      },
+      "routing": {
+        "corridor": "monitor",
+        "sourceHandle": "right:monitor:3",
+        "targetHandle": "top:monitor:0",
+        "labelPlacement": "tap",
+        "priority": 3
       },
       "inspector": {
         "rationale": "F_M1_G1A emits schema-pass and schema-reject events from the Output Guard / Schema Checker."
@@ -3391,8 +3455,17 @@
         "audit"
       ],
       "interactive": {
+        "sourceHandle": "right",
+        "targetHandle": "top",
         "optional": true,
         "highlightGroup": "policy"
+      },
+      "routing": {
+        "corridor": "monitor",
+        "sourceHandle": "right:monitor:4",
+        "targetHandle": "top:monitor:0",
+        "labelPlacement": "tap",
+        "priority": 4
       },
       "inspector": {
         "rationale": "F_M1_H1 emits approve, reject, expiry, and stale-snapshot events from the Human Approval Gate."
