@@ -4,6 +4,7 @@ import { createElement, Fragment, type CSSProperties, type ReactNode } from 'rea
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { edgeStrokeWidth } from '@/graph/compile/semanticPresentation'
 import { resolveGraphEdge } from '@/graph/spec/manifest'
 import type { CompiledEdgeData } from '@/graph/compile/toReactFlow'
 import { BaseSemanticEdge } from '@/ui/edges/BaseSemanticEdge'
@@ -142,6 +143,7 @@ describe('BaseSemanticEdge', () => {
         } as never),
       ),
     )
+  const renderedStrokeWidth = () => Number.parseFloat(screen.getAllByTestId('base-edge')[1]?.style.strokeWidth ?? '0')
 
   it('pins the transparent hit path and interaction width to 12px', () => {
     const { container } = renderEdge()
@@ -190,5 +192,16 @@ describe('BaseSemanticEdge', () => {
     expect(hitPath?.getAttribute('stroke-width')).toBe('12')
     expect(screen.getAllByTestId('base-edge')).toHaveLength(2)
     expect(container.querySelectorAll('path')).toHaveLength(5)
+  })
+
+  it('scales dimmed and supportive strokes from the semantic width instead of subtracting fixed pixels', () => {
+    const baseWidth = edgeStrokeWidth(spec.style, spec.semantic, baseData.canvasLod)
+
+    renderEdge({ dimmed: true })
+    expect(renderedStrokeWidth()).toBeCloseTo(Math.max(baseWidth * 0.7, 0.8))
+
+    cleanup()
+    renderEdge({ supportive: true })
+    expect(renderedStrokeWidth()).toBeCloseTo(Math.max(baseWidth * 0.82, 0.9))
   })
 })

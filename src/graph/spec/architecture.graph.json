@@ -3495,7 +3495,7 @@
         "priority": 1
       },
       "inspector": {
-        "rationale": "F5 is the exclusive write-back initiation path and therefore the only bold cross-boundary edge in the figure.",
+        "rationale": "F5 is the exclusive write-back initiation path and therefore the first bold cross-boundary edge in the figure.",
         "notes": [
           "Exclusive write-back initiation path."
         ],
@@ -3544,13 +3544,13 @@
         "priority": 2
       },
       "inspector": {
-        "rationale": "F6 carries the mapped and verified instruction into the CPC Change Handler, not into the read-only CPC Data Interface.",
+        "rationale": "F6 carries the mapped and verified instruction into the CPC Change Handler, not into the read-only CPC Data Interface, and remains bold as the second write-path segment.",
         "notes": [
           "Non-plant-specific status is not carried here; only the change instruction is."
         ],
         "constraints": [
           "Target must remain A3.",
-          "Implemented as solid medium, not dashed."
+          "Implemented as solid bold, not dashed."
         ]
       }
     },

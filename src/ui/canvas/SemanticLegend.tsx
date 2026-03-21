@@ -87,7 +87,7 @@ export function SemanticLegend() {
                       fill="none"
                       stroke={presentation.stroke}
                       strokeWidth={Math.max(
-                        2.2,
+                        1.2,
                         edgeStrokeWidth(getSemanticLegendStyle(presentation.semantic), presentation.semantic),
                       )}
                       strokeLinecap="round"
