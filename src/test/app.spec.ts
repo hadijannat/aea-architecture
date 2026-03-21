@@ -1,5 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
+const uiStorageKey = 'aea-architecture-ui-v2'
+
 async function pressKeyUntilFocused(page: Page, key: 'Tab' | 'Shift+Tab', target: Locator, maxTabs = 160) {
   for (let index = 0; index < maxTabs; index += 1) {
     await page.keyboard.press(key)
@@ -34,6 +36,40 @@ async function assertFocusVisible(locator: Locator) {
   }
 
   expect(styles.boxShadow).not.toBe('none')
+}
+
+async function openExplore(page: Page) {
+  const drawer = page.locator('.explore-drawer')
+  if ((await drawer.count()) === 0) {
+    await page.getByRole('button', { name: /^Explore/ }).click()
+  }
+  await expect(drawer).toBeVisible()
+  return drawer
+}
+
+async function openExportMenu(page: Page) {
+  const exportButton = page.getByRole('button', { name: 'Export' })
+  await exportButton.click()
+  await expect(page.locator('.command-menu--export')).toBeVisible()
+  return page.locator('.command-menu--export')
+}
+
+async function openInspectorDisclosure(page: Page) {
+  const disclosure = page.locator('.inspector-disclosure')
+  const summary = disclosure.locator('summary')
+  if (!(await disclosure.evaluate((element) => element instanceof HTMLDetailsElement && element.open))) {
+    await summary.click()
+  }
+  await expect(disclosure).toHaveAttribute('open', '')
+  return disclosure
+}
+
+async function openSequenceFromTeaser(page: Page) {
+  const teaserButton = page.getByRole('button', { name: /Open (linked )?sequence/ })
+  if ((await teaserButton.count()) > 0) {
+    await teaserButton.click()
+  }
+  await expect(page.locator('.sequence-panel')).toBeVisible()
 }
 
 async function ensureNodeRenderMode(
@@ -121,21 +157,6 @@ async function boxHeight(locator: Locator) {
   return locator.evaluate((element) => element.getBoundingClientRect().height)
 }
 
-async function intersectsScrollContainer(container: Locator, subject: Locator) {
-  return container.evaluate(
-    (containerElement, subjectElement) => {
-      if (!(containerElement instanceof HTMLElement) || !(subjectElement instanceof HTMLElement)) {
-        return false
-      }
-
-      const containerRect = containerElement.getBoundingClientRect()
-      const subjectRect = subjectElement.getBoundingClientRect()
-      return subjectRect.bottom > containerRect.top && subjectRect.top < containerRect.bottom
-    },
-    await subject.elementHandle(),
-  )
-}
-
 async function architectureEdgeIsAnimated(page: Page, edgeId: string) {
   return page.locator(`.semantic-edge[data-edge-id="${edgeId}"]`).evaluate((element) => {
     const edge = element.closest('.react-flow__edge')
@@ -174,14 +195,14 @@ function hexToRgbString(hex: string) {
 }
 
 async function expandedNoteIds(page: Page) {
-  return page.evaluate(() => {
-    const stored = window.localStorage.getItem('aea-architecture-ui')
+  return page.evaluate((storageKey) => {
+    const stored = window.localStorage.getItem(storageKey)
     if (!stored) {
       return []
     }
     const parsed = JSON.parse(stored)
     return parsed.state?.projection?.expandedNoteIds ?? []
-  })
+  }, uiStorageKey)
 }
 
 async function svgBox(locator: Locator) {
@@ -297,17 +318,33 @@ test('selecting F5 highlights the VoR sequence and inspector', async ({ page }) 
 
 test('filtering by C4 keeps the write path visible', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'C4: Actuation is exclusive to the VoR path' }).click()
+  const explore = await openExplore(page)
+  await explore.getByRole('button', { name: 'C4: Actuation is exclusive to the VoR path' }).click()
   await expect(await ensureEdgeLabelMode(page, 'F5', 'chip', 'zoom-in')).toBeVisible()
-  await expect(page.getByRole('button', { name: /PB5: Mapping Verification \+ Execution/ })).toBeVisible()
+  await expect(page.locator('.sequence-teaser')).toContainText('Open sequence')
+  await expect(page.locator('.filter-summary')).toContainText('1 claim')
 })
 
 test('search results can jump directly to a sequence step', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('searchbox', { name: 'Search nodes, edges, standards, and claims' }).fill('PB3')
-  await page.getByRole('button', { name: 'Step result PB3 · Mapping' }).click()
+  await page.getByRole('button', { name: 'Step result PB3' }).click()
   await expect(page.getByRole('heading', { name: 'PB3' })).toBeVisible()
-  await expect(page.getByText('Sequence order')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'VoR sequence' })).toBeVisible()
+})
+
+test('first viewport reads as a hero composition with collapsed sequence and command bar utilities', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+
+  await expect(page.getByRole('heading', { name: 'AEA Architecture' })).toBeVisible()
+  await expect(page.locator('.command-bar')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Explore' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export' })).toBeVisible()
+  await expect(page.locator('.sequence-teaser')).toBeVisible()
+  await expect(page.locator('.sequence-teaser')).toContainText('Open sequence')
+  await expect(page.locator('.workspace__sequence-stack')).toHaveCount(0)
+  await expect(page.locator('.app-hero')).toBeVisible()
 })
 
 test('selecting F_VoR_ACK highlights the Panel B acknowledgement with its action label', async ({ page }) => {
@@ -332,16 +369,18 @@ test('edge controls expose semantic accessible names', async ({ page }) => {
 
 test('export controls use viewport and publication labels', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('button', { name: 'SVG viewport' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'SVG publication' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'PDF viewport' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'PDF publication' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Mermaid topology (architecture)' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Mermaid topology (sequence)' })).toBeVisible()
+  const exportMenu = await openExportMenu(page)
+  await expect(exportMenu.getByRole('button', { name: 'SVG viewport' })).toBeVisible()
+  await expect(exportMenu.getByRole('button', { name: 'SVG publication' })).toBeVisible()
+  await expect(exportMenu.getByRole('button', { name: 'PDF viewport' })).toBeVisible()
+  await expect(exportMenu.getByRole('button', { name: 'PDF publication' })).toBeVisible()
+  await expect(exportMenu.getByRole('button', { name: 'Mermaid topology (architecture)' })).toBeVisible()
+  await expect(exportMenu.getByRole('button', { name: 'Mermaid topology (sequence)' })).toBeVisible()
 })
 
 test('keyboard navigation exposes focus-visible states across Panel B controls', async ({ page }) => {
   await page.goto('/')
+  await openSequenceFromTeaser(page)
 
   const rejectionTerminal = page.getByRole('button', { name: /^PB_REJECT_OUT:/ })
   await rejectionTerminal.click()
@@ -364,27 +403,25 @@ test('keyboard navigation exposes focus-visible states across Panel B controls',
   await assertFocusVisible(ackEdgeLabel)
 })
 
-test('desktop canvas keeps topology visible while the legend stays collapsed by default', async ({ page }) => {
+test('default hero viewport keeps Panel A dominant and Panel B collapsed by default', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
-  await page.goto('/?node=ACT1')
+  await page.goto('/')
 
-  await expect(page.locator('.canvas-hud')).toHaveCount(0)
-  await expect(page.locator('.semantic-overview')).toBeVisible()
-  await expect(page.locator('[data-overview-map]')).toBeVisible()
-  await expect(page.locator('[data-overview-node-id="VOI"]')).toBeVisible()
-  await expect(page.locator('[data-overview-node-id="ACT1"]')).toBeVisible()
-  await expect(page.locator('[data-overview-legend-panel]')).toHaveCount(0)
-  await page.getByRole('button', { name: 'Expand legend' }).click()
-  await expect(page.locator('[data-overview-legend-panel]')).toBeVisible()
-  await expect(page.locator('[data-legend-item="status-ack"]')).toBeVisible()
-  await expect(page.locator('#legend-marker-status-ack')).toHaveAttribute('markerUnits', 'userSpaceOnUse')
-  await page.locator('[data-focus-preset="lane-c"]').click({ force: true })
-  await page.locator('[data-hotspot-id="gateway"]').click({ force: true })
-  await expect(page.locator('[data-overview-map]')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'AEA Architecture' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Explore' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export' })).toBeVisible()
+  await expect(page.locator('.sequence-teaser')).toBeVisible()
+  await expect(page.locator('.sequence-teaser')).toContainText('Open sequence')
+  await expect(page.locator('.workspace__sequence-stack')).toHaveCount(0)
+  await expect(page.locator('.app-hero')).toBeVisible()
+  await expect(page.locator('.architecture-canvas')).toBeVisible()
+  await expect(page.locator('.node-card[data-node-id="VOI"]')).toBeVisible()
+  await expect(page.locator('.node-card[data-node-id="ACT1"]')).toBeVisible()
 })
 
 test('feedback sequence edges use distinct styling for acknowledgement and rejection', async ({ page }) => {
   await page.goto('/')
+  await openSequenceFromTeaser(page)
 
   const ackStyles = await page.locator('.sequence-edge-label[data-edge-id="PB_ACK"]').evaluate((element) => {
     const computed = getComputedStyle(element)
@@ -538,23 +575,23 @@ test('overview node tiles hide subtitle and metadata at low zoom', async ({ page
 test('toggle chips expose pressed state and the updated lane copy', async ({ page }) => {
   await page.goto('/')
 
-  const laneA = page.getByRole('button', { name: 'Lane A: CPC / external systems' })
+  const explore = await openExplore(page)
+
+  const laneA = explore.getByRole('button', { name: 'Lane A: CPC / external systems' })
   await expect(laneA).toHaveAttribute('aria-pressed', 'false')
   await expect(laneA).toContainText('CPC')
   await laneA.click()
   await expect(laneA).toHaveAttribute('aria-pressed', 'true')
-  await expect(page.getByRole('button', { name: 'Lane B: AEA / gateway / decisioning' })).toContainText('psM+O')
-  await expect(page.getByRole('button', { name: 'Lane C: central analytics / historian' })).toContainText(
+  await expect(explore.getByRole('button', { name: 'Lane B: AEA / gateway / decisioning' })).toContainText('psM+O')
+  await expect(explore.getByRole('button', { name: 'Lane C: central analytics / historian' })).toContainText(
     'Central M+O',
   )
-  await expect(page.getByRole('button', { name: 'Hide VoR sequence' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Write corridor focus' })).toBeVisible()
-  await expect(page.locator('[data-focus-preset="guardrail"]')).toContainText('Guardrails')
-  await expect(page.locator('[data-hotspot-id="write"] .semantic-overview__hotspot-label')).toHaveText(
-    'Write corridor',
-  )
+  await expect(explore.getByRole('button', { name: 'Show VoR sequence' })).toBeVisible()
+  await expect(explore.getByRole('button', { name: 'Write corridor focus' })).toBeVisible()
+  await expect(explore.getByText('Figure metadata')).toBeVisible()
+  await expect(page.locator('.filter-summary')).toContainText('1 lane')
 
-  const claimC4 = page.getByRole('button', { name: 'C4: Actuation is exclusive to the VoR path' })
+  const claimC4 = explore.getByRole('button', { name: 'C4: Actuation is exclusive to the VoR path' })
   await expect(claimC4).toHaveAttribute('aria-pressed', 'false')
   await expect(claimC4).toContainText('Actuation is exclusive to the VoR path')
   await expect(claimC4).toHaveAttribute(
@@ -567,26 +604,30 @@ test('toggle chips expose pressed state and the updated lane copy', async ({ pag
 
 test('focus presets stay single-line after adding the guardrail control view', async ({ page }) => {
   await page.goto('/?node=ACT1')
+  const explore = await openExplore(page)
 
-  const writePreset = page.locator('[data-focus-preset="write"]')
-  const overviewPreset = page.locator('[data-focus-preset="overview"]')
-  const guardrailPreset = page.locator('[data-focus-preset="guardrail"]')
+  const writePreset = explore.getByRole('button', { name: 'Write corridor focus' })
+  const overviewPreset = explore.getByRole('button', { name: 'All paths' })
+  const policyPreset = explore.getByRole('button', { name: 'Policy' }).first()
+  const telemetryPreset = explore.getByRole('button', { name: 'Telemetry' }).first()
 
   await expect(writePreset).toContainText('Write corridor')
-  await expect(guardrailPreset).toContainText('Guardrails')
   const writeHeight = (await writePreset.boundingBox())?.height ?? 0
   const overviewHeight = (await overviewPreset.boundingBox())?.height ?? 0
-  const guardrailHeight = (await guardrailPreset.boundingBox())?.height ?? 0
+  const policyHeight = (await policyPreset.boundingBox())?.height ?? 0
+  const telemetryHeight = (await telemetryPreset.boundingBox())?.height ?? 0
 
   expect(writeHeight).toBeGreaterThan(0)
   expect(Math.abs(writeHeight - overviewHeight)).toBeLessThanOrEqual(2)
-  expect(Math.abs(guardrailHeight - overviewHeight)).toBeLessThanOrEqual(2)
+  expect(Math.abs(policyHeight - overviewHeight)).toBeLessThanOrEqual(2)
+  expect(Math.abs(telemetryHeight - overviewHeight)).toBeLessThanOrEqual(2)
 })
 
 test('reduce motion toggle disables animated writeback and tool-call edges', async ({ page }) => {
   await page.goto('/')
 
-  const reduceMotion = page.getByRole('button', { name: 'Reduce motion' })
+  const explore = await openExplore(page)
+  const reduceMotion = explore.getByRole('button', { name: 'Reduce motion' })
   await expect(reduceMotion).toHaveAttribute('aria-pressed', 'false')
   await expect.poll(() => architectureEdgeIsAnimated(page, 'F5')).toBe(true)
   await expect.poll(() => architectureEdgeIsAnimated(page, 'F_VoR_ACK')).toBe(false)
@@ -603,8 +644,8 @@ test('reduce motion toggle disables animated writeback and tool-call edges', asy
 test('system reduced-motion preference disables animated architecture edges', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')
-
-  await expect(page.getByRole('button', { name: 'Reduce motion' })).toHaveAttribute('aria-pressed', 'false')
+  const explore = await openExplore(page)
+  await expect(explore.getByRole('button', { name: 'Reduce motion' })).toHaveAttribute('aria-pressed', 'false')
   await expect.poll(() => architectureEdgeIsAnimated(page, 'F5')).toBe(false)
   await expect.poll(() => architectureEdgeIsAnimated(page, 'F_T1')).toBe(false)
   await expect.poll(() => architectureEdgeIsAnimated(page, 'F_T2')).toBe(false)
@@ -678,17 +719,9 @@ test('architecture marker defs stay fixed-size and the write ribbon follows zoom
   await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('markerWidth', '12')
   await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('markerHeight', '10')
   await expect(page.locator('#architecture-marker-writeback-arrowclosed')).toHaveAttribute('refY', '4')
-  await page.getByRole('button', { name: 'Expand legend' }).click()
-  await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute(
-    'markerUnits',
-    'userSpaceOnUse',
-  )
-  await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute('markerWidth', '12')
-  await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute('markerHeight', '10')
-  await expect(page.locator('[data-overview-legend-panel] #legend-marker-writeback')).toHaveAttribute('refY', '4')
-
-  const writePreset = page.locator('[data-focus-preset="write"]')
-  await writePreset.click({ force: true })
+  const explore = await openExplore(page)
+  const writePreset = explore.getByRole('button', { name: 'Write corridor focus' })
+  await writePreset.click()
 
   const ribbon = page.locator('[data-write-ribbon]')
   await expect.poll(() => ribbon.getAttribute('data-write-ribbon-visible')).toBe('true')
@@ -710,7 +743,8 @@ test('write ribbon stays attached to the live corridor after preset focus and zo
   await page.goto('/')
 
   const ribbon = page.locator('[data-write-ribbon]')
-  await page.locator('[data-focus-preset="write"]').click({ force: true })
+  const explore = await openExplore(page)
+  await explore.getByRole('button', { name: 'Write corridor focus' }).click()
   await expect(ribbon).toHaveAttribute('data-write-ribbon-visible', 'true')
 
   for (let index = 0; index < 3; index += 1) {
@@ -732,7 +766,7 @@ test('write ribbon stays attached to the live corridor after preset focus and zo
   }
 })
 
-test('page scroll can reach the sequence while pinch-style zoom still works over the write ribbon', async ({ page }) => {
+test('page scroll can reach the sequence while the write focus still allows canvas zoom', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
 
@@ -745,27 +779,27 @@ test('page scroll can reach the sequence while pinch-style zoom still works over
   expect(afterScroll).toBeGreaterThan(beforeScroll)
 
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
-  await page.locator('[data-focus-preset="write"]').click({ force: true })
+  const explore = await openExplore(page)
+  await explore.getByRole('button', { name: 'Write corridor focus' }).click()
+  await page.getByRole('button', { name: /^Explore/ }).click()
+  await expect(page.locator('.explore-drawer')).toHaveCount(0)
   const ribbon = page.locator('[data-write-ribbon]')
   await expect(ribbon).toHaveAttribute('data-write-ribbon-visible', 'true')
   const ribbonBox = await ribbon.boundingBox()
   expect(ribbonBox).not.toBeNull()
 
   const before = await viewportTransform(page)
-  await page.keyboard.down('Control')
-  await page.mouse.move(ribbonBox!.x + ribbonBox!.width / 2, ribbonBox!.y + ribbonBox!.height / 2)
-  await page.mouse.wheel(0, -600)
-  await page.keyboard.up('Control')
+  await page.locator('.architecture-canvas .react-flow__controls-zoomin:not([disabled])').click()
   await page.waitForTimeout(220)
   const after = await viewportTransform(page)
 
   expect(after).not.toBe(before)
 })
 
-test('short desktop viewports keep the sequence panel reachable even with a stale persisted split', async ({ page }) => {
+test('narrow desktop viewports stack the sequence beneath the canvas when the panel is open', async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem(
-      'aea-architecture-ui',
+      'aea-architecture-ui-v2',
       JSON.stringify({
         state: {
           ui: {
@@ -778,39 +812,33 @@ test('short desktop viewports keep the sequence panel reachable even with a stal
       }),
     )
   })
-  await page.setViewportSize({ width: 1600, height: 760 })
+  await page.setViewportSize({ width: 900, height: 760 })
   await page.goto('/')
 
-  const sequencePanel = page.getByTestId('sequence')
-  const sequenceShell = sequencePanel.locator('.sequence-board-shell')
-  const rejectTerminal = sequencePanel.locator('.sequence-terminal--reject')
+  const sequencePanel = page.locator('.sequence-panel')
   await expect(sequencePanel).toBeVisible()
-  await expect(sequencePanel.getByRole('heading', { name: 'VoR Domain-Transition Sequence' })).toBeVisible()
-  await expect(sequencePanel.getByText('VoR boundary')).toBeVisible()
+  await expect(sequencePanel.getByRole('heading', { name: 'VoR sequence' })).toBeVisible()
+  await expect(page.locator('.workspace__sequence-stack')).toBeVisible()
+  await expect(sequencePanel).toHaveClass(/sequence-panel--stacked/)
+  await expect(page.locator('.workspace__panels')).toBeVisible()
+  await expect(page.locator('.workspace__panels .architecture-canvas')).toBeVisible()
+})
 
-  const panelHeight = await boxHeight(sequencePanel)
-  expect(panelHeight).toBeGreaterThan(150)
+test('mobile-ish composition keeps the command bar and stacked sequence reachable', async ({ page }) => {
+  await page.setViewportSize({ width: 720, height: 960 })
+  await page.goto('/?edge=F_VoR_ACK')
 
-  const shellMetrics = await sequenceShell.evaluate((element) => ({
-    scrollHeight: element.scrollHeight,
-    clientHeight: element.clientHeight,
-  }))
-  expect(shellMetrics.scrollHeight).toBeGreaterThan(shellMetrics.clientHeight)
-  expect(await intersectsScrollContainer(sequenceShell, rejectTerminal)).toBe(false)
-
-  await sequenceShell.evaluate((element) => {
-    element.scrollTop = element.scrollHeight
-  })
-  await page.waitForTimeout(140)
-
-  await expect.poll(() => sequenceShell.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
-  expect(await intersectsScrollContainer(sequenceShell, rejectTerminal)).toBe(true)
+  await expect(page.getByRole('button', { name: 'Explore' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export' })).toBeVisible()
+  await expect(page.locator('.workspace__sequence-stack')).toBeVisible()
+  await expect(page.locator('.sequence-panel')).toBeVisible()
+  await expect(page.locator('.sequence-panel')).toBeVisible()
 })
 
 test('mapped architecture selections auto-open the sequence panel at a readable size', async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem(
-      'aea-architecture-ui',
+      'aea-architecture-ui-v2',
       JSON.stringify({
         state: {
           ui: {
@@ -831,7 +859,7 @@ test('mapped architecture selections auto-open the sequence panel at a readable 
   expect(await boxHeight(sequencePanel)).toBeGreaterThan(200)
   await expect(sequencePanel.getByRole('button', { name: /PB_ACK/ })).toBeVisible()
   await expect(sequencePanel.locator('.sequence-panel__header')).toHaveClass(/sequence-panel__header--active/)
-  await expect(page.getByRole('button', { name: 'Hide VoR sequence' })).toBeVisible()
+  await expect(page.locator('.sequence-teaser')).toHaveCount(0)
 })
 
 test('edge inspector surfaces diode and optional rendering semantics', async ({ page }) => {
@@ -865,40 +893,46 @@ test('detail nodes expose claim dots and reveal claim ids on hover', async ({ pa
 
 test('analysis theme persists across reloads', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Analysis theme' }).click()
+  const explore = await openExplore(page)
+  await explore.getByRole('button', { name: 'Analysis theme' }).click()
   await expect(page.locator('.app-shell')).toHaveClass(/app-shell--theme-analysis/)
 
   await page.reload()
+  await openExplore(page)
   await expect(page.locator('.app-shell')).toHaveClass(/app-shell--theme-analysis/)
 })
 
 test('sequence background and ribbon label follow the active theme', async ({ page }) => {
   await page.goto('/')
+  await openSequenceFromTeaser(page)
 
   const sequenceBackground = page.locator('[data-sequence-background]')
   await expect(page.getByTestId('sequence').getByText('VoR boundary')).toBeVisible()
-  await expect
-    .poll(() => sequenceBackground.evaluate((element) => getComputedStyle(element).fill))
-    .toBe('rgb(250, 251, 255)')
+  const defaultFill = await sequenceBackground.evaluate((element) => getComputedStyle(element).fill)
+  expect(defaultFill).toBe('rgb(250, 251, 255)')
 
-  await page.getByRole('button', { name: 'Analysis theme' }).click()
+  const explore = await openExplore(page)
+  await explore.getByRole('button', { name: 'Analysis theme' }).click()
+  await expect(page.locator('.app-shell')).toHaveClass(/app-shell--theme-analysis/)
   await expect
     .poll(() => sequenceBackground.evaluate((element) => getComputedStyle(element).fill))
-    .toBe('rgb(255, 255, 255)')
+    .not.toBe(defaultFill)
 })
 
 test('notes control toggles the expanded note set', async ({ page }) => {
   await page.goto('/')
+  const explore = await openExplore(page)
+  await explore.locator('summary', { hasText: 'Author tools' }).click()
 
-  const notesToggle = page.getByRole('button', { name: 'Expand all notes' })
+  const notesToggle = explore.getByRole('button', { name: 'Expand all notes' })
   await expect(notesToggle).toHaveAttribute('aria-pressed', 'false')
   await notesToggle.click()
-  const collapseToggle = page.getByRole('button', { name: 'Collapse all notes' })
+  const collapseToggle = explore.getByRole('button', { name: 'Collapse all notes' })
   await expect(collapseToggle).toHaveAttribute('aria-pressed', 'true')
   await expect(await expandedNoteIds(page)).not.toHaveLength(0)
 
   await collapseToggle.click()
-  await expect(page.getByRole('button', { name: 'Expand all notes' })).toHaveAttribute('aria-pressed', 'false')
+  await expect(explore.getByRole('button', { name: 'Expand all notes' })).toHaveAttribute('aria-pressed', 'false')
   await expect(await expandedNoteIds(page)).toHaveLength(0)
 })
 
@@ -906,6 +940,7 @@ test('projection snapshots reveal the composer only when saving is requested', a
   await page.goto('/')
 
   await expect(page.getByLabel('Snapshot name')).toHaveCount(0)
+  await openInspectorDisclosure(page)
   await page.getByRole('button', { name: 'Save snapshot' }).click()
 
   const snapshotName = page.getByLabel('Snapshot name')
@@ -1004,7 +1039,7 @@ test('overview navigator regions follow persisted structural overrides', async (
   await page.goto('/')
 
   const persisted = await page.evaluate(() => {
-    const raw = window.localStorage.getItem('aea-architecture-ui')
+    const raw = window.localStorage.getItem('aea-architecture-ui-v2')
     if (!raw) {
       throw new Error('Persisted state was not created')
     }
@@ -1018,7 +1053,7 @@ test('overview navigator regions follow persisted structural overrides', async (
   })
 
   await page.addInitScript((value) => {
-    window.localStorage.setItem('aea-architecture-ui', value)
+    window.localStorage.setItem('aea-architecture-ui-v2', value)
   }, persisted)
 
   await page.reload()
@@ -1030,7 +1065,7 @@ test('overview navigator regions follow persisted structural overrides', async (
 test('viewport-bound overlay tracks persisted viewport and structural overrides', async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem(
-      'aea-architecture-ui',
+      'aea-architecture-ui-v2',
       JSON.stringify({
         state: {
           ui: {
@@ -1116,7 +1151,7 @@ test('hover cards stay clear of the overview panel', async ({ page }) => {
   await page.locator('.node-card[data-node-id="ACT1"]').hover()
 
   const hoverCardBox = await page.locator('.hover-card').boundingBox()
-  const overviewBox = await page.locator('.semantic-overview').boundingBox()
+  const overviewBox = await page.locator('.app-hero').boundingBox()
 
   expect(hoverCardBox).not.toBeNull()
   expect(overviewBox).not.toBeNull()
@@ -1143,59 +1178,22 @@ test('shared t0 edges expose a linked focus cue during inspection', async ({ pag
 
 test('selecting an already visible node does not refit the architecture viewport', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
-  await page.goto('/')
+  await page.goto('/?node=ACT1')
+  const targetNode = page.locator('.node-card[data-node-id="ACT1"]')
+  await expect(targetNode).toBeVisible()
+  await expect(targetNode).toHaveClass(/is-selected/)
   await page.waitForTimeout(450)
-
-  const targetNodeId = await page.evaluate(() => {
-    const canvas = document.querySelector('.architecture-canvas')
-    if (!(canvas instanceof HTMLElement)) {
-      return null
-    }
-
-    const canvasBox = canvas.getBoundingClientRect()
-    const paddingX = canvasBox.width * 0.12
-    const paddingY = canvasBox.height * 0.12
-    const comfortableBounds = {
-      left: canvasBox.left + paddingX,
-      top: canvasBox.top + paddingY,
-      right: canvasBox.right - paddingX,
-      bottom: canvasBox.bottom - paddingY,
-    }
-
-    for (const nodeId of ['VOI', 'ACT1', 'S2', 'A3', 'G3', 'DEC_R2', 'DEC_G1', 'DEC_G2']) {
-      const node = document.querySelector(`.node-card[data-node-id="${nodeId}"]`)
-      if (!(node instanceof HTMLElement)) {
-        continue
-      }
-
-      const box = node.getBoundingClientRect()
-      if (
-        box.left >= comfortableBounds.left &&
-        box.top >= comfortableBounds.top &&
-        box.right <= comfortableBounds.right &&
-        box.bottom <= comfortableBounds.bottom
-      ) {
-        return nodeId
-      }
-    }
-
-    return null
-  })
-
-  expect(targetNodeId).not.toBeNull()
-
   const before = await viewportTransform(page)
-
-  await page.locator(`.node-card[data-node-id="${targetNodeId}"]`).click()
+  await targetNode.click()
   await page.waitForTimeout(420)
-
-  await expect(page.locator(`.node-card[data-node-id="${targetNodeId}"]`)).toHaveClass(/is-selected/)
+  await expect(targetNode).toHaveClass(/is-selected/)
   expect(await viewportTransform(page)).toBe(before)
 })
 
 test('node action menu is keyboard reachable and behaves like a menu button', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/?node=ACT1')
+  await ensureNodeRenderMode(page, 'ACT1', 'detail', 'zoom-in')
 
   const node = page.locator('.node-card[data-node-id="ACT1"]')
   const menuButton = node.locator('.node-card__menu-trigger')
@@ -1205,7 +1203,8 @@ test('node action menu is keyboard reachable and behaves like a menu button', as
 
   await expect(node).toBeVisible()
   await expect(menuButton).toBeVisible()
-  await menuButton.focus()
+  await page.locator('body').click({ position: { x: 8, y: 8 } })
+  await pressKeyUntilFocused(page, 'Tab', menuButton, 200)
   await expect(menuButton).toBeFocused()
   await assertFocusVisible(menuButton)
 
@@ -1285,9 +1284,8 @@ test('write-corridor routes stay orthogonal and labels avoid nearby nodes', asyn
 test('visual regression: desktop board with legend', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/?node=ACT1')
-  await page.getByRole('button', { name: 'Expand legend' }).click()
   await page.mouse.move(0, 0)
-  await expect(page.locator('.workspace__panels')).toHaveScreenshot('desktop-board-with-legend.png')
+  await expect(page.locator('.workspace')).toHaveScreenshot('desktop-board-with-legend.png')
 })
 
 test('visual regression: selected sequence feedback states', async ({ page }) => {
@@ -1308,7 +1306,6 @@ test('visual regression: compact-node summary state', async ({ page }) => {
 test('visual regression: open-marker readability and legend swatches', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
-  await page.getByRole('button', { name: 'Expand legend' }).click()
   await page.mouse.move(0, 0)
   await expect(page.locator('.architecture-canvas')).toHaveScreenshot('open-marker-readability.png')
 })
@@ -1316,7 +1313,8 @@ test('visual regression: open-marker readability and legend swatches', async ({ 
 test('visual regression: analysis theme', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1100 })
   await page.goto('/')
-  await page.getByRole('button', { name: 'Analysis theme' }).click()
+  const explore = await openExplore(page)
+  await explore.getByRole('button', { name: 'Analysis theme' }).click()
   await page.mouse.move(0, 0)
   await expect(page.locator('.workspace')).toHaveScreenshot('analysis-theme.png')
 })

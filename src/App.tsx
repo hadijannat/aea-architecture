@@ -15,13 +15,9 @@ import type { ClaimId } from '@/graph/spec/schema'
 import { buildUiSearchParams, parseUiSearchParams } from '@/state/urlState'
 import { ArchitectureCanvas } from '@/ui/canvas/ArchitectureCanvas'
 import { SequencePanel } from '@/ui/canvas/SequencePanel'
-import { Breadcrumbs } from '@/ui/controls/Breadcrumbs'
-import { ClaimChips } from '@/ui/controls/ClaimChips'
+import { ExploreDrawer } from '@/ui/controls/ExploreDrawer'
 import { ExportBar } from '@/ui/controls/ExportBar'
-import { FilterPanel } from '@/ui/controls/FilterPanel'
-import { SearchBar } from '@/ui/controls/SearchBar'
-import { SearchResults } from '@/ui/controls/SearchResults'
-import { StandardChips } from '@/ui/controls/StandardChips'
+import { SequenceTeaser } from '@/ui/controls/SequenceTeaser'
 import { EdgeInspector } from '@/ui/inspectors/EdgeInspector'
 import { NodeInspector } from '@/ui/inspectors/NodeInspector'
 import { StepInspector } from '@/ui/inspectors/StepInspector'
@@ -47,6 +43,13 @@ function mermaidDownloadName(panel: 'architecture' | 'vor-sequence') {
 const minSequencePanelPercent = 28
 const defaultSequencePanelPercent = 34
 const maxSequencePanelPercent = 54
+const searchKindLabels: Record<SearchResult['kind'], string> = {
+  node: 'Block',
+  edge: 'Flow',
+  step: 'Step',
+  claim: 'Claim',
+  standard: 'Standard',
+}
 
 function toPanelPercent(percent: number) {
   return `${percent}%`
@@ -55,38 +58,16 @@ function toPanelPercent(percent: number) {
 export default function App() {
   const store = useDiagramStore()
   const { actions } = store
+  const commandShellRef = useRef<HTMLDivElement>(null)
   const architectureCanvasRef = useRef<HTMLDivElement>(null)
   const sequencePanelRef = useRef<HTMLElement>(null)
   const sequencePanelHandleRef = useRef<PanelImperativeHandle | null>(null)
   const lastAutoRevealSelectionRef = useRef<string | undefined>(undefined)
   const [snapshotName, setSnapshotName] = useState('')
   const [snapshotComposerOpen, setSnapshotComposerOpen] = useState(false)
-
-  const overviewMetrics = useMemo(
-    () => [
-      {
-        label: 'Graph',
-        value: `${graphManifest.nodes.filter((node) => !['lane', 'container', 'band'].includes(node.kind)).length} blocks`,
-        detail: `${graphManifest.edges.length} flows and ${graphManifest.steps.length} sequence steps`,
-      },
-      {
-        label: 'Coverage',
-        value: `${Object.keys(graphManifest.claims).length} claims`,
-        detail: `${Object.keys(graphManifest.standards).length} standard anchors`,
-      },
-      {
-        label: 'Source',
-        value: graphManifest.sourceSpec.authority,
-        detail: graphManifest.sourceSpec.path,
-      },
-      {
-        label: 'Mode',
-        value: store.ui.mode === 'author' ? 'Author projection' : 'Explore semantics',
-        detail: store.ui.panelBVisible ? 'VoR sequence synced' : 'VoR sequence hidden',
-      },
-    ],
-    [store.ui.mode, store.ui.panelBVisible],
-  )
+  const [exploreOpen, setExploreOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
+  const [stackedPanels, setStackedPanels] = useState(() => window.matchMedia('(max-width: 1180px)').matches)
   const noteNodeIds = useMemo(
     () => graphManifest.nodes.filter((node) => node.inspector.notes.length > 0).map((node) => node.id),
     [],
@@ -99,6 +80,8 @@ export default function App() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        setExploreOpen(false)
+        setExportOpen(false)
         actions.clearSelection()
         actions.hoverEntity(undefined)
       }
@@ -116,6 +99,33 @@ export default function App() {
     mediaQuery.addEventListener('change', syncReduceMotion)
     return () => mediaQuery.removeEventListener('change', syncReduceMotion)
   }, [actions])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 1180px)')
+    const syncLayout = () => setStackedPanels(mediaQuery.matches)
+
+    syncLayout()
+    mediaQuery.addEventListener('change', syncLayout)
+    return () => mediaQuery.removeEventListener('change', syncLayout)
+  }, [])
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!(event.target instanceof Node)) {
+        return
+      }
+
+      if (commandShellRef.current?.contains(event.target)) {
+        return
+      }
+
+      setExploreOpen(false)
+      setExportOpen(false)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [])
 
   useEffect(() => {
     const { selectedNodeId, selectedEdgeId, selectedStepId, filters } = parseUiSearchParams(
@@ -262,6 +272,8 @@ export default function App() {
 
   function openSearchResult(result: SearchResult) {
     actions.setSearch('')
+    setExportOpen(false)
+    setExploreOpen(false)
 
     if (result.kind === 'node') {
       actions.selectNode(result.id)
@@ -282,6 +294,27 @@ export default function App() {
     }
     actions.clearSelection()
     actions.setFilter('standards', [result.id])
+  }
+
+  function clearActiveFilters() {
+    actions.setSearch('')
+    actions.setFilter('claims', [])
+    actions.setFilter('standards', [])
+    actions.setFilter('semanticFamilies', [])
+    actions.setFilter('lanes', [])
+    actions.setFilter('pathPreset', 'all')
+  }
+
+  function openPanelBFromTeaser() {
+    if (store.ui.panelBVisible) {
+      return
+    }
+
+    if (store.ui.panelBSize < defaultSequencePanelPercent) {
+      actions.setPanelBSize(defaultSequencePanelPercent)
+    }
+
+    actions.togglePanelB()
   }
 
   function buildExportDocument(mode: ExportMode) {
@@ -332,112 +365,298 @@ export default function App() {
     pdf.save(`aea-architecture-${mode}.pdf`)
   }
 
+  const breadcrumbLabel = useMemo(
+    () => derivedState.breadcrumbs.map((item) => item.label).join(' / '),
+    [derivedState.breadcrumbs],
+  )
+
+  const commandFocus = useMemo(() => {
+    if (selectedNode) {
+      return {
+        label: 'Selection',
+        title: selectedNode.title,
+        summary: breadcrumbLabel || selectedNode.id,
+      }
+    }
+
+    if (selectedEdge) {
+      return {
+        label: 'Selection',
+        title: selectedEdge.displayLabel ?? selectedEdge.label,
+        summary: breadcrumbLabel || selectedEdge.id,
+      }
+    }
+
+    if (selectedStep) {
+      return {
+        label: 'Selection',
+        title: selectedStep.title,
+        summary: breadcrumbLabel || selectedStep.id,
+      }
+    }
+
+    return {
+      label: 'Current focus',
+      title: 'Canonical architecture figure',
+      summary: 'Panel A is the primary explainer; use search or Explore to jump into specifics.',
+    }
+  }, [breadcrumbLabel, selectedEdge, selectedNode, selectedStep])
+
+  const activeSummaryItems = useMemo(() => {
+    const items: string[] = []
+    if (store.ui.filters.search.trim()) {
+      items.push(`Query: ${store.ui.filters.search.trim()}`)
+    }
+    if (store.ui.filters.pathPreset !== 'all') {
+      items.push(store.ui.filters.pathPreset === 'write' ? 'Write corridor focus' : `${store.ui.filters.pathPreset} path`)
+    }
+    if (store.ui.filters.lanes.length > 0) {
+      items.push(`${store.ui.filters.lanes.length} lane${store.ui.filters.lanes.length === 1 ? '' : 's'}`)
+    }
+    if (store.ui.filters.semanticFamilies.length > 0) {
+      items.push(`${store.ui.filters.semanticFamilies.length} semantic famil${store.ui.filters.semanticFamilies.length === 1 ? 'y' : 'ies'}`)
+    }
+    if (store.ui.filters.claims.length > 0) {
+      items.push(`${store.ui.filters.claims.length} claim${store.ui.filters.claims.length === 1 ? '' : 's'}`)
+    }
+    if (store.ui.filters.standards.length > 0) {
+      items.push(`${store.ui.filters.standards.length} standard${store.ui.filters.standards.length === 1 ? '' : 's'}`)
+    }
+    return items
+  }, [store.ui.filters])
+
+  const relatedSequenceLabel = useMemo(() => {
+    if (!mappedSelectionKey) {
+      return undefined
+    }
+
+    if (selectedStep) {
+      return selectedStep.title
+    }
+    if (selectedEdge) {
+      return selectedEdge.displayLabel ?? selectedEdge.label
+    }
+    return selectedNode?.title
+  }, [mappedSelectionKey, selectedEdge, selectedNode, selectedStep])
+
+  const activeDisclosureCount =
+    (store.ui.filters.pathPreset !== 'all' ? 1 : 0) +
+    store.ui.filters.lanes.length +
+    store.ui.filters.semanticFamilies.length +
+    store.ui.filters.claims.length +
+    store.ui.filters.standards.length
+
   return (
     <div className={`app-shell app-shell--${store.ui.mode} app-shell--theme-${store.projection.theme}`}>
-      <header className="app-header">
-        <div className="app-header__intro">
-          <p className="eyebrow">AEA Architecture Figure</p>
-          <h1>Interactive Graph Application</h1>
-          <p className="app-header__summary">
-            Canonical graph manifest, fixed board layout, and synchronized VoR sequence rendered from one audited runtime model.
+      <header className="app-hero">
+        <div className="app-hero__copy">
+          <h1>AEA Architecture</h1>
+          <p className="app-hero__summary">
+            A publication-grade explorer for the canonical audited architecture figure, synchronized VoR sequence, and evidence-backed inspection path.
           </p>
-          <div className="app-header__metrics" aria-label="Application overview metrics">
-            {overviewMetrics.map((metric) => (
-              <article key={metric.label} className="metric-card">
-                <span className="metric-card__label">{metric.label}</span>
-                <strong>{metric.value}</strong>
-                <p>{metric.detail}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-        <div className="app-header__actions">
-          <span className="toolbar__label">Export</span>
-          <ExportBar
-            onExportSvg={(mode) => {
-              const exportDocument = buildExportDocument(mode)
-              downloadText(`aea-architecture-${mode}.svg`, exportDocument.svg, 'image/svg+xml')
-            }}
-            onExportPdf={(mode) => void exportPdf(mode)}
-            onExportMermaid={(panel) => downloadText(mermaidDownloadName(panel), toMermaid(panel), 'text/plain')}
-            onExportGraphJson={() => downloadText('graph.json', getGraphManifestJson(), 'application/json')}
-            onExportProjection={() => downloadText('projection.json', JSON.stringify(store.projection, null, 2), 'application/json')}
-          />
         </div>
       </header>
 
-      <section className="toolbar">
-        <SearchBar
-          value={store.ui.filters.search}
-          resultsCount={searchResults.length}
-          onChange={actions.setSearch}
-          onSubmitFirst={() => {
-            if (searchResults[0]) {
-              openSearchResult(searchResults[0])
-            }
-          }}
-          onClear={() => actions.setSearch('')}
-        />
-        <SearchResults query={store.ui.filters.search} results={searchResults} onOpenResult={openSearchResult} />
-        <Breadcrumbs items={derivedState.breadcrumbs} />
-        <FilterPanel
-          filters={store.ui.filters}
-          mode={store.ui.mode}
-          theme={store.projection.theme}
-          panelBVisible={store.ui.panelBVisible}
-          viewportLocked={store.ui.viewportLocked}
-          reduceMotion={store.ui.reduceMotion}
-          hasExpandedNotes={store.projection.expandedNoteIds.length > 0}
-          onPathPreset={(value) => actions.setFilter('pathPreset', value)}
-          onLaneToggle={(value) => actions.setFilter('lanes', toggleInList(store.ui.filters.lanes, value))}
-          onSemanticFamilyToggle={(value) =>
-            actions.setFilter('semanticFamilies', toggleInList(store.ui.filters.semanticFamilies, value))
-          }
-          onModeToggle={() => actions.setMode(store.ui.mode === 'author' ? 'explore' : 'author')}
-          onThemeToggle={() => actions.setTheme(store.projection.theme === 'analysis' ? 'default' : 'analysis')}
-          onTogglePanelB={actions.togglePanelB}
-          onToggleViewportLock={actions.toggleViewportLock}
-          onToggleReduceMotion={actions.toggleReduceMotion}
-          onResetLayout={() => void actions.resetLayout()}
-          onToggleNotes={() =>
-            actions.setExpandedNoteIds(store.projection.expandedNoteIds.length > 0 ? [] : noteNodeIds)
-          }
-        />
-        <div className="toolbar__chips">
-          <div className="toolbar__claims">
-            <span className="toolbar__label">Claims</span>
-            <ClaimChips
-              manifest={graphManifest}
-              selected={store.ui.filters.claims}
-              onToggle={(claimId) => actions.setFilter('claims', toggleInList(store.ui.filters.claims, claimId))}
-            />
+      <section className="command-shell" ref={commandShellRef}>
+        <div className="command-bar">
+          <div className="command-bar__search-shell">
+            <label className="command-bar__search">
+              <span className="command-bar__label">Jump</span>
+              <input
+                type="search"
+                value={store.ui.filters.search}
+                onChange={(event) => actions.setSearch(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && searchResults[0]) {
+                    event.preventDefault()
+                    openSearchResult(searchResults[0])
+                  }
+                }}
+                placeholder="Jump by ID, title, standard, claim, or sequence step"
+                aria-label="Search nodes, edges, standards, and claims"
+              />
+            </label>
+            {store.ui.filters.search.trim() ? (
+              <div className="command-bar__search-results" aria-label="Direct search results">
+                <div className="command-bar__search-results-header">
+                  <strong>Direct matches</strong>
+                  <span>{searchResults.length} shown</span>
+                </div>
+                {searchResults.length === 0 ? (
+                  <p className="command-bar__search-empty">No direct matches. Keep typing to use the broader graph filter.</p>
+                ) : (
+                  <div className="command-bar__search-result-list">
+                    {searchResults.map((result) => (
+                      <button
+                        key={result.key}
+                        type="button"
+                        className="command-bar__search-result"
+                        aria-label={`${searchKindLabels[result.kind]} result ${result.title}`}
+                        onClick={() => openSearchResult(result)}
+                      >
+                        <span className="command-bar__search-kind">{searchKindLabels[result.kind]}</span>
+                        <strong>{result.title}</strong>
+                        <span>{result.subtitle}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
-          <div className="toolbar__standards">
-            <span className="toolbar__label">Standards</span>
-            <StandardChips
-              manifest={graphManifest}
-              selected={store.ui.filters.standards}
-              onToggle={(standardId) =>
-                actions.setFilter('standards', toggleInList(store.ui.filters.standards, standardId))
-              }
-            />
+
+          <div className="command-bar__context">
+            <span className="command-bar__label">{commandFocus.label}</span>
+            <strong>{commandFocus.title}</strong>
+            <p>{commandFocus.summary}</p>
+          </div>
+
+          <div className="command-bar__actions">
+            <button
+              type="button"
+              className={exploreOpen ? 'chip is-active' : 'chip'}
+              aria-expanded={exploreOpen}
+              onClick={() => {
+                setExploreOpen((current) => !current)
+                setExportOpen(false)
+              }}
+            >
+              Explore
+              {activeDisclosureCount > 0 ? <span className="command-bar__count">{activeDisclosureCount}</span> : null}
+            </button>
+            <div className="command-bar__export-shell">
+              <button
+                type="button"
+                className={exportOpen ? 'chip is-active' : 'chip'}
+                aria-expanded={exportOpen}
+                onClick={() => {
+                  setExportOpen((current) => !current)
+                  setExploreOpen(false)
+                }}
+              >
+                Export
+              </button>
+              {exportOpen ? (
+                <div className="command-menu command-menu--export">
+                  <span className="command-menu__label">Export artifacts</span>
+                  <ExportBar
+                    onExportSvg={(mode) => {
+                      const exportDocument = buildExportDocument(mode)
+                      downloadText(`aea-architecture-${mode}.svg`, exportDocument.svg, 'image/svg+xml')
+                    }}
+                    onExportPdf={(mode) => void exportPdf(mode)}
+                    onExportMermaid={(panel) => downloadText(mermaidDownloadName(panel), toMermaid(panel), 'text/plain')}
+                    onExportGraphJson={() => downloadText('graph.json', getGraphManifestJson(), 'application/json')}
+                    onExportProjection={() => downloadText('projection.json', JSON.stringify(store.projection, null, 2), 'application/json')}
+                  />
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
+
+        {activeSummaryItems.length > 0 ? (
+          <div className="filter-summary" aria-label="Active filters">
+            <div className="filter-summary__items">
+              {activeSummaryItems.map((item) => (
+                <span key={item} className="filter-summary__item">
+                  {item}
+                </span>
+              ))}
+            </div>
+            <button type="button" className="chip" onClick={clearActiveFilters}>
+              Clear all
+            </button>
+          </div>
+        ) : null}
+
+        {exploreOpen ? (
+          <ExploreDrawer
+            manifest={graphManifest}
+            filters={store.ui.filters}
+            mode={store.ui.mode}
+            theme={store.projection.theme}
+            panelBVisible={store.ui.panelBVisible}
+            viewportLocked={store.ui.viewportLocked}
+            reduceMotion={store.ui.reduceMotion}
+            hasExpandedNotes={store.projection.expandedNoteIds.length > 0}
+            layoutReady={store.layout.ready}
+            onClose={() => setExploreOpen(false)}
+            onPathPreset={(value) => actions.setFilter('pathPreset', value)}
+            onLaneToggle={(value) => actions.setFilter('lanes', toggleInList(store.ui.filters.lanes, value))}
+            onSemanticFamilyToggle={(value) =>
+              actions.setFilter('semanticFamilies', toggleInList(store.ui.filters.semanticFamilies, value))
+            }
+            onClaimToggle={(claimId) => actions.setFilter('claims', toggleInList(store.ui.filters.claims, claimId))}
+            onStandardToggle={(standardId) =>
+              actions.setFilter('standards', toggleInList(store.ui.filters.standards, standardId))
+            }
+            onModeToggle={() => actions.setMode(store.ui.mode === 'author' ? 'explore' : 'author')}
+            onThemeToggle={() => actions.setTheme(store.projection.theme === 'analysis' ? 'default' : 'analysis')}
+            onTogglePanelB={actions.togglePanelB}
+            onToggleViewportLock={actions.toggleViewportLock}
+            onToggleReduceMotion={actions.toggleReduceMotion}
+            onResetLayout={() => void actions.resetLayout()}
+            onToggleNotes={() =>
+              actions.setExpandedNoteIds(store.projection.expandedNoteIds.length > 0 ? [] : noteNodeIds)
+            }
+          />
+        ) : null}
       </section>
 
       <main className="workspace">
-        <div className="workspace__panels">
-          <PanelGroup
-            key={store.ui.panelBVisible ? 'workspace-panels--with-sequence' : 'workspace-panels--architecture-only'}
-            orientation="vertical"
-            onLayoutChanged={(layout: Record<string, number>) => {
-              const panelBSize = layout.sequence
-              if (store.ui.panelBVisible && typeof panelBSize === 'number') {
-                actions.setPanelBSize(panelBSize)
-              }
-            }}
-          >
-            <Panel id="architecture" defaultSize={toPanelPercent(100 - sequencePanelPercent)} minSize={48}>
+        <div className="workspace__figure">
+          <div className="workspace__panels">
+            {!stackedPanels ? (
+              <PanelGroup
+                key={store.ui.panelBVisible ? 'workspace-panels--with-sequence' : 'workspace-panels--architecture-only'}
+                orientation="vertical"
+                onLayoutChanged={(layout: Record<string, number>) => {
+                  const panelBSize = layout.sequence
+                  if (store.ui.panelBVisible && typeof panelBSize === 'number') {
+                    actions.setPanelBSize(panelBSize)
+                  }
+                }}
+              >
+                <Panel id="architecture" defaultSize={toPanelPercent(100 - sequencePanelPercent)} minSize={48}>
+                  <ArchitectureCanvas
+                    containerRef={architectureCanvasRef}
+                    nodes={architectureNodes}
+                    edges={architectureEdges}
+                    ui={store.ui}
+                    theme={store.projection.theme}
+                    layoutReady={store.layout.ready}
+                    onViewport={actions.setViewport}
+                    onClearSelection={actions.clearSelection}
+                    onNodeDragStop={onNodeDragStop}
+                    onResetLayout={() => void actions.resetLayout()}
+                  />
+                </Panel>
+                {store.ui.panelBVisible ? (
+                  <>
+                    <PanelResizeHandle className="panel-resize-handle" />
+                    <Panel
+                      id="sequence"
+                      panelRef={sequencePanelHandleRef}
+                      defaultSize={toPanelPercent(sequencePanelPercent)}
+                      minSize={toPanelPercent(minSequencePanelPercent)}
+                      maxSize={toPanelPercent(maxSequencePanelPercent)}
+                    >
+                      <SequencePanel
+                        containerRef={sequencePanelRef}
+                        model={sequenceModel}
+                        theme={store.projection.theme}
+                        layout="split"
+                        onSelectNode={actions.selectNode}
+                        onSelectStep={actions.selectStep}
+                        onSelectEdge={actions.selectEdge}
+                        onHover={actions.hoverEntity}
+                      />
+                    </Panel>
+                  </>
+                ) : null}
+              </PanelGroup>
+            ) : (
               <ArchitectureCanvas
                 containerRef={architectureCanvasRef}
                 nodes={architectureNodes}
@@ -450,35 +669,33 @@ export default function App() {
                 onNodeDragStop={onNodeDragStop}
                 onResetLayout={() => void actions.resetLayout()}
               />
-            </Panel>
-            {store.ui.panelBVisible ? (
-              <>
-                <PanelResizeHandle className="panel-resize-handle" />
-                <Panel
-                  id="sequence"
-                  panelRef={sequencePanelHandleRef}
-                  defaultSize={toPanelPercent(sequencePanelPercent)}
-                  minSize={toPanelPercent(minSequencePanelPercent)}
-                  maxSize={toPanelPercent(maxSequencePanelPercent)}
-                >
-                  <SequencePanel
-                    containerRef={sequencePanelRef}
-                    model={sequenceModel}
-                    theme={store.projection.theme}
-                    onSelectNode={actions.selectNode}
-                    onSelectStep={actions.selectStep}
-                    onSelectEdge={actions.selectEdge}
-                    onHover={actions.hoverEntity}
-                  />
-                </Panel>
-              </>
+            )}
+
+            {hoverSummary ? (
+              <aside className="hover-card" aria-live="polite">
+                <strong>{hoverSummary.title}</strong>
+                <span>{hoverSummary.summary}</span>
+              </aside>
             ) : null}
-          </PanelGroup>
-          {hoverSummary ? (
-            <aside className="hover-card" aria-live="polite">
-              <strong>{hoverSummary.title}</strong>
-              <span>{hoverSummary.summary}</span>
-            </aside>
+          </div>
+
+          {!store.ui.panelBVisible ? (
+            <SequenceTeaser relatedSelectionLabel={relatedSequenceLabel} onOpen={openPanelBFromTeaser} />
+          ) : null}
+
+          {stackedPanels && store.ui.panelBVisible ? (
+            <div className="workspace__sequence-stack">
+              <SequencePanel
+                containerRef={sequencePanelRef}
+                model={sequenceModel}
+                theme={store.projection.theme}
+                layout="stacked"
+                onSelectNode={actions.selectNode}
+                onSelectStep={actions.selectStep}
+                onSelectEdge={actions.selectEdge}
+                onHover={actions.hoverEntity}
+              />
+            </div>
           ) : null}
         </div>
 
@@ -519,23 +736,23 @@ export default function App() {
           ) : null}
           {!selectedNode && !selectedEdge && !selectedStep ? (
             <section className="inspector-section">
-              <h2>Inspector</h2>
-              <p className="inspector-section__title">Selection-aware architecture details</p>
+              <h2>What this figure shows</h2>
+              <p className="inspector-section__title">Select a block, flow, or sequence step to read the architecture in context.</p>
               <p>
-                Select a node, edge, or sequence step to inspect semantics, claims, standards, and linked panel mappings.
+                Panel A is the primary architecture explainer. Panel B opens contextually when a mapped selection reveals the VoR sequence.
               </p>
               <div className="inspector-grid">
                 <div>
-                  <strong>Spec version</strong>
-                  <p>{graphManifest.specVersion}</p>
+                  <strong>Current focus</strong>
+                  <p>{breadcrumbLabel || 'Overview / All paths'}</p>
+                </div>
+                <div>
+                  <strong>Sequence state</strong>
+                  <p>{store.ui.panelBVisible ? 'Expanded' : 'Collapsed to teaser'}</p>
                 </div>
                 <div>
                   <strong>Source</strong>
                   <p>{graphManifest.sourceSpec.path}</p>
-                </div>
-                <div>
-                  <strong>Mode</strong>
-                  <p>{store.ui.mode}</p>
                 </div>
                 <div>
                   <strong>Layout</strong>
@@ -544,65 +761,69 @@ export default function App() {
               </div>
             </section>
           ) : null}
-          <section className="inspector-section">
-            <h2>Projection snapshots</h2>
-            {snapshotComposerOpen ? (
-              <form
-                className="snapshot-composer"
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  saveSnapshot()
-                }}
-              >
-                <label className="snapshot-composer__field">
-                  <span>Snapshot name</span>
-                  <input
-                    type="text"
-                    value={snapshotName}
-                    placeholder="Name this projection state"
-                    onChange={(event) => setSnapshotName(event.target.value)}
-                  />
-                </label>
-                <div className="inspector-actions">
-                  <button type="submit" disabled={snapshotName.trim().length === 0}>
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSnapshotName('')
-                      setSnapshotComposerOpen(false)
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="inspector-actions">
-                <button type="button" onClick={() => setSnapshotComposerOpen(true)}>
-                  Save snapshot
-                </button>
-              </div>
-            )}
-            <div className="snapshot-list">
-              {store.projection.snapshots.length === 0 ? <p>No saved snapshots yet.</p> : null}
-              {store.projection.snapshots.map((snapshot) => (
-                <div key={snapshot.id} className="snapshot-card">
-                  <strong>{snapshot.name}</strong>
-                  <span>{new Date(snapshot.createdAt).toLocaleString()}</span>
+
+          <details className="inspector-disclosure">
+            <summary>Author tools and snapshots</summary>
+            <section className="inspector-section inspector-section--advanced">
+              {snapshotComposerOpen ? (
+                <form
+                  className="snapshot-composer"
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    saveSnapshot()
+                  }}
+                >
+                  <label className="snapshot-composer__field">
+                    <span>Snapshot name</span>
+                    <input
+                      type="text"
+                      value={snapshotName}
+                      placeholder="Name this projection state"
+                      onChange={(event) => setSnapshotName(event.target.value)}
+                    />
+                  </label>
                   <div className="inspector-actions">
-                    <button type="button" onClick={() => void actions.loadSnapshot(snapshot.id)}>
-                      Load
+                    <button type="submit" disabled={snapshotName.trim().length === 0}>
+                      Save
                     </button>
-                    <button type="button" onClick={() => actions.deleteSnapshot(snapshot.id)}>
-                      Delete
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSnapshotName('')
+                        setSnapshotComposerOpen(false)
+                      }}
+                    >
+                      Cancel
                     </button>
                   </div>
+                </form>
+              ) : (
+                <div className="inspector-actions">
+                  <button type="button" onClick={() => setSnapshotComposerOpen(true)}>
+                    Save snapshot
+                  </button>
                 </div>
-              ))}
-            </div>
-          </section>
+              )}
+
+              <div className="snapshot-list">
+                {store.projection.snapshots.length === 0 ? <p>No saved snapshots yet.</p> : null}
+                {store.projection.snapshots.map((snapshot) => (
+                  <div key={snapshot.id} className="snapshot-card">
+                    <strong>{snapshot.name}</strong>
+                    <span>{new Date(snapshot.createdAt).toLocaleString()}</span>
+                    <div className="inspector-actions">
+                      <button type="button" onClick={() => void actions.loadSnapshot(snapshot.id)}>
+                        Load
+                      </button>
+                      <button type="button" onClick={() => actions.deleteSnapshot(snapshot.id)}>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </details>
         </aside>
       </main>
     </div>

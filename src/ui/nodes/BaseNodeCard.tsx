@@ -185,9 +185,10 @@ export const BaseNodeCard = memo(function BaseNodeCard({
   const showCollapsed = renderMode === 'collapsed'
   const showSubtitle = showDetail && zoom >= 1.2
   const showIdBadge = showDetail && zoom >= 1.2
-  const showMenu = !isStructural && !showIconMode && !showCollapsed
+  const showMenu = !isStructural && !showIconMode && !showCollapsed && (showDetail || selected || data.selected)
   const structuralNarrative = isStructural ? resolveStructuralNarrative(spec) : undefined
   const expandedNotes = showDetail && (data.notesExpanded || annotation)
+  const showClaimDots = !isStructural && (showDetail || selected || data.selected)
 
   useEffect(() => {
     if (!menuOpen) {
@@ -452,7 +453,7 @@ export const BaseNodeCard = memo(function BaseNodeCard({
             <div className="node-card__annotation">{spec.inspector.notes[0]}</div>
           ) : null}
           {annotation && showDetail ? <div className="node-card__annotation">Author note: {annotation}</div> : null}
-          {!isStructural ? (
+          {showClaimDots ? (
             <ClaimDots
               nodeTitle={spec.title}
               claimDots={data.claimDots}

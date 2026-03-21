@@ -60,67 +60,103 @@ export function EdgeInspector({
     <section className="inspector-section">
       <h2>{edge.id}</h2>
       <p className="inspector-section__title">{primaryTitle}</p>
-      {showRawLabel ? (
-        <div className="inspector-section__detail">
-          <p>{edge.label}</p>
-          {edge.detail ? <p>{edge.detail}</p> : null}
+
+      <section className="inspector-subsection">
+        <strong>What this is</strong>
+        {showRawLabel ? (
+          <div className="inspector-section__detail">
+            <p>{edge.label}</p>
+            {edge.detail ? <p>{edge.detail}</p> : null}
+          </div>
+        ) : edge.detail ? (
+          <p>{edge.detail}</p>
+        ) : null}
+        <div className="inspector-grid">
+          <div>
+            <strong>Source</strong>
+            <p>{sourceTitle}</p>
+          </div>
+          <div>
+            <strong>Target</strong>
+            <p>{targetTitle}</p>
+          </div>
+          <div>
+            <strong>Semantic</strong>
+            <p>{edge.semantic}</p>
+          </div>
+          <div>
+            <strong>Direction</strong>
+            <p>{edge.direction}</p>
+          </div>
         </div>
-      ) : null}
-      <div className="inspector-grid">
-        <div>
-          <strong>Source</strong>
-          <p>{sourceTitle}</p>
-        </div>
-        <div>
-          <strong>Target</strong>
-          <p>{targetTitle}</p>
-        </div>
-        <div>
-          <strong>Semantic</strong>
-          <p>{edge.semantic}</p>
-        </div>
-        <div>
-          <strong>Direction</strong>
-          <p>{edge.direction}</p>
-        </div>
-      </div>
-      {!showRawLabel && edge.detail ? <p>{edge.detail}</p> : null}
-      <div className="inspector-actions">
-        <button type="button" onClick={() => onSelectNode(edge.source)}>
-          Open source block
-        </button>
-        <button type="button" onClick={() => onSelectNode(edge.target)}>
-          Open target block
-        </button>
-      </div>
-      <div className="inspector-tags">
-        {edge.standardIds.map((id) => (
-          <span key={id} className="badge badge--standard">
-            {manifest.standards[id]?.label}
-          </span>
-        ))}
-        {edge.claimIds.map((id) => (
-          <span key={id} className="badge badge--claim">
-            {id}
-          </span>
-        ))}
-      </div>
-      <p>{edge.inspector.rationale}</p>
-      {renderingSemantics.length > 0 ? (
-        <div className="inspector-subsection">
-          <strong>Rendering semantics</strong>
-          <ul className="inspector-list">
-            {renderingSemantics.map((item) => (
-              <li key={item.label}>
-                <strong>{item.label}:</strong> {item.description}
-              </li>
+      </section>
+
+      <section className="inspector-subsection">
+        <strong>Why it matters</strong>
+        <p>{edge.inspector.rationale}</p>
+      </section>
+
+      {(claims.length > 0 || standards.length > 0) ? (
+        <section className="inspector-subsection">
+          <strong>Claims &amp; standards</strong>
+          <div className="inspector-tags">
+            {edge.standardIds.map((id) => (
+              <span key={id} className="badge badge--standard">
+                {manifest.standards[id]?.label}
+              </span>
             ))}
-          </ul>
-        </div>
+            {edge.claimIds.map((id) => (
+              <span key={id} className="badge badge--claim">
+                {id}
+              </span>
+            ))}
+          </div>
+          {claims.length > 0 ? (
+            <div className="inspector-detail-grid">
+              {claims.map((claim) => (
+                <button
+                  key={claim.id}
+                  type="button"
+                  className="inspector-detail-card inspector-detail-card--interactive"
+                  onClick={() => onApplyClaimFilter(claim.id)}
+                >
+                  <span className="inspector-detail-card__eyebrow">Claim {claim.id}</span>
+                  <strong>{claim.label}</strong>
+                  <p>{claim.summary}</p>
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {standards.length > 0 ? (
+            <div className="inspector-detail-grid">
+              {standards.map((standard) => (
+                <button
+                  key={standard.id}
+                  type="button"
+                  className="inspector-detail-card inspector-detail-card--interactive"
+                  onClick={() => onApplyStandardFilter(standard.id)}
+                >
+                  <span className="inspector-detail-card__eyebrow">{standard.id}</span>
+                  <strong>{standard.label}</strong>
+                  <p>{standard.version ?? 'Version not specified in the manifest.'}</p>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </section>
       ) : null}
-      {linkedSteps.length > 0 ? (
-        <div className="inspector-subsection">
-          <strong>Sequence mapping</strong>
+
+      <section className="inspector-subsection">
+        <strong>Connected path</strong>
+        <div className="inspector-actions">
+          <button type="button" onClick={() => onSelectNode(edge.source)}>
+            Open source block
+          </button>
+          <button type="button" onClick={() => onSelectNode(edge.target)}>
+            Open target block
+          </button>
+        </div>
+        {linkedSteps.length > 0 ? (
           <div className="inspector-chip-list">
             {linkedSteps.map((step) => (
               <button key={step.id} type="button" className="chip" onClick={() => onSelectStep(step.id)}>
@@ -128,84 +164,62 @@ export function EdgeInspector({
               </button>
             ))}
           </div>
+        ) : null}
+        <div className="inspector-actions">
+          <button type="button" onClick={() => onPathAction(edge.source, 'upstream')}>
+            Show upstream path
+          </button>
+          <button type="button" onClick={() => onPathAction(edge.target, 'downstream')}>
+            Show downstream path
+          </button>
         </div>
-      ) : null}
-      {claims.length > 0 ? (
-        <div className="inspector-subsection">
-          <strong>Claim coverage</strong>
-          <div className="inspector-detail-grid">
-            {claims.map((claim) => (
-              <button
-                key={claim.id}
-                type="button"
-                className="inspector-detail-card inspector-detail-card--interactive"
-                onClick={() => onApplyClaimFilter(claim.id)}
-              >
-                <span className="inspector-detail-card__eyebrow">Claim {claim.id}</span>
-                <strong>{claim.label}</strong>
-                <p>{claim.summary}</p>
-              </button>
-            ))}
+      </section>
+
+      <section className="inspector-subsection">
+        <strong>Advanced/source metadata</strong>
+        {renderingSemantics.length > 0 ? (
+          <div className="inspector-subsection">
+            <strong>Rendering semantics</strong>
+            <ul className="inspector-list">
+              {renderingSemantics.map((item) => (
+                <li key={item.label}>
+                  <strong>{item.label}:</strong> {item.description}
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
-      ) : null}
-      {standards.length > 0 ? (
-        <div className="inspector-subsection">
-          <strong>Standards anchors</strong>
-          <div className="inspector-detail-grid">
-            {standards.map((standard) => (
-              <button
-                key={standard.id}
-                type="button"
-                className="inspector-detail-card inspector-detail-card--interactive"
-                onClick={() => onApplyStandardFilter(standard.id)}
-              >
-                <span className="inspector-detail-card__eyebrow">{standard.id}</span>
-                <strong>{standard.label}</strong>
-                <p>{standard.version ?? 'Version not specified in the manifest.'}</p>
-              </button>
-            ))}
+        ) : null}
+        {edge.inspector.constraints.length > 0 ? (
+          <div>
+            <strong>Constraints</strong>
+            <ul className="inspector-list">
+              {edge.inspector.constraints.map((constraint) => (
+                <li key={constraint}>{constraint}</li>
+              ))}
+            </ul>
           </div>
-        </div>
-      ) : null}
-      {edge.inspector.constraints.length > 0 ? (
-        <div>
-          <strong>Constraints</strong>
-          <ul className="inspector-list">
-            {edge.inspector.constraints.map((constraint) => (
-              <li key={constraint}>{constraint}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      {edge.inspector.notes.length > 0 ? (
-        <div>
-          <strong>Notes</strong>
-          <ul className="inspector-list">
-            {edge.inspector.notes.map((note) => (
-              <li key={note}>{note}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      {edge.inspector.risks.length > 0 ? (
-        <div>
-          <strong>Risks</strong>
-          <ul className="inspector-list">
-            {edge.inspector.risks.map((risk) => (
-              <li key={risk}>{risk}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      <div className="inspector-actions">
-        <button type="button" onClick={() => onPathAction(edge.source, 'upstream')}>
-          Show upstream path
-        </button>
-        <button type="button" onClick={() => onPathAction(edge.target, 'downstream')}>
-          Show downstream path
-        </button>
-      </div>
+        ) : null}
+        {edge.inspector.notes.length > 0 ? (
+          <div>
+            <strong>Notes</strong>
+            <ul className="inspector-list">
+              {edge.inspector.notes.map((note) => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {edge.inspector.risks.length > 0 ? (
+          <div>
+            <strong>Risks</strong>
+            <ul className="inspector-list">
+              {edge.inspector.risks.map((risk) => (
+                <li key={risk}>{risk}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </section>
     </section>
   )
 }

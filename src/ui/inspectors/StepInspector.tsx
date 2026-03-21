@@ -36,69 +36,75 @@ export function StepInspector({
     <section className="inspector-section">
       <h2>{step.id}</h2>
       <p className="inspector-section__title">{step.title}</p>
-      <p>{step.summary}</p>
-      <div className="inspector-grid">
-        <div>
-          <strong>Sequence order</strong>
-          <p>{step.order}</p>
+
+      <section className="inspector-subsection">
+        <strong>What this is</strong>
+        <p>{step.summary}</p>
+        <div className="inspector-grid">
+          <div>
+            <strong>Sequence order</strong>
+            <p>{step.order}</p>
+          </div>
+          <div>
+            <strong>Linked entities</strong>
+            <p>
+              {linkedNodes.length} blocks · {linkedEdges.length} flows
+            </p>
+          </div>
         </div>
-        <div>
-          <strong>Linked entities</strong>
-          <p>
-            {linkedNodes.length} blocks · {linkedEdges.length} flows
-          </p>
-        </div>
-      </div>
+      </section>
+
       {step.notes.length > 0 ? (
-        <div>
-          <strong>Notes</strong>
+        <section className="inspector-subsection">
+          <strong>Why it matters</strong>
           <ul className="inspector-list">
             {step.notes.map((note) => (
               <li key={note}>{note}</li>
             ))}
           </ul>
-        </div>
+        </section>
       ) : null}
-      {claims.length > 0 ? (
-        <div className="inspector-subsection">
-          <strong>Claim trace</strong>
-          <div className="inspector-detail-grid">
-            {claims.map((claim) => (
-              <button
-                key={claim.id}
-                type="button"
-                className="inspector-detail-card inspector-detail-card--interactive"
-                onClick={() => onApplyClaimFilter(claim.id)}
-              >
-                <span className="inspector-detail-card__eyebrow">Claim {claim.id}</span>
-                <strong>{claim.label}</strong>
-                <p>{claim.summary}</p>
-              </button>
-            ))}
-          </div>
-        </div>
+
+      {(claims.length > 0 || standards.length > 0) ? (
+        <section className="inspector-subsection">
+          <strong>Claims &amp; standards</strong>
+          {claims.length > 0 ? (
+            <div className="inspector-detail-grid">
+              {claims.map((claim) => (
+                <button
+                  key={claim.id}
+                  type="button"
+                  className="inspector-detail-card inspector-detail-card--interactive"
+                  onClick={() => onApplyClaimFilter(claim.id)}
+                >
+                  <span className="inspector-detail-card__eyebrow">Claim {claim.id}</span>
+                  <strong>{claim.label}</strong>
+                  <p>{claim.summary}</p>
+                </button>
+              ))}
+            </div>
+          ) : null}
+          {standards.length > 0 ? (
+            <div className="inspector-detail-grid">
+              {standards.map((standard) => (
+                <button
+                  key={standard.id}
+                  type="button"
+                  className="inspector-detail-card inspector-detail-card--interactive"
+                  onClick={() => onApplyStandardFilter(standard.id)}
+                >
+                  <span className="inspector-detail-card__eyebrow">{standard.id}</span>
+                  <strong>{standard.label}</strong>
+                  <p>{standard.version ?? 'Version not specified in the manifest.'}</p>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </section>
       ) : null}
-      {standards.length > 0 ? (
-        <div className="inspector-subsection">
-          <strong>Standards trace</strong>
-          <div className="inspector-detail-grid">
-            {standards.map((standard) => (
-              <button
-                key={standard.id}
-                type="button"
-                className="inspector-detail-card inspector-detail-card--interactive"
-                onClick={() => onApplyStandardFilter(standard.id)}
-              >
-                <span className="inspector-detail-card__eyebrow">{standard.id}</span>
-                <strong>{standard.label}</strong>
-                <p>{standard.version ?? 'Version not specified in the manifest.'}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-      <div>
-        <strong>Linked blocks</strong>
+
+      <section className="inspector-subsection">
+        <strong>Connected path</strong>
         <div className="inspector-chip-list">
           {linkedNodes.map((node) => (
             <button key={node.id} type="button" className="chip" onClick={() => onSelectNode(node.id)}>
@@ -106,9 +112,6 @@ export function StepInspector({
             </button>
           ))}
         </div>
-      </div>
-      <div>
-        <strong>Linked edges</strong>
         <div className="inspector-chip-list">
           {linkedEdges.map((edge) => (
             <button key={edge.id} type="button" className="chip" onClick={() => onSelectEdge(edge.id)}>
@@ -116,7 +119,29 @@ export function StepInspector({
             </button>
           ))}
         </div>
-      </div>
+      </section>
+
+      <section className="inspector-subsection">
+        <strong>Advanced/source metadata</strong>
+        <div className="inspector-grid">
+          <div>
+            <strong>Sequence order</strong>
+            <p>{step.order}</p>
+          </div>
+          <div>
+            <strong>Linked blocks</strong>
+            <p>{linkedNodes.length || 'None'}</p>
+          </div>
+          <div>
+            <strong>Linked flows</strong>
+            <p>{linkedEdges.length || 'None'}</p>
+          </div>
+          <div>
+            <strong>Step ID</strong>
+            <p>{step.id}</p>
+          </div>
+        </div>
+      </section>
     </section>
   )
 }

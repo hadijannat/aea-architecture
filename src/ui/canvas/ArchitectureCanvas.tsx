@@ -13,17 +13,15 @@ import {
 
 import type { DiagramFlowEdge, DiagramFlowNode } from '@/graph/compile/toReactFlow'
 import {
-  getSemanticFamilyLabel,
   getSemanticMarkerGeometry,
   getSemanticMarkerRefX,
   getSemanticMarkerTokens,
   getSemanticPresentation,
-  semanticFamilyOrder,
 } from '@/graph/compile/semanticPresentation'
 import { graphManifest, resolveGraphEdge, resolveGraphNode, resolveSequenceStep } from '@/graph/spec/manifest'
 import type { ProjectionTheme } from '@/graph/spec/schema'
 import type { DiagramStore } from '@/state/diagramStore'
-import { bandVisuals, laneVisuals, resolveSemanticVisual } from '@/graph/compile/visualSystem'
+import { bandVisuals, laneVisuals } from '@/graph/compile/visualSystem'
 import { buildBoardGeometryFromNodes, clampRectToCanvas } from '@/layout/boardGeometry'
 
 import AckEdge from '@/ui/edges/AckEdge'
@@ -232,37 +230,6 @@ function ArchitectureStructureOverlay({
           <span>{label}</span>
         </div>
       ))}
-    </div>
-  )
-}
-
-function CanvasLegendStrip() {
-  const familyToSemantic = {
-    context: 'read-only',
-    policy: 'policy-hard',
-    runtime: 'tool-call',
-    write: 'writeback',
-    feedback: 'rejection',
-    telemetry: 'kpi',
-    sequence: 'sequence',
-  } as const
-
-  return (
-    <div className="architecture-canvas__legend-strip" aria-label="Compact semantic legend">
-      {semanticFamilyOrder.map((family) => {
-        const semantic = familyToSemantic[family]
-        const visual = resolveSemanticVisual(semantic)
-        return (
-          <div key={family} className="architecture-canvas__legend-item" data-legend-family={family}>
-            <span
-              className="architecture-canvas__legend-swatch"
-              style={{ '--legend-swatch': visual.stroke } as React.CSSProperties}
-              aria-hidden="true"
-            />
-            <span>{getSemanticFamilyLabel(family)}</span>
-          </div>
-        )
-      })}
     </div>
   )
 }
@@ -504,7 +471,6 @@ export function ArchitectureCanvas({
       data-theme={theme}
       aria-label="Panel A architecture canvas"
     >
-      <span className="architecture-canvas__panel-label">(A)</span>
       <ArchitectureEdgeMarkers />
       <ReactFlow
         nodes={nodes}
@@ -552,7 +518,6 @@ export function ArchitectureCanvas({
           />
         </FlowPanel>
       </ReactFlow>
-      <CanvasLegendStrip />
     </div>
   )
 }

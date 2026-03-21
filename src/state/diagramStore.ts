@@ -119,7 +119,7 @@ export const useDiagramStore = create<DiagramStore>()(
           filters: initialFilters,
           highlightedEntityKeys: [],
           viewport: graphManifest.layoutDefaults.viewport,
-          panelBVisible: defaultProjectionOverrides.panelBVisible,
+          panelBVisible: false,
           panelBSize: clampPanelBPercent(defaultProjectionOverrides.panelBSize),
           viewportLocked: false,
           reduceMotion: false,
@@ -471,7 +471,7 @@ export const useDiagramStore = create<DiagramStore>()(
         },
       }),
       {
-        name: 'aea-architecture-ui',
+        name: 'aea-architecture-ui-v2',
         partialize: (state) => ({
           ui: {
             mode: state.ui.mode,

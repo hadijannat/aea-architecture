@@ -18,6 +18,7 @@ interface SequencePanelProps {
   containerRef?: RefObject<HTMLElement | null>
   model: SequenceBoardModel
   theme: ProjectionTheme
+  layout?: 'split' | 'stacked'
   onSelectNode(nodeId: string): void
   onSelectStep(stepId: string): void
   onSelectEdge(edgeId: string): void
@@ -48,6 +49,7 @@ export function SequencePanel({
   containerRef,
   model,
   theme,
+  layout = 'split',
   onSelectNode,
   onSelectStep,
   onSelectEdge,
@@ -65,16 +67,16 @@ export function SequencePanel({
   return (
     <section
       ref={containerRef}
-      className={`sequence-panel sequence-panel--${theme}`}
+      className={`sequence-panel sequence-panel--${theme} sequence-panel--${layout}`}
       data-theme={theme}
       aria-label="VoR domain transition sequence"
     >
       <header className={clsx('sequence-panel__header', hasActiveHighlights && 'sequence-panel__header--active')}>
         <div>
-          <p className="eyebrow">(B)</p>
-          <h2>VoR Domain-Transition Sequence</h2>
+          <p className="sequence-panel__eyebrow">Panel B</p>
+          <h2>VoR sequence</h2>
         </div>
-        <p>Five-stage VoR validation pipeline enforcing NE178 boundary semantics before CPC actuation.</p>
+        <p>Five-stage validation path enforcing the NE178 boundary before CPC actuation.</p>
       </header>
 
       <div className="sequence-board-shell">
