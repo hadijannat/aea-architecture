@@ -44,9 +44,14 @@ afterEach(() => {
 
 describe('BaseSemanticEdge', () => {
   const spec = resolveGraphEdge('F4')
+  const ackSpec = resolveGraphEdge('F_VoR_ACK')
 
   if (!spec) {
     throw new Error('Expected F4 edge spec to exist')
+  }
+
+  if (!ackSpec) {
+    throw new Error('Expected F_VoR_ACK edge spec to exist')
   }
 
   const callbacks = {
@@ -59,17 +64,17 @@ describe('BaseSemanticEdge', () => {
     onPathAction() {},
   }
 
-  const baseData: CompiledEdgeData = {
-    spec,
-    ariaLabel: 'F4 test edge',
-    sourceTitle: spec.source,
-    targetTitle: spec.target,
+  const baseData = (edgeSpec = spec): CompiledEdgeData => ({
+    spec: edgeSpec,
+    ariaLabel: `${edgeSpec.id} test edge`,
+    sourceTitle: edgeSpec.source,
+    targetTitle: edgeSpec.target,
     standards: [],
     claims: [],
     sourceHandle: 'bottom:validation:0',
     targetHandle: 'top:validation:0',
     callbacks,
-    optional: false,
+    optional: edgeSpec.interactive.optional ?? false,
     selected: false,
     hovered: false,
     searchMatched: false,
@@ -123,23 +128,23 @@ describe('BaseSemanticEdge', () => {
       },
       bridges: [],
     },
-  }
+  })
 
-  const renderEdge = (overrides: Partial<typeof baseData> = {}) =>
+  const renderEdge = (edgeSpec = spec, overrides: Partial<CompiledEdgeData> = {}) =>
     render(
       createElement(
         'svg',
         null,
         createElement(BaseSemanticEdge as never, {
-          id: spec.id,
-          source: spec.source,
-          target: spec.target,
+          id: edgeSpec.id,
+          source: edgeSpec.source,
+          target: edgeSpec.target,
           sourceX: 1588,
           sourceY: 894,
           targetX: 779,
           targetY: 770,
           data: {
-            ...baseData,
+            ...baseData(edgeSpec),
             ...overrides,
           },
         } as never),
@@ -161,30 +166,56 @@ describe('BaseSemanticEdge', () => {
   })
 
   it('keeps edge labels hidden in overview mode', () => {
-    renderEdge({ labelMode: 'hidden' })
+    renderEdge(spec, { labelMode: 'hidden' })
 
     expect(screen.queryByText('Await approval')).toBeNull()
     expect(screen.queryByText('F4 · Await approval')).toBeNull()
     expect(screen.getAllByTestId('base-edge')).toHaveLength(2)
   })
 
-  it('renders chip and detail labels from the shared label state', () => {
-    renderEdge({ labelMode: 'chip' })
+  it('renders chip and compact detail labels for non-selected edges', () => {
+    renderEdge(spec, { labelMode: 'chip' })
 
     expect(screen.getByRole('button', { name: 'F4 test edge' })).toHaveAttribute('data-edge-label-mode', 'chip')
     expect(screen.getByText('Await approval')).toBeInTheDocument()
 
     cleanup()
-    renderEdge({ labelMode: 'detail' })
+    renderEdge(spec, { labelMode: 'detail' })
 
     expect(screen.getByRole('button', { name: 'F4 test edge' })).toHaveAttribute('data-edge-label-mode', 'detail')
+    expect(screen.getByRole('button', { name: 'F4 test edge' })).toHaveAttribute('data-edge-label-variant', 'compact')
     expect(screen.getByText('F4 · Await approval')).toBeInTheDocument()
   })
 
+  it('keeps detail-bearing edges compact until selected', () => {
+    renderEdge(ackSpec, { labelMode: 'detail' })
+
+    const label = screen.getByRole('button', { name: 'F_VoR_ACK test edge' })
+    expect(label).toHaveAttribute('data-edge-label-variant', 'compact')
+    expect(label).toHaveTextContent('F_VoR_ACK · Status')
+    expect(label).not.toHaveTextContent('non-plant-specific; no CPC architecture disclosed')
+  })
+
+  it('renders canonical detail labels only for the selected edge', () => {
+    renderEdge(spec, { labelMode: 'detail', selected: true })
+
+    expect(screen.getByRole('button', { name: 'F4 test edge' })).toHaveAttribute('data-edge-label-mode', 'detail')
+    expect(screen.getByRole('button', { name: 'F4 test edge' })).toHaveAttribute('data-edge-label-variant', 'canonical')
+    expect(screen.getByText('F4 · validated candidate plan (approval pending)')).toBeInTheDocument()
+  })
+
+  it('renders secondary qualifier text for selected edges with detail metadata', () => {
+    renderEdge(ackSpec, { labelMode: 'detail', selected: true })
+
+    expect(screen.getByRole('button', { name: 'F_VoR_ACK test edge' })).toHaveAttribute('data-edge-label-variant', 'canonical')
+    expect(screen.getByText('F_VoR_ACK · status: accepted | rejected | executed | timeout')).toBeInTheDocument()
+    expect(screen.getByText('non-plant-specific; no CPC architecture disclosed')).toBeInTheDocument()
+  })
+
   it('renders bridge hops for crossed secondary routes without changing interaction width', () => {
-    const { container } = renderEdge({
+    const { container } = renderEdge(spec, {
       route: {
-        ...baseData.route,
+        ...baseData(spec).route,
         bridges: [{ x: 6, y: 6, orientation: 'horizontal' }],
       },
     })
@@ -197,13 +228,13 @@ describe('BaseSemanticEdge', () => {
   })
 
   it('scales dimmed and supportive strokes from the semantic width instead of subtracting fixed pixels', () => {
-    const baseWidth = edgeStrokeWidth(spec.style, spec.semantic, baseData.canvasLod)
+    const baseWidth = edgeStrokeWidth(spec.style, spec.semantic, baseData(spec).canvasLod)
 
-    renderEdge({ dimmed: true })
+    renderEdge(spec, { dimmed: true })
     expect(renderedStrokeWidth()).toBeCloseTo(Math.max(baseWidth * 0.7, 0.8))
 
     cleanup()
-    renderEdge({ supportive: true })
+    renderEdge(spec, { supportive: true })
     expect(renderedStrokeWidth()).toBeCloseTo(Math.max(baseWidth * 0.82, 0.9))
   })
 })

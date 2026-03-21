@@ -443,11 +443,11 @@ test('selecting F_VoR_ACK highlights the Panel B acknowledgement with its action
 test('edge controls expose semantic accessible names', async ({ page }) => {
   await page.goto('/?edge=F5')
   await expect(await ensureEdgeLabelMode(page, 'F5', 'detail', 'zoom-in')).toHaveAccessibleName(
-    /^F5: writeback edge from/,
+    /F5: writeback edge from .* VoR request \(non-plant-specific, authenticated\)/,
   )
   await page.goto('/?edge=F_VoR_ACK')
   await expect(await ensureEdgeLabelMode(page, 'F_VoR_ACK', 'detail', 'zoom-in')).toHaveAccessibleName(
-    /^F_VoR_ACK: status-ack edge from/,
+    /F_VoR_ACK: status-ack edge from .* non-plant-specific; no CPC architecture disclosed/,
   )
 })
 
@@ -550,7 +550,33 @@ test('architecture edge labels stay hidden at rest and retain ids in detail mode
   await page.goto('/?edge=F5')
   const detailedLabel = await ensureEdgeLabelMode(page, 'F5', 'detail', 'zoom-in')
   await expect(detailedLabel).toHaveAttribute('data-edge-label-mode', 'detail')
-  await expect(detailedLabel).toContainText('F5 · Send request')
+  await expect(detailedLabel).toHaveAttribute('data-edge-label-variant', 'canonical')
+  await expect(detailedLabel).toContainText('F5 · VoR request (non-plant-specific, authenticated)')
+})
+
+test('selected acknowledgement labels expose the full canonical status semantics on-canvas', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/?edge=F_VoR_ACK')
+  await page.waitForTimeout(700)
+
+  const detailedLabel = await ensureEdgeLabelMode(page, 'F_VoR_ACK', 'detail', 'zoom-in')
+  await expect(detailedLabel).toHaveAttribute('data-edge-label-variant', 'canonical')
+  await expect(detailedLabel).toContainText('F_VoR_ACK · status: accepted | rejected | executed | timeout')
+  await expect(detailedLabel).toContainText('non-plant-specific; no CPC architecture disclosed')
+})
+
+test('search-matched detail labels stay compact until the edge is explicitly selected', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1100 })
+  await page.goto('/')
+  await page.waitForTimeout(700)
+
+  await page.getByRole('searchbox', { name: 'Search nodes, edges, standards, and claims' }).fill('F_VoR_ACK')
+
+  const matchedLabel = await ensureEdgeLabelMode(page, 'F_VoR_ACK', 'detail', 'zoom-in')
+  await expect(matchedLabel).toHaveAttribute('data-edge-label-mode', 'detail')
+  await expect(matchedLabel).toHaveAttribute('data-edge-label-variant', 'compact')
+  await expect(matchedLabel).toContainText('F_VoR_ACK · Status')
+  await expect(matchedLabel).not.toContainText('non-plant-specific; no CPC architecture disclosed')
 })
 
 test('diode edges use dedicated diode markers with readable labels', async ({ page }) => {

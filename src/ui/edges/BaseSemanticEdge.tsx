@@ -129,11 +129,15 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
   const isT0Edge = data.spec.tags.includes('t0')
   const labelMode = data.labelMode
   const displayLabel = data.spec.displayLabel ?? data.spec.label
-  const detailText = data.spec.detail ? `${displayLabel} · ${data.spec.detail}` : displayLabel
+  const usesCanonicalDetailLabel = labelMode === 'detail' && data.selected
   const labelText =
-    labelMode === 'detail'
-      ? `${data.spec.id} · ${detailText}${data.optional ? ' (optional)' : ''}`
-      : displayLabel
+    usesCanonicalDetailLabel
+      ? `${data.spec.id} · ${data.spec.label}${data.optional ? ' (optional)' : ''}`
+      : labelMode === 'detail'
+        ? `${data.spec.id} · ${displayLabel}${data.optional ? ' (optional)' : ''}`
+        : displayLabel
+  const labelDetailText = usesCanonicalDetailLabel ? data.spec.detail : undefined
+  const labelVariant = usesCanonicalDetailLabel ? 'canonical' : 'compact'
   const showT0Badge = isT0Edge && labelMode !== 'hidden'
   const markerKind = data.spec.markers.includes('diode') ? 'diode' : presentation.marker
   const writePathActive =
@@ -214,13 +218,19 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
             data-edge-tag-t0={isT0Edge ? 'true' : 'false'}
             data-edge-shared-tag-focus={data.sharedTagFocused ? 'true' : 'false'}
             data-edge-label-mode={labelMode}
+            data-edge-label-variant={labelVariant}
             style={labelStyle}
             onFocus={handleMouseEnter}
             onBlur={handleMouseLeave}
             onPointerDown={handleLabelPointerDown}
             onClick={handleLabelClick}
           >
-            <span className="edge-label__text">{labelText}</span>
+            <span className="edge-label__body">
+              <span className={clsx('edge-label__text', usesCanonicalDetailLabel && 'edge-label__text--primary')}>
+                {labelText}
+              </span>
+              {labelDetailText ? <span className="edge-label__text edge-label__text--secondary">{labelDetailText}</span> : null}
+            </span>
             {showT0Badge ? (
               <span className="edge-label__tag edge-label__tag--t0" data-edge-tag="t0" aria-hidden="true">
                 T0
