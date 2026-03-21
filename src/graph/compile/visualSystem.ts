@@ -154,7 +154,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#0F3F7A',
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'arrow',
-    width: 1.8,
+    width: 2.0,
     label: 'Read-only',
   },
   normalization: {
@@ -179,7 +179,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'diamond',
     dash: '6 3',
-    width: 1.8,
+    width: 1.6,
     label: 'Policy soft gate',
   },
   'policy-hard': {
@@ -187,7 +187,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#4C1D95',
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'diamond',
-    width: 2.4,
+    width: 2.6,
     label: 'Policy hard gate',
   },
   proposal: {
@@ -211,7 +211,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#7C2D12',
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'circle',
-    width: 2.4,
+    width: 2.0,
     label: 'Tool call',
   },
   subscription: {
@@ -220,7 +220,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'circle',
     dash: '1 5',
-    width: 1.8,
+    width: 1.2,
     label: 'Subscription',
   },
   writeback: {
@@ -228,7 +228,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#7F1D1D',
     halo: 'rgba(255, 255, 255, 0.98)',
     marker: 'arrowclosed',
-    width: 2.4,
+    width: 2.8,
     label: 'Writeback',
   },
   'status-ack': {
@@ -236,7 +236,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#7F1D1D',
     halo: 'rgba(255, 255, 255, 0.98)',
     marker: 'arrow',
-    width: 2.4,
+    width: 2.0,
     label: 'Status acknowledgement',
   },
   rejection: {
@@ -245,7 +245,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     halo: 'rgba(255, 255, 255, 0.98)',
     marker: 'tee',
     dash: '7 4',
-    width: 1.8,
+    width: 1.6,
     label: 'Rejection',
   },
   kpi: {
@@ -254,7 +254,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'circle',
     dash: '1 5',
-    width: 1.8,
+    width: 1.2,
     label: 'KPI',
   },
   audit: {
@@ -263,7 +263,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'tee',
     dash: '1 5',
-    width: 1.8,
+    width: 1.2,
     label: 'Audit',
   },
   sequence: {
@@ -271,7 +271,7 @@ const semanticVisuals: Record<EdgeSemantic, SemanticVisualTokens> = {
     chipText: '#374151',
     halo: 'rgba(255, 255, 255, 0.95)',
     marker: 'arrowclosed',
-    width: 1.2,
+    width: 1.0,
     label: 'Sequence transition',
   },
 }
@@ -422,16 +422,16 @@ export function resolveSemanticStrokeWidth(style: EdgeStyle, semantic: EdgeSeman
 
   switch (style) {
     case 'bold':
-      return Math.max(semanticWidth + 0.8, 2.6)
+      return Math.max(semanticWidth + 1.0, 3.0)
     case 'medium':
-      return Math.max(semanticWidth + 0.2, 1.9)
+      return Math.max(semanticWidth + 0.3, 2.0)
     case 'dashed':
-      return Math.max(semanticWidth, 1.6)
+      return Math.max(semanticWidth, 1.4)
     case 'dotted':
-      return Math.max(semanticWidth - 0.1, 1.4)
+      return Math.max(semanticWidth - 0.2, 1.1)
     case 'thin':
     default:
-      return Math.max(semanticWidth - 0.1, 1.35)
+      return Math.max(semanticWidth - 0.3, 1.0)
   }
 }
 

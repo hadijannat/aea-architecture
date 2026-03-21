@@ -391,10 +391,10 @@ describe('graph manifest', () => {
       F_KPI: { source: 'S2', target: 'ACT2', semantic: 'kpi', style: 'thin', direction: 'ttb' },
       F_AUDIT: { source: 'ACT1', target: 'ACT3', semantic: 'audit', style: 'thin', direction: 'ltr' },
       F5: { source: 'ACT1', target: 'VOI', semantic: 'writeback', style: 'bold', direction: 'rtl' },
-      F6: { source: 'VOI', target: 'A3', semantic: 'writeback', style: 'medium', direction: 'ltr' },
+      F6: { source: 'VOI', target: 'A3', semantic: 'writeback', style: 'bold', direction: 'ltr' },
       F_VoR_ACK: { source: 'VOI', target: 'ACT1', semantic: 'status-ack', style: 'dashed', direction: 'rtl' },
-      F7a: { source: 'ACT2', target: 'C1', semantic: 'kpi', style: 'medium', direction: 'ltr' },
-      F7b: { source: 'C1', target: 'C2', semantic: 'kpi', style: 'medium', direction: 'ltr' },
+      F7a: { source: 'ACT2', target: 'C1', semantic: 'kpi', style: 'thin', direction: 'ltr' },
+      F7b: { source: 'C1', target: 'C2', semantic: 'kpi', style: 'thin', direction: 'ltr' },
       F7_sub: { source: 'C2', target: 'C1', semantic: 'subscription', style: 'dotted', direction: 'rtl' },
       PB_F1: { source: 'PB1', target: 'PB2', semantic: 'sequence', style: 'medium', direction: 'ltr', displayLabel: 'Authorise' },
       PB_F2: { source: 'PB2', target: 'PB3', semantic: 'sequence', style: 'medium', direction: 'ltr', displayLabel: 'Map request' },
@@ -487,8 +487,8 @@ describe('graph manifest', () => {
     expect(pbReject?.target).toBe('PB_REJECT_OUT')
     expect(pbAea?.panel).toContain('vor-sequence')
     expect(rejectOut?.panel).toContain('vor-sequence')
-    expect(boldEdges).toHaveLength(1)
-    expect(boldEdges[0]?.id).toBe('F5')
+    expect(boldEdges).toHaveLength(2)
+    expect(boldEdges.map((edge) => edge.id).sort()).toEqual(['F5', 'F6'])
   })
 
   it('keeps F3i sourced from VOI and DEC_G2 aliased from DEC3', () => {
@@ -810,11 +810,11 @@ describe('derived projections', () => {
       d: 'M 1 1 L 1 7 M 1 4 L 9 4',
       strokeWidth: 2.3,
     })
-    expect(edgeStrokeWidth('bold', 'writeback')).toBe(3.2)
-    expect(edgeStrokeWidth('medium', 'validation')).toBe(2.6)
-    expect(edgeStrokeWidth('dashed', 'rejection')).toBe(1.8)
-    expect(edgeStrokeWidth('dotted', 'tool-call')).toBe(2.3)
-    expect(edgeStrokeWidth('thin', 'retrieval')).toBe(1.7)
+    expect(edgeStrokeWidth('bold', 'writeback')).toBe(3.8)
+    expect(edgeStrokeWidth('medium', 'validation')).toBeCloseTo(2.7)
+    expect(edgeStrokeWidth('dashed', 'rejection')).toBe(1.6)
+    expect(edgeStrokeWidth('dotted', 'tool-call')).toBeCloseTo(1.8)
+    expect(edgeStrokeWidth('thin', 'retrieval')).toBeCloseTo(1.5)
   })
 
   it('marks optional architecture edges explicitly and animates tool-call edges', async () => {
@@ -987,7 +987,7 @@ describe('exports', () => {
     expect(architectureMermaid).toContain('subgraph GW_NE178["NE 178 VoR interface"]')
     expect(architectureMermaid).toContain('F_GW2:')
     expect(architectureMermaid).toContain('[diode, medium]')
-    expect(architectureMermaid).toContain('stroke:#EF4444,stroke-width:3.2px')
+    expect(architectureMermaid).toContain('stroke:#EF4444,stroke-width:3.8px')
     expect(sequenceMermaid).toContain('%% Canonical topology export only; schematic and not viewport/state-aware.')
     expect(sequenceMermaid).toContain('PB_AEA')
     expect(sequenceMermaid).toContain('PB_REJECT_OUT')
@@ -1063,15 +1063,15 @@ describe('exports', () => {
         labelPoint: { x: 1512.5, y: 1042 },
       },
       F3g: {
-        path: 'M 879 666 L 879 678 L 879 1057 Q 879 1073 895 1073 L 902 1073 Q 911 1073 911 1082 L 911 1082 Q 911 1091 920 1091 L 1828 1091 Q 1837 1091 1837 1082 L 1837 1082 Q 1837 1073 1846 1073 L 1853 1073 Q 1869 1073 1869 1089 L 1869 1174 L 1869 1186',
+        path: 'M 879 666 L 879 678 L 879 1050.5 Q 879 1069 897.5 1069 L 905 1069 Q 916 1069 916 1080 L 916 1080 Q 916 1091 927 1091 L 1821 1091 Q 1832 1091 1832 1080 L 1832 1080 Q 1832 1069 1843 1069 L 1850.5 1069 Q 1869 1069 1869 1087.5 L 1869 1174 L 1869 1186',
         labelPoint: { x: 1374, y: 1073 },
       },
       F3h: {
-        path: 'M 1418 352 L 1424 352 Q 1430 352 1430 358 L 1430 1093 Q 1430 1109 1446 1109 L 1453 1109 Q 1462 1109 1462 1100 L 1462 1100 Q 1462 1091 1471 1091 L 1860 1091 Q 1869 1091 1869 1100 L 1869 1100 Q 1869 1109 1878 1109 L 1885 1109 Q 1901 1109 1901 1125 L 1901 1174 L 1901 1186',
+        path: 'M 1418 352 L 1424 352 Q 1430 352 1430 358 L 1430 1094.5 Q 1430 1113 1448.5 1113 L 1456 1113 Q 1467 1113 1467 1102 L 1467 1102 Q 1467 1091 1478 1091 L 1853 1091 Q 1864 1091 1864 1102 L 1864 1102 Q 1864 1113 1875 1113 L 1882.5 1113 Q 1901 1113 1901 1131.5 L 1901 1174 L 1901 1186',
         labelPoint: { x: 1665.5, y: 1073 },
       },
       F3i: {
-        path: 'M 596 1277 L 602 1277 Q 608 1277 608 1271 L 608 1074 Q 608 1055 627 1055 L 628 1055 Q 646 1055 646 1073 L 646 1073 Q 646 1091 664 1091 L 1702 1091 Q 1720 1091 1720 1073 L 1720 1073 Q 1720 1055 1738 1055 L 1739 1055 Q 1758 1055 1758 1074 L 1758 1212 Q 1758 1218 1764 1218 L 1770 1218',
+        path: 'M 596 1277 L 602 1277 Q 608 1277 608 1271 L 608 1069 Q 608 1047 630 1047 L 631 1047 Q 653 1047 653 1069 L 653 1069 Q 653 1091 675 1091 L 1691 1091 Q 1713 1091 1713 1069 L 1713 1069 Q 1713 1047 1735 1047 L 1736 1047 Q 1758 1047 1758 1069 L 1758 1212 Q 1758 1218 1764 1218 L 1770 1218',
         labelPoint: { x: 1183, y: 1073 },
       },
       F_T0_req: {
@@ -1091,7 +1091,7 @@ describe('exports', () => {
         labelPoint: { x: 1555, y: 750 },
       },
       F4: {
-        path: 'M 1885 1314 L 1885 1326 L 1885 1297 Q 1885 1284 1872 1284 L 1859 1284 L 921 1284 L 908 1284 Q 895 1284 895 1271 L 895 1174 L 895 1186',
+        path: 'M 1885 1314 L 1885 1326 L 1885 1299 Q 1885 1284 1870 1284 L 1855 1284 L 925 1284 L 910 1284 Q 895 1284 895 1269 L 895 1174 L 895 1186',
         labelPoint: { x: 1390, y: 1266 },
       },
       F_H1_revalidate: {
@@ -1107,15 +1107,15 @@ describe('exports', () => {
         labelPoint: { x: 915, y: 1327 },
       },
       F5: {
-        path: 'M 780 1568 L 774 1568 Q 768 1568 768 1562 L 768 1502 Q 768 1486 752 1486 L 745 1486 Q 736 1486 736 1495 L 736 1495 Q 736 1504 727 1504 L 649 1504 Q 640 1504 640 1495 L 640 1495 Q 640 1486 631 1486 L 624 1486 Q 608 1486 608 1470 L 608 1299 Q 608 1293 602 1293 L 596 1293',
+        path: 'M 780 1568 L 774 1568 Q 768 1568 768 1562 L 768 1500.5 Q 768 1482 749.5 1482 L 742 1482 Q 731 1482 731 1493 L 731 1493 Q 731 1504 720 1504 L 656 1504 Q 645 1504 645 1493 L 645 1493 Q 645 1482 634 1482 L 626.5 1482 Q 608 1482 608 1463.5 L 608 1299 Q 608 1293 602 1293 L 596 1293',
         labelPoint: { x: 688, y: 1528 },
       },
       F6: {
-        path: 'M 486 1325 L 480 1325 Q 474 1325 474 1331 L 474 1506 Q 474 1522 458 1522 L 451 1522 Q 442 1522 442 1513 L 442 1513 Q 442 1504 433 1504 L 377 1504 Q 368 1504 368 1513 L 368 1513 Q 368 1522 359 1522 L 352 1522 Q 336 1522 336 1538 L 336 1569 Q 336 1575 330 1575 L 324 1575',
+        path: 'M 486 1325 L 480 1325 Q 474 1325 474 1331 L 474 1507.5 Q 474 1526 455.5 1526 L 448 1526 Q 437 1526 437 1515 L 437 1515 Q 437 1504 426 1504 L 384 1504 Q 373 1504 373 1515 L 373 1515 Q 373 1526 362 1526 L 354.5 1526 Q 336 1526 336 1544.5 L 336 1569 Q 336 1575 330 1575 L 324 1575',
         labelPoint: { x: 405, y: 1528 },
       },
       F_VoR_ACK: {
-        path: 'M 596 1309 L 602 1309 Q 608 1309 608 1315 L 608 1437 Q 608 1450 621 1450 L 634 1450 L 742 1450 L 755 1450 Q 768 1450 768 1463 L 768 1578 Q 768 1584 774 1584 L 780 1584',
+        path: 'M 596 1309 L 602 1309 Q 608 1309 608 1315 L 608 1435 Q 608 1450 623 1450 L 638 1450 L 738 1450 L 753 1450 Q 768 1450 768 1465 L 768 1578 Q 768 1584 774 1584 L 780 1584',
         labelPoint: { x: 688, y: 1430 },
       },
       F_CPC_INT: {
@@ -1295,12 +1295,12 @@ describe('exports', () => {
     expect(buildArchitectureRoute(state, 'F3d').points).toEqual([
       { x: 1319, y: 396 },
       { x: 1319, y: 408 },
-      { x: 1319, y: 810 },
-      { x: 1287, y: 810 },
-      { x: 1287, y: 792 },
-      { x: 1273, y: 792 },
-      { x: 1273, y: 810 },
-      { x: 1241, y: 810 },
+      { x: 1319, y: 814 },
+      { x: 1282, y: 814 },
+      { x: 1282, y: 792 },
+      { x: 1278, y: 792 },
+      { x: 1278, y: 814 },
+      { x: 1241, y: 814 },
       { x: 1241, y: 854 },
       { x: 1241, y: 866 },
     ])

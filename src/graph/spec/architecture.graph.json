@@ -3495,7 +3495,7 @@
         "priority": 1
       },
       "inspector": {
-        "rationale": "F5 is the exclusive write-back initiation path and therefore the only bold cross-boundary edge in the figure.",
+        "rationale": "F5 is the exclusive write-back initiation path and therefore the first bold cross-boundary edge in the figure.",
         "notes": [
           "Exclusive write-back initiation path."
         ],
@@ -3514,7 +3514,7 @@
       "source": "VOI",
       "target": "A3",
       "semantic": "writeback",
-      "style": "medium",
+      "style": "bold",
       "label": "mapped + verified change instruction",
       "displayLabel": "Send change",
       "direction": "ltr",
@@ -3544,13 +3544,13 @@
         "priority": 2
       },
       "inspector": {
-        "rationale": "F6 carries the mapped and verified instruction into the CPC Change Handler, not into the read-only CPC Data Interface.",
+        "rationale": "F6 carries the mapped and verified instruction into the CPC Change Handler, not into the read-only CPC Data Interface, and remains bold as the second write-path segment.",
         "notes": [
           "Non-plant-specific status is not carried here; only the change instruction is."
         ],
         "constraints": [
           "Target must remain A3.",
-          "Implemented as solid medium, not dashed."
+          "Implemented as solid bold, not dashed."
         ]
       }
     },
@@ -3612,7 +3612,7 @@
       "source": "A3",
       "target": "A1",
       "semantic": "writeback",
-      "style": "thin",
+      "style": "medium",
       "label": "execute verified change",
       "displayLabel": "Execute",
       "direction": "ttb",
@@ -3648,7 +3648,7 @@
       "source": "ACT2",
       "target": "C1",
       "semantic": "kpi",
-      "style": "medium",
+      "style": "thin",
       "label": "OPC UA PubSub over MQTT",
       "displayLabel": "Publish MQTT",
       "detail": "MQTT mapping, Part 14",
@@ -3681,7 +3681,7 @@
       "source": "C1",
       "target": "C2",
       "semantic": "kpi",
-      "style": "medium",
+      "style": "thin",
       "label": "subscribe / consume",
       "displayLabel": "Consume",
       "direction": "ltr",

@@ -769,7 +769,7 @@ test('telemetry labels and paths fade together at rest and restore when selected
   const restingEdge = page.locator('.semantic-edge[data-edge-id="F_AUDIT"]')
   await expect(page.locator('.edge-label[data-edge-id="F_AUDIT"]')).toHaveCount(0)
 
-  expect(await computedStyleValue(restingEdge, 'opacity')).toBe('0.68')
+  expect(await computedStyleValue(restingEdge, 'opacity')).toBe('0.62')
 
   await page.goto('/?edge=F_AUDIT')
 

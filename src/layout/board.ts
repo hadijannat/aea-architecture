@@ -164,12 +164,12 @@ function corridorTrackOffset(priority = 0) {
     return 0
   }
 
-  const magnitude = Math.ceil(priority / 2) * 18
+  const magnitude = Math.ceil(priority / 2) * 22
   return priority % 2 === 1 ? -magnitude : magnitude
 }
 
 function corridorBranchDistance(offset: number) {
-  return 26 + Math.round(Math.abs(offset) / 3)
+  return 30 + Math.round(Math.abs(offset) / 3)
 }
 
 function routeViaHorizontalCorridor(
