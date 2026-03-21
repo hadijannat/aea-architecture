@@ -135,27 +135,46 @@ export function compareHandleIds(first: HandleId | string, second: HandleId | st
   return parsedFirst.raw.localeCompare(parsedSecond.raw)
 }
 
+function resolveProjectedHandle(
+  overrideHandle: string | undefined,
+  routedHandle: string | undefined,
+  interactiveHandle: string | undefined,
+  fallbackHandle: HandleId,
+): HandleId {
+  const parsedOverride = parseHandleId(overrideHandle)
+  const parsedRouted = parseHandleId(routedHandle)
+
+  if (
+    parsedOverride?.legacy &&
+    parsedRouted &&
+    parsedRouted.family !== 'default' &&
+    parsedOverride.side === parsedRouted.side
+  ) {
+    return parsedRouted.raw
+  }
+
+  return normalizeHandleId(overrideHandle ?? routedHandle ?? interactiveHandle ?? fallbackHandle) ?? fallbackHandle
+}
+
 export function resolveEdgeHandles(
   edge: EdgeSpec,
   overrides: ProjectionOverrides['edgeHandles'],
 ): { sourceHandle: HandleId; targetHandle: HandleId } {
   const override = overrides[edge.id]
   const fallback = fallbackByDirection[edge.direction]
-  const sourceHandle = normalizeHandleId(
-    override?.sourceHandle ??
-      edge.routing?.sourceHandle ??
-      edge.interactive.sourceHandle ??
-      fallback.source,
-  )
-  const targetHandle = normalizeHandleId(
-    override?.targetHandle ??
-      edge.routing?.targetHandle ??
-      edge.interactive.targetHandle ??
-      fallback.target,
-  )
 
   return {
-    sourceHandle: sourceHandle ?? fallback.source,
-    targetHandle: targetHandle ?? fallback.target,
+    sourceHandle: resolveProjectedHandle(
+      override?.sourceHandle,
+      edge.routing?.sourceHandle,
+      edge.interactive.sourceHandle,
+      fallback.source,
+    ),
+    targetHandle: resolveProjectedHandle(
+      override?.targetHandle,
+      edge.routing?.targetHandle,
+      edge.interactive.targetHandle,
+      fallback.target,
+    ),
   }
 }

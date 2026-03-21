@@ -263,26 +263,19 @@ function routeViaCeilingCorridor(
   source: Point,
   target: Point,
   handles: BoardRouteHandles,
-  channels: BoardRouteChannels,
+  _channels: BoardRouteChannels,
   corridorY: number,
   priority = 0,
 ) {
   const sourceStub = routeStub(source, handles.sourceHandle)
   const targetStub = routeStub(target, handles.targetHandle)
   const branchY = corridorY + ceilingCorridorOffset(priority)
-  const descentX =
-    targetStub.x >= channels.decideCol23GapX
-      ? channels.decideCol23GapX
-      : targetStub.x >= channels.decideCol12GapX
-        ? channels.decideCol12GapX
-        : channels.decideCol01GapX
 
   return compactOrthogonalPoints([
     source,
     sourceStub,
     point(sourceStub.x, branchY),
-    point(descentX, branchY),
-    point(descentX, targetStub.y),
+    point(targetStub.x, branchY),
     targetStub,
     target,
   ])
@@ -302,6 +295,26 @@ function routeViaFeedbackCorridor(
   const branchDistance = 28 + priority * 10
   const sourceJoinX = sourceStub.x + direction * branchDistance
   const targetJoinX = targetStub.x - direction * branchDistance
+  const joinsCross = direction === 1 ? sourceJoinX >= targetJoinX : sourceJoinX <= targetJoinX
+
+  // When the stubs line up vertically, detour on one side of the trench instead of
+  // drawing a self-overlapping U-turn across the same horizontal run.
+  if (joinsCross) {
+    const detourX =
+      direction === 1
+        ? Math.max(sourceStub.x, targetStub.x) + branchDistance
+        : Math.min(sourceStub.x, targetStub.x) - branchDistance
+
+    return compactOrthogonalPoints([
+      source,
+      sourceStub,
+      point(sourceStub.x, branchY),
+      point(detourX, branchY),
+      point(detourX, targetStub.y),
+      targetStub,
+      target,
+    ])
+  }
 
   return compactOrthogonalPoints([
     source,

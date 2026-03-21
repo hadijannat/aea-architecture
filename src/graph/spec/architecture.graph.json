@@ -2452,7 +2452,7 @@
         "relatedStepIds": [
           "PB2"
         ],
-        "sourceHandle": "right",
+        "sourceHandle": "bottom",
         "targetHandle": "top",
         "highlightGroup": "policy"
       },

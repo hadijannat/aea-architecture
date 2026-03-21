@@ -1175,24 +1175,22 @@ describe('exports', () => {
           { x: 1539, y: 1174 },
           { x: 1539, y: 1058 },
           { x: 1577, y: 1058 },
-          { x: 1501, y: 1058 },
-          { x: 1539, y: 1058 },
+          { x: 1577, y: 1008 },
           { x: 1539, y: 1008 },
           { x: 1539, y: 996 },
         ],
-        labelPoint: { x: 1539, y: 1076 },
+        labelPoint: { x: 1558, y: 1076 },
       },
       F3g: {
         points: [
           { x: 895, y: 546 },
           { x: 895, y: 534 },
           { x: 895, y: 518 },
-          { x: 1720, y: 518 },
-          { x: 1720, y: 1174 },
+          { x: 1885, y: 518 },
           { x: 1885, y: 1174 },
           { x: 1885, y: 1186 },
         ],
-        labelPoint: { x: 1307.5, y: 500 },
+        labelPoint: { x: 1390, y: 500 },
       },
       F3h: {
         path: 'M 1418 352 L 1424 352 Q 1430 352 1430 358 L 1430 1094.5 Q 1430 1113 1448.5 1113 L 1456 1113 Q 1467 1113 1467 1102 L 1467 1102 Q 1467 1091 1478 1091 L 1853 1091 Q 1864 1091 1864 1102 L 1864 1102 Q 1864 1113 1875 1113 L 1882.5 1113 Q 1901 1113 1901 1131.5 L 1901 1174 L 1901 1186',
@@ -1203,12 +1201,11 @@ describe('exports', () => {
           { x: 596, y: 1293 },
           { x: 608, y: 1293 },
           { x: 608, y: 500 },
-          { x: 1720, y: 500 },
-          { x: 1720, y: 1174 },
+          { x: 1869, y: 500 },
           { x: 1869, y: 1174 },
           { x: 1869, y: 1186 },
         ],
-        labelPoint: { x: 1164, y: 482 },
+        labelPoint: { x: 1238.5, y: 482 },
       },
       F_T0_req: {
         points: [
@@ -1449,7 +1446,6 @@ describe('exports', () => {
       expect(handles.targetHandle).toBe(expected.targetHandle)
       expect(route.points[2]?.y).toBe(expected.trenchY)
       expect(route.points[3]?.y).toBe(expected.trenchY)
-      expect(route.points[4]?.y).toBe(expected.trenchY)
       expect((route.points.at(-2)?.y ?? 0) > (route.points.at(-1)?.y ?? 0), `${edgeId} should enter DEC_R2 from below`).toBe(true)
     }
 
@@ -1710,7 +1706,15 @@ describe('exports', () => {
       sourceHandle: 'top:ceiling:0',
       targetHandle: 'top:ceiling:0',
     })
+    expect(resolveEdgeHandles(f3g, { F3g: { sourceHandle: 'top', targetHandle: 'top' } })).toEqual({
+      sourceHandle: 'top:ceiling:0',
+      targetHandle: 'top:ceiling:0',
+    })
     expect(resolveEdgeHandles(fM1G0, {})).toEqual({
+      sourceHandle: 'right:monitor:0',
+      targetHandle: 'top:monitor:0',
+    })
+    expect(resolveEdgeHandles(fM1G0, { F_M1_G0: { sourceHandle: 'right', targetHandle: 'top' } })).toEqual({
       sourceHandle: 'right:monitor:0',
       targetHandle: 'top:monitor:0',
     })
@@ -1734,6 +1738,53 @@ describe('exports', () => {
       }
 
       expect(resolveEdgeHandles(edge, {})).toEqual(expected)
+    }
+  })
+
+  it('keeps interactive handle sides aligned with routed handle sides', () => {
+    for (const edge of graphManifest.edges) {
+      if (!edge.routing) {
+        continue
+      }
+
+      const interactiveSource = parseHandleId(edge.interactive.sourceHandle)
+      const interactiveTarget = parseHandleId(edge.interactive.targetHandle)
+      const routedSource = parseHandleId(edge.routing.sourceHandle)
+      const routedTarget = parseHandleId(edge.routing.targetHandle)
+
+      if (interactiveSource && routedSource) {
+        expect(interactiveSource.side, `${edge.id} source handle side drifted from routing`).toBe(routedSource.side)
+      }
+
+      if (interactiveTarget && routedTarget) {
+        expect(interactiveTarget.side, `${edge.id} target handle side drifted from routing`).toBe(routedTarget.side)
+      }
+    }
+  })
+
+  it('upgrades legacy bare-side overrides to routed corridor families', () => {
+    const edgeIds = {
+      F_G1A_reject: { sourceHandle: 'bottom:feedback:0', targetHandle: 'bottom:feedback:0' },
+      F3f_reject: { sourceHandle: 'top:feedback:1', targetHandle: 'bottom:feedback:1' },
+      F_G2_reject: { sourceHandle: 'top:feedback:3', targetHandle: 'bottom:feedback:3' },
+      F3i: { sourceHandle: 'right:ceiling:1', targetHandle: 'top:ceiling:1' },
+      F_M1_H1: { sourceHandle: 'right:monitor:4', targetHandle: 'top:monitor:0' },
+    } as const
+
+    for (const [edgeId, expected] of Object.entries(edgeIds)) {
+      const edge = resolveGraphEdge(edgeId)
+      if (!edge) {
+        throw new Error(`Expected ${edgeId} to exist`)
+      }
+
+      const legacyOverride = {
+        [edgeId]: {
+          sourceHandle: edge.interactive.sourceHandle,
+          targetHandle: edge.interactive.targetHandle,
+        },
+      }
+
+      expect(resolveEdgeHandles(edge, legacyOverride)).toEqual(expected)
     }
   })
 
