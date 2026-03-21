@@ -102,7 +102,7 @@ Place these three blocks in Lane A, stacked vertically from top to bottom:
 **Internal CPC arrow:**  
 `F_CPC_INT:` Block A3 → Block A1  
 Label: *execute verified change*  
-Style: thin solid arrow, entirely within Lane A  
+Style: medium solid arrow, entirely within Lane A  
 (This arrow is optional; include it if space permits; omit if the figure becomes crowded, and explain it in the caption.)
 
 ---
@@ -714,16 +714,16 @@ This is the definitive, ordered list of all arrows in the figure. Use this as a 
 | ID | Source | Target | Label | Style | Note |
 |---|---|---|---|---|---|
 | F5 **[NEW]** | VoR Request Composer | VoR Interface | *VoR request (non-plant-specific)* | **solid bold** | Critical; exclusive write path |
-| F6 **[NEW]** | VoR Interface | CPC Change Handler (A3) | *mapped + verified change instruction* | solid medium | |
+| F6 **[NEW]** | VoR Interface | CPC Change Handler (A3) | *mapped + verified change instruction* | **solid bold** | |
 | F_VoR_ACK **[NEW]** | VoR Interface | VoR Request Composer | *status: accepted\|rejected\|executed\|timeout* | **dashed** | Non-plant-specific feedback |
-| F_CPC_INT (optional) | CPC Change Handler (A3) | CPC System (A1) | *execute verified change* | solid thin | Within Lane A |
+| F_CPC_INT (optional) | CPC Change Handler (A3) | CPC System (A1) | *execute verified change* | solid medium | Within Lane A |
 
 ### Northbound arrows
 
 | ID | Source | Target | Label | Style |
 |---|---|---|---|---|
-| F7a | KPI Publisher | MQTT Broker | *OPC UA PubSub over MQTT* | solid medium |
-| F7b | MQTT Broker | Central Analytics | *subscribe/consume* | solid |
+| F7a | KPI Publisher | MQTT Broker | *OPC UA PubSub over MQTT* | solid thin |
+| F7b | MQTT Broker | Central Analytics | *subscribe/consume* | solid thin |
 | F7_sub (optional) | Central Analytics | MQTT Broker | *subscribe* | dotted |
 
 ### Panel B sequence arrows
@@ -748,9 +748,9 @@ The figure uses five distinct arrow styles. Each style must be used **consistent
 
 | Style | Appearance | Semantic meaning | Arrows using this style |
 |---|---|---|---|
-| **Solid bold** | 1.5 pt solid | Primary, safety-relevant, exclusive path | F5 (VoR write-back initiation) |
-| **Solid medium** | 1.0 pt solid | Standard data flow, in-scope | F_GW1-3, F1, F_R0_out, F3c, F3d, F_G0_out, F3e, F_G1A_pass, F3f, F_T0_obs, F4, F_H1_pass, F6, F7a, F7b, PB_F1-4 |
-| **Solid thin** | 0.5 pt solid | Secondary/supporting data flow | F2, F3a, F3b, F_G0_pol, F3g, F3h, F3i, F_M1_G0/R0/T0/G1A/H1/out, F_KPI, F_AUDIT, F_CPC_INT |
+| **Solid bold** | 1.5 pt solid | Primary, safety-relevant, exclusive write corridor | F5, F6 |
+| **Solid medium** | 1.0 pt solid | Standard data flow, in-scope | F_GW1-3, F1, F3b', F_R0_out, F3c, F3d, F_G0_out, F3e, F_G1A_pass, F3f, F_T0_obs, F4, F_H1_pass, F_CPC_INT, PB_F1-4 |
+| **Solid thin** | 0.5 pt solid | Secondary/supporting data flow and northbound telemetry | F2, F3a, F3b, F_G0_pol, F3g, F3h, F3i, F_M1_G0/R0/T0/G1A/H1/out, F_KPI, F_AUDIT, F7a, F7b |
 | **Dashed** | 1.0 pt dashed (4pt dash, 2pt gap) | Status, feedback, rejection, acknowledgement | F_G1A_reject, F3f_reject, F_G2_reject, F_H1_revalidate, F_H1_reject, F_VoR_ACK, PB_ACK, PB_REJECT |
 | **Dotted** | 0.75 pt dotted | Agent-initiated tool calls; optional subscription | F_T0_req, F_T1, F_T2, F7_sub |
 

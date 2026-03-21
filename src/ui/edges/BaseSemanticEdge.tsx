@@ -61,11 +61,11 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
     }
 
     if (data.dimmed) {
-      return Math.max(strokeWidth - 0.45, 1.2)
+      return Math.max(strokeWidth * 0.7, 0.8)
     }
 
     if (data.supportive && !data.selected && !data.highlighted && !data.groupHighlighted) {
-      return Math.max(strokeWidth - 0.3, 1.25)
+      return Math.max(strokeWidth * 0.82, 0.9)
     }
 
     return strokeWidth

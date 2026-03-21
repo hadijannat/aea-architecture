@@ -513,7 +513,7 @@ const canonicalEdgeRules: Record<(typeof requiredEdgeIds)[number], CanonicalEdge
     source: 'VOI',
     target: 'A3',
     semantic: 'writeback',
-    style: 'medium',
+    style: 'bold',
     direction: 'ltr',
   },
   F_VoR_ACK: {
@@ -527,7 +527,7 @@ const canonicalEdgeRules: Record<(typeof requiredEdgeIds)[number], CanonicalEdge
     source: 'A3',
     target: 'A1',
     semantic: 'writeback',
-    style: 'thin',
+    style: 'medium',
     direction: 'ttb',
     optional: true,
   },
@@ -535,14 +535,14 @@ const canonicalEdgeRules: Record<(typeof requiredEdgeIds)[number], CanonicalEdge
     source: 'ACT2',
     target: 'C1',
     semantic: 'kpi',
-    style: 'medium',
+    style: 'thin',
     direction: 'ltr',
   },
   F7b: {
     source: 'C1',
     target: 'C2',
     semantic: 'kpi',
-    style: 'medium',
+    style: 'thin',
     direction: 'ltr',
   },
   F7_sub: {
@@ -1171,10 +1171,10 @@ export function validateGraphManifest(manifest: GraphManifest): ValidationIssue[
     })
   }
 
-  if (manifest.edges.some((edge) => edge.id !== 'F5' && edge.style === 'bold')) {
+  if (manifest.edges.some((edge) => edge.id !== 'F5' && edge.id !== 'F6' && edge.style === 'bold')) {
     issues.push({
       code: 'multiple-bold-edges',
-      message: 'Only F5 may use the bold edge style',
+      message: 'Only F5 and F6 may use the bold edge style',
     })
   }
 
