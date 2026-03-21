@@ -238,7 +238,7 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     label: 'Writeback',
     stroke: resolveSemanticVisual('writeback').stroke,
     marker: resolveSemanticVisual('writeback').marker,
-    referenceStyle: 'medium',
+    referenceStyle: 'bold',
     icon: 'WR',
   },
   'status-ack': {
@@ -268,7 +268,7 @@ const semanticPresentationMap: Record<EdgeSemantic, SemanticPresentation> = {
     label: 'KPI',
     stroke: resolveSemanticVisual('kpi').stroke,
     marker: resolveSemanticVisual('kpi').marker,
-    referenceStyle: 'medium',
+    referenceStyle: 'thin',
     icon: 'KP',
   },
   subscription: {
@@ -467,15 +467,15 @@ export function edgeStrokeWidth(style: EdgeStyle, semantic?: EdgeSemantic, lod?:
 
   switch (style) {
     case 'bold':
-      return 2.6
+      return 3.0
     case 'medium':
-      return 1.9
+      return 2.0
     case 'dashed':
-      return 1.7
+      return 1.4
     case 'dotted':
-      return 1.5
+      return 1.1
     case 'thin':
     default:
-      return 1.35
+      return 1.0
   }
 }
