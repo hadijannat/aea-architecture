@@ -2082,16 +2082,16 @@
 }
 
 .semantic-edge.is-dimmed {
-  opacity: 0.28;
+  opacity: 0.18;
 }
 
 .edge-label.is-dimmed {
-  opacity: 0.28;
+  opacity: 0.18;
 }
 
 .semantic-edge.is-supportive:not(.is-dimmed):not(.is-selected):not(.is-highlighted):not(.is-group-highlighted):not(.is-shared-tag-focused),
 .edge-label.is-supportive:not(.is-dimmed):not(.is-selected):not(.is-highlighted):not(.is-group-highlighted):not(.is-shared-tag-focused) {
-  opacity: 0.62;
+  opacity: 0.48;
 }
 
 .semantic-edge-family--telemetry:not(.is-optional):not(.is-supportive):not(.is-dimmed):not(.is-selected):not(.is-highlighted):not(.is-shared-tag-focused) .react-flow__edge-path,
@@ -2126,7 +2126,7 @@
 .edge-label--subscription.is-dimmed,
 .edge-label--audit.is-dimmed,
 .edge-label--sequence.is-dimmed {
-  opacity: 0.46;
+  opacity: 0.30;
 }
 
 .semantic-edge.is-optional:not(.is-dimmed):not(.is-highlighted):not(.is-selected),

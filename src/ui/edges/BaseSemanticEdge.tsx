@@ -18,7 +18,7 @@ import { resolveSemanticVisual } from '@/graph/compile/visualSystem'
 
 function bridgePath(
   bridge: NonNullable<NonNullable<DiagramFlowEdge['data']>['route']['bridges']>[number],
-  radius = 7,
+  radius = 9,
 ) {
   if (bridge.orientation === 'horizontal') {
     return `M ${bridge.x - radius} ${bridge.y} Q ${bridge.x} ${bridge.y - radius} ${bridge.x + radius} ${bridge.y}`
@@ -61,11 +61,17 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
     }
 
     if (data.dimmed) {
-      return Math.max(strokeWidth * 0.7, 0.8)
+      return Math.max(strokeWidth * 0.55, 0.7)
     }
 
     if (data.supportive && !data.selected && !data.highlighted && !data.groupHighlighted) {
-      return Math.max(strokeWidth * 0.82, 0.9)
+      return Math.max(strokeWidth * 0.68, 0.8)
+    }
+
+    const noActiveSelection = !data.selected && !data.highlighted && !data.groupHighlighted && !data.dimmed
+    const isPrimaryFlow = data.spec.tags.includes('write-path') || data.spec.tags.includes('policy-path')
+    if (noActiveSelection && isPrimaryFlow && !data.supportive) {
+      return strokeWidth * 1.15
     }
 
     return strokeWidth

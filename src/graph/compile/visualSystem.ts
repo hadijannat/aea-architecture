@@ -395,7 +395,13 @@ export function resolveEdgeLabelMode(
   }
 
   if (lod === 'navigation') {
-    return activeEdge ? 'chip' : 'hidden'
+    if (activeEdge) {
+      return 'chip'
+    }
+    if (localNeighborhood) {
+      return 'chip'
+    }
+    return 'hidden'
   }
 
   if (activeEdge) {
@@ -406,7 +412,7 @@ export function resolveEdgeLabelMode(
     return 'chip'
   }
 
-  return 'hidden'
+  return 'chip'
 }
 
 export function resolveSemanticVisual(semantic: EdgeSemantic): SemanticVisualTokens {
