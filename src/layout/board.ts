@@ -160,7 +160,7 @@ function findTapSegmentIndex(points: Point[], axis: 'horizontal' | 'vertical'): 
   return findLongestSegmentIndex(points, axis)
 }
 
-function routeStub(anchor: Point, handle: HandleId, distance = 12): Point {
+function routeStub(anchor: Point, handle: HandleId, distance = 18): Point {
   const parsed = parseHandleId(handle)
   if (!parsed) {
     return anchor
@@ -183,7 +183,7 @@ function corridorTrackOffset(priority = 0) {
     return 0
   }
 
-  const magnitude = Math.ceil(priority / 2) * 22
+  const magnitude = Math.ceil(priority / 2) * 28
   return priority % 2 === 1 ? -magnitude : magnitude
 }
 
@@ -192,11 +192,11 @@ function corridorBranchDistance(offset: number) {
 }
 
 function ceilingCorridorOffset(priority = 0) {
-  return -priority * 18
+  return -priority * 24
 }
 
 function feedbackCorridorOffset(priority = 0) {
-  return priority * 28
+  return priority * 34
 }
 
 function routeViaHorizontalCorridor(
@@ -538,7 +538,7 @@ export function buildBoardEdgeRoute(
     const routedPoints = buildCorridorPoints(edge, source, target, channels, handles)
     if (routedPoints) {
       return {
-        path: smoothOrthogonalPath(routedPoints, 22),
+        path: smoothOrthogonalPath(routedPoints, 20),
         points: routedPoints,
         label: buildLabel(edge, routedPoints, channels, handles),
         bridges: [],
@@ -768,7 +768,7 @@ export function buildBoardEdgeRoute(
 
   const compactedPoints = compactOrthogonalPoints(points)
   return {
-    path: smoothOrthogonalPath(compactedPoints, 22),
+    path: smoothOrthogonalPath(compactedPoints, 20),
     points: compactedPoints,
     label: buildLabel(edge, compactedPoints, channels, handles),
     bridges: [],

@@ -149,23 +149,23 @@ describe('resolveEdgeLabelMode', () => {
     expect(resolveEdgeLabelMode(0.49, edgeState({ localNeighborhood: true }))).toBe('hidden')
   })
 
-  it('shows chips only for active edges at navigation zoom', () => {
+  it('shows chips for active and local-neighborhood edges at navigation zoom', () => {
     expect(resolveEdgeLabelMode(0.8, edgeState({ selected: true }))).toBe('chip')
     expect(resolveEdgeLabelMode(1.0, edgeState({ hovered: true }))).toBe('chip')
     expect(resolveEdgeLabelMode(1.0, edgeState({ highlighted: true }))).toBe('chip')
     expect(resolveEdgeLabelMode(1.0, edgeState({ searchMatched: true }))).toBe('chip')
     expect(resolveEdgeLabelMode(1.0, edgeState())).toBe('hidden')
-    expect(resolveEdgeLabelMode(1.0, edgeState({ localNeighborhood: true }))).toBe('hidden')
+    expect(resolveEdgeLabelMode(1.0, edgeState({ localNeighborhood: true }))).toBe('chip')
   })
 
-  it('shows detail labels for active edges and local-neighborhood chips at detail zoom', () => {
+  it('shows detail labels for active edges, chips for all others at detail zoom', () => {
     const detailZoom = canvasLodThresholds.detail // 1.4
     expect(resolveEdgeLabelMode(detailZoom, edgeState({ selected: true }))).toBe('detail')
     expect(resolveEdgeLabelMode(detailZoom, edgeState({ hovered: true }))).toBe('detail')
     expect(resolveEdgeLabelMode(detailZoom, edgeState({ highlighted: true }))).toBe('detail')
     expect(resolveEdgeLabelMode(detailZoom, edgeState({ searchMatched: true }))).toBe('detail')
     expect(resolveEdgeLabelMode(detailZoom, edgeState({ localNeighborhood: true }))).toBe('chip')
-    expect(resolveEdgeLabelMode(1.5, edgeState())).toBe('hidden')
+    expect(resolveEdgeLabelMode(1.5, edgeState())).toBe('chip')
   })
 })
 

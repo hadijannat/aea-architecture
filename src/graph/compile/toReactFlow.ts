@@ -24,6 +24,7 @@ import {
   resolveEdgeLabelMode,
   resolveNodeRenderMode,
   resolveCanvasLod,
+  type CanvasLod,
 } from './visualSystem'
 
 export interface BreadcrumbItem {
@@ -222,6 +223,25 @@ function edgeSupportiveByDefault(edge: EdgeSpec) {
   }
 
   return new Set(['status-ack', 'rejection', 'tool-call', 'subscription', 'audit', 'kpi']).has(edge.semantic)
+}
+
+function isLodHidden(
+  lod: CanvasLod,
+  supportive: boolean,
+  selected: boolean,
+  highlighted: boolean,
+  groupHighlighted: boolean,
+  hovered: boolean,
+): boolean {
+  if (selected || highlighted || groupHighlighted || hovered) {
+    return false
+  }
+
+  if (lod === 'overview') {
+    return supportive
+  }
+
+  return false
 }
 
 function buildBreadcrumbs(state: DiagramStore, manifest: GraphManifest): BreadcrumbItem[] {
@@ -707,7 +727,8 @@ export function compileArchitectureEdges(
         target: edge.target,
         sourceHandle,
         targetHandle,
-        hidden: !derivedState.visibleEdgeIds.has(edge.id),
+        hidden: !derivedState.visibleEdgeIds.has(edge.id)
+          || isLodHidden(canvasLod, supportive, selected, highlighted, groupHighlighted, hovered),
         selectable: true,
         focusable: true,
         ariaLabel: buildEdgeAriaLabel(edge, manifest),

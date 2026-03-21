@@ -212,7 +212,7 @@
         "cpc"
       ],
       "width": 380,
-      "height": 1900,
+      "height": 1952,
       "fixed": true,
       "visual": {
         "fill": "#FFF7ED",
@@ -263,7 +263,7 @@
         "psmo"
       ],
       "width": 1480,
-      "height": 1900,
+      "height": 1952,
       "fixed": true,
       "visual": {
         "fill": "#EFF6FF",
@@ -315,7 +315,7 @@
         "telemetry-path"
       ],
       "width": 380,
-      "height": 1900,
+      "height": 1952,
       "fixed": true,
       "visual": {
         "fill": "#F0FDF4",
@@ -362,7 +362,7 @@
         "boundary"
       ],
       "width": 172,
-      "height": 1380,
+      "height": 1432,
       "fixed": true,
       "visual": {
         "fill": "#F8FBFF",
@@ -422,7 +422,7 @@
         "container"
       ],
       "width": 1340,
-      "height": 1580,
+      "height": 1632,
       "fixed": true,
       "visual": {
         "fill": "#F8FBFF",
@@ -534,7 +534,7 @@
       ],
       "parentId": "AEA",
       "width": 1284,
-      "height": 930,
+      "height": 982,
       "fixed": true,
       "visual": {
         "fill": "#F7F5FF",
@@ -2270,10 +2270,10 @@
       },
       "routing": {
         "corridor": "policy",
-        "sourceHandle": "right:policy:1",
-        "targetHandle": "left:policy:1",
+        "sourceHandle": "right:policy:0",
+        "targetHandle": "left:policy:0",
         "labelPlacement": "segment",
-        "priority": 1
+        "priority": 0
       },
       "inspector": {
         "rationale": "F3b provides soft-grounding policy context, but only after the Retrieval Guard checks provenance, scope, and trust classification.",
@@ -4310,7 +4310,7 @@
   "layoutDefaults": {
     "canvas": {
       "width": 2700,
-      "height": 1960
+      "height": 2012
     },
     "viewport": {
       "x": 18,
@@ -4322,26 +4322,26 @@
         "x": 30,
         "y": 30,
         "width": 380,
-        "height": 1900
+        "height": 1952
       },
       "B": {
         "x": 680,
         "y": 30,
         "width": 1480,
-        "height": 1900
+        "height": 1952
       },
       "C": {
         "x": 2210,
         "y": 30,
         "width": 380,
-        "height": 1900
+        "height": 1952
       }
     },
     "gateway": {
       "x": 460,
       "y": 164,
       "width": 172,
-      "height": 1380,
+      "height": 1432,
       "ne177Height": 520,
       "ne178Height": 350
     },
@@ -4349,10 +4349,10 @@
       "x": 720,
       "y": 152,
       "width": 1340,
-      "height": 1580,
+      "height": 1632,
       "bandHeights": {
         "Sense": 230,
-        "Decide": 930,
+        "Decide": 982,
         "Act": 230
       }
     }

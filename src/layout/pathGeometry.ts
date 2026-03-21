@@ -67,7 +67,7 @@ export function smoothOrthogonalPath(points: Point[], radius = 14): string {
     if (
       incomingLength === 0 ||
       outgoingLength === 0 ||
-      cornerRadius < 0.5 ||
+      cornerRadius < 1.0 ||
       isColinear(previous, current, next)
     ) {
       commands.push(`L ${formatPoint(current)}`)
