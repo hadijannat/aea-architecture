@@ -187,6 +187,15 @@ describe('BaseSemanticEdge', () => {
     expect(screen.getByText('F4 · Await approval')).toBeInTheDocument()
   })
 
+  it('keeps detail-bearing edges compact until selected', () => {
+    renderEdge(ackSpec, { labelMode: 'detail' })
+
+    const label = screen.getByRole('button', { name: 'F_VoR_ACK test edge' })
+    expect(label).toHaveAttribute('data-edge-label-variant', 'compact')
+    expect(label).toHaveTextContent('F_VoR_ACK · Status')
+    expect(label).not.toHaveTextContent('non-plant-specific; no CPC architecture disclosed')
+  })
+
   it('renders canonical detail labels only for the selected edge', () => {
     renderEdge(spec, { labelMode: 'detail', selected: true })
 

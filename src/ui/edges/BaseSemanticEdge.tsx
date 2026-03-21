@@ -130,12 +130,11 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
   const labelMode = data.labelMode
   const displayLabel = data.spec.displayLabel ?? data.spec.label
   const usesCanonicalDetailLabel = labelMode === 'detail' && data.selected
-  const detailText = data.spec.detail ? `${displayLabel} · ${data.spec.detail}` : displayLabel
   const labelText =
     usesCanonicalDetailLabel
       ? `${data.spec.id} · ${data.spec.label}${data.optional ? ' (optional)' : ''}`
       : labelMode === 'detail'
-        ? `${data.spec.id} · ${detailText}${data.optional ? ' (optional)' : ''}`
+        ? `${data.spec.id} · ${displayLabel}${data.optional ? ' (optional)' : ''}`
         : displayLabel
   const labelDetailText = usesCanonicalDetailLabel ? data.spec.detail : undefined
   const labelVariant = usesCanonicalDetailLabel ? 'canonical' : 'compact'
