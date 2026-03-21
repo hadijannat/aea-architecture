@@ -22,6 +22,8 @@ export interface DiagramFilters {
   pathPreset: 'all' | 'write' | 'policy' | 'telemetry'
 }
 
+export const defaultPathPreset: DiagramFilters['pathPreset'] = 'write'
+
 export interface DiagramUiState {
   mode: 'explore' | 'author'
   selectedNodeId?: string
@@ -95,7 +97,7 @@ const initialFilters: DiagramFilters = {
   semanticFamilies: [],
   lanes: [],
   search: '',
-  pathPreset: 'all',
+  pathPreset: defaultPathPreset,
 }
 
 const minPanelBPercent = 28

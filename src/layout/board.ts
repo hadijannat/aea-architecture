@@ -16,10 +16,17 @@ export interface RoutedBoardLabel {
   offset: number
 }
 
+export interface RoutedBoardBridge {
+  x: number
+  y: number
+  orientation: 'horizontal' | 'vertical'
+}
+
 export interface RoutedBoardEdge {
   path: string
   points: Point[]
   label: RoutedBoardLabel
+  bridges?: RoutedBoardBridge[]
 }
 
 export interface BoardRouteHandles {
@@ -161,20 +168,35 @@ function corridorTrackOffset(priority = 0) {
   return priority % 2 === 1 ? -magnitude : magnitude
 }
 
+function corridorBranchDistance(offset: number) {
+  return 26 + Math.round(Math.abs(offset) / 3)
+}
+
 function routeViaHorizontalCorridor(
   source: Point,
   target: Point,
   handles: BoardRouteHandles,
   corridorY: number,
+  priority = 0,
 ) {
   const sourceStub = routeStub(source, handles.sourceHandle)
   const targetStub = routeStub(target, handles.targetHandle)
+  const offset = corridorTrackOffset(priority)
+  const branchY = corridorY + offset
+  const direction = sourceStub.x <= targetStub.x ? 1 : -1
+  const branchDistance = corridorBranchDistance(offset)
+  const sourceJoinX = sourceStub.x + direction * branchDistance
+  const targetJoinX = targetStub.x - direction * branchDistance
 
   return compactOrthogonalPoints([
     source,
     sourceStub,
-    point(sourceStub.x, corridorY),
-    point(targetStub.x, corridorY),
+    point(sourceStub.x, branchY),
+    point(sourceJoinX, branchY),
+    point(sourceJoinX, corridorY),
+    point(targetJoinX, corridorY),
+    point(targetJoinX, branchY),
+    point(targetStub.x, branchY),
     targetStub,
     target,
   ])
@@ -185,15 +207,26 @@ function routeViaVerticalCorridor(
   target: Point,
   handles: BoardRouteHandles,
   corridorX: number,
+  priority = 0,
 ) {
   const sourceStub = routeStub(source, handles.sourceHandle)
   const targetStub = routeStub(target, handles.targetHandle)
+  const offset = corridorTrackOffset(priority)
+  const branchX = corridorX + offset
+  const direction = sourceStub.y <= targetStub.y ? 1 : -1
+  const branchDistance = corridorBranchDistance(offset)
+  const sourceJoinY = sourceStub.y + direction * branchDistance
+  const targetJoinY = targetStub.y - direction * branchDistance
 
   return compactOrthogonalPoints([
     source,
     sourceStub,
-    point(corridorX, sourceStub.y),
-    point(corridorX, targetStub.y),
+    point(branchX, sourceStub.y),
+    point(branchX, sourceJoinY),
+    point(corridorX, sourceJoinY),
+    point(corridorX, targetJoinY),
+    point(branchX, targetJoinY),
+    point(branchX, targetStub.y),
     targetStub,
     target,
   ])
@@ -238,29 +271,28 @@ function buildCorridorPoints(
     return null
   }
 
-  const offset = corridorTrackOffset(edge.routing.priority)
-
   switch (edge.routing.corridor) {
     case 'gateway':
       if (edge.id === 'F_GW2' || edge.id === 'F_GW3') {
         return compactOrthogonalPoints([source, target])
       }
-      return routeViaVerticalCorridor(source, target, handles, channels.gatewayApproachX + offset)
+      return routeViaVerticalCorridor(source, target, handles, channels.gatewayApproachX, edge.routing.priority)
     case 'policy':
-      return routeViaHorizontalCorridor(source, target, handles, channels.policyY + offset)
+      return routeViaHorizontalCorridor(source, target, handles, channels.policyY, edge.routing.priority)
     case 'runtime':
-      return routeViaHorizontalCorridor(source, target, handles, channels.contextY + offset)
+      return routeViaHorizontalCorridor(source, target, handles, channels.contextY, edge.routing.priority)
     case 'validation':
       return routeViaHorizontalCorridor(
         source,
         target,
         handles,
-        (edge.source === 'DEC_G2' ? channels.validationY : channels.decideRow12GapY) + offset,
+        edge.source === 'DEC_G2' ? channels.validationY : channels.decideRow12GapY,
+        edge.routing.priority,
       )
     case 'writeback':
-      return routeViaHorizontalCorridor(source, target, handles, channels.writeY + offset)
+      return routeViaHorizontalCorridor(source, target, handles, channels.writeY, edge.routing.priority)
     case 'ack':
-      return routeViaHorizontalCorridor(source, target, handles, channels.ackY + offset)
+      return routeViaHorizontalCorridor(source, target, handles, channels.ackY, edge.routing.priority)
     default:
       return null
   }
@@ -382,6 +414,7 @@ export function buildBoardEdgeRoute(
         path: smoothOrthogonalPath(routedPoints, 22),
         points: routedPoints,
         label: buildLabel(edge, routedPoints, channels, handles),
+        bridges: [],
       }
     }
   }
@@ -684,5 +717,171 @@ export function buildBoardEdgeRoute(
     path: smoothOrthogonalPath(compactedPoints, 22),
     points: compactedPoints,
     label: buildLabel(edge, compactedPoints, channels, handles),
+    bridges: [],
   }
+}
+
+interface RoutedSegment {
+  start: Point
+  end: Point
+  orientation: 'horizontal' | 'vertical'
+}
+
+function toSegments(points: Point[]): RoutedSegment[] {
+  const segments: RoutedSegment[] = []
+
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const start = points[index]
+    const end = points[index + 1]
+
+    if (start.x === end.x && start.y !== end.y) {
+      segments.push({ start, end, orientation: 'vertical' })
+    } else if (start.y === end.y && start.x !== end.x) {
+      segments.push({ start, end, orientation: 'horizontal' })
+    }
+  }
+
+  return segments
+}
+
+function rangeContainsInterior(value: number, first: number, second: number, clearance = 10) {
+  const min = Math.min(first, second) + clearance
+  const max = Math.max(first, second) - clearance
+  return value > min && value < max
+}
+
+function bridgePriority(edge: EdgeSpec) {
+  if (edge.interactive.optional) {
+    return 10
+  }
+
+  switch (edge.routing?.corridor) {
+    case 'writeback':
+      return 500
+    case 'validation':
+      return 420
+    case 'policy':
+      return 340
+    case 'runtime':
+      return 240
+    case 'gateway':
+      return 220
+    case 'ack':
+      return 120
+    default:
+      break
+  }
+
+  switch (edge.semantic) {
+    case 'writeback':
+      return 520
+    case 'validation':
+      return 430
+    case 'policy-hard':
+      return 360
+    case 'policy-soft':
+      return 320
+    case 'status-ack':
+      return 110
+    case 'rejection':
+      return 90
+    case 'tool-call':
+      return 80
+    case 'kpi':
+    case 'audit':
+    case 'subscription':
+      return 70
+    default:
+      return 200
+  }
+}
+
+function chooseBridgeEdge(left: EdgeSpec, right: EdgeSpec) {
+  const leftPriority = bridgePriority(left)
+  const rightPriority = bridgePriority(right)
+
+  if (leftPriority === rightPriority) {
+    return left.id > right.id ? left : right
+  }
+
+  return leftPriority < rightPriority ? left : right
+}
+
+function segmentsCross(left: RoutedSegment, right: RoutedSegment) {
+  const horizontal = left.orientation === 'horizontal' ? left : right.orientation === 'horizontal' ? right : null
+  const vertical = left.orientation === 'vertical' ? left : right.orientation === 'vertical' ? right : null
+
+  if (!horizontal || !vertical) {
+    return null
+  }
+
+  const x = vertical.start.x
+  const y = horizontal.start.y
+  if (
+    !rangeContainsInterior(x, horizontal.start.x, horizontal.end.x) ||
+    !rangeContainsInterior(y, vertical.start.y, vertical.end.y)
+  ) {
+    return null
+  }
+
+  return {
+    x,
+    y,
+    horizontal,
+    vertical,
+  }
+}
+
+function hasSharedEndpoint(left: EdgeSpec, right: EdgeSpec) {
+  return (
+    left.source === right.source ||
+    left.source === right.target ||
+    left.target === right.source ||
+    left.target === right.target
+  )
+}
+
+export function assignBoardRouteBridges(routes: Array<{ edge: EdgeSpec; route: RoutedBoardEdge }>) {
+  const bridges = new Map<string, RoutedBoardBridge[]>()
+
+  for (let index = 0; index < routes.length; index += 1) {
+    for (let otherIndex = index + 1; otherIndex < routes.length; otherIndex += 1) {
+      const left = routes[index]
+      const right = routes[otherIndex]
+
+      if (hasSharedEndpoint(left.edge, right.edge)) {
+        continue
+      }
+
+      const leftSegments = toSegments(left.route.points)
+      const rightSegments = toSegments(right.route.points)
+
+      for (const leftSegment of leftSegments) {
+        for (const rightSegment of rightSegments) {
+          const crossing = segmentsCross(leftSegment, rightSegment)
+          if (!crossing) {
+            continue
+          }
+
+          const bridgeEdge = chooseBridgeEdge(left.edge, right.edge)
+          const bridgeSegment = bridgeEdge.id === left.edge.id
+            ? leftSegment
+            : rightSegment
+          const existing = bridges.get(bridgeEdge.id) ?? []
+          if (existing.some((bridge) => bridge.orientation === bridgeSegment.orientation && Math.abs(bridge.x - crossing.x) < 16 && Math.abs(bridge.y - crossing.y) < 16)) {
+            continue
+          }
+
+          existing.push({
+            x: crossing.x,
+            y: crossing.y,
+            orientation: bridgeSegment.orientation,
+          })
+          bridges.set(bridgeEdge.id, existing)
+        }
+      }
+    }
+  }
+
+  return bridges
 }

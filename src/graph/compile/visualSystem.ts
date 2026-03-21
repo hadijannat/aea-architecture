@@ -11,6 +11,14 @@ import type {
 export type CanvasLod = 'overview' | 'navigation' | 'detail'
 export type NodeRenderMode = 'icon' | 'navigation' | 'detail' | 'collapsed'
 export type EdgeLabelMode = 'hidden' | 'chip' | 'detail'
+export interface EdgeLabelState {
+  selected: boolean
+  hovered: boolean
+  highlighted: boolean
+  searchMatched: boolean
+  localNeighborhood: boolean
+  exportMode?: boolean
+}
 
 export interface LaneVisualTokens {
   fill: string
@@ -366,23 +374,39 @@ export function resolveNodeRenderMode(
 
 export function resolveEdgeLabelMode(
   zoom: number,
-  selected: boolean,
-  highlighted: boolean,
-  exportMode = false,
+  {
+    selected,
+    hovered,
+    highlighted,
+    searchMatched,
+    localNeighborhood,
+    exportMode = false,
+  }: EdgeLabelState,
 ): EdgeLabelMode {
   if (exportMode) {
     return 'detail'
   }
 
-  if (zoom < 0.8) {
+  const lod = resolveCanvasLod(zoom)
+  const activeEdge = selected || hovered || highlighted || searchMatched
+
+  if (lod === 'overview') {
     return 'hidden'
   }
 
-  if (zoom >= canvasLodThresholds.detail && (selected || highlighted)) {
+  if (lod === 'navigation') {
+    return activeEdge ? 'chip' : 'hidden'
+  }
+
+  if (activeEdge) {
     return 'detail'
   }
 
-  return 'chip'
+  if (localNeighborhood) {
+    return 'chip'
+  }
+
+  return 'hidden'
 }
 
 export function resolveSemanticVisual(semantic: EdgeSemantic): SemanticVisualTokens {
@@ -446,4 +470,3 @@ export function hexToRgba(hex: string, alpha: number): string {
   const [r, g, b] = [0, 2, 4].map((index) => Number.parseInt(value.slice(index, index + 2), 16))
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
-

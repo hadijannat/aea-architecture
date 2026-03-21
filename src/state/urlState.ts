@@ -4,7 +4,7 @@ import {
 } from '@/graph/compile/semanticPresentation'
 import type { ClaimId, EdgeSemantic, LaneId } from '@/graph/spec/schema'
 
-import type { DiagramFilters, DiagramUiState } from './diagramStore'
+import { defaultPathPreset, type DiagramFilters, type DiagramUiState } from './diagramStore'
 
 const validPathPresets = new Set<DiagramFilters['pathPreset']>(['all', 'write', 'policy', 'telemetry'])
 const validLanes = new Set<LaneId>(['A', 'B', 'C'])
@@ -16,7 +16,7 @@ function parseSearchParamList(value: string | null) {
 function parsePathPreset(value: string | null): DiagramFilters['pathPreset'] {
   return value && validPathPresets.has(value as DiagramFilters['pathPreset'])
     ? (value as DiagramFilters['pathPreset'])
-    : 'all'
+    : defaultPathPreset
 }
 
 function parseLanes(value: string | null): LaneId[] {
@@ -79,7 +79,7 @@ export function buildUiSearchParams(ui: Pick<DiagramUiState, 'selectedNodeId' | 
   if (ui.filters.search) {
     params.set('search', ui.filters.search)
   }
-  if (ui.filters.pathPreset !== 'all') {
+  if (ui.filters.pathPreset !== defaultPathPreset) {
     params.set('path', ui.filters.pathPreset)
   }
 

@@ -16,7 +16,8 @@ import {
 } from '@/graph/spec/manifest'
 import type { ClaimId, EdgeSpec, EntityKey, GraphManifest, NodeSpec } from '@/graph/spec/schema'
 import { compareHandleIds, resolveEdgeHandles, type HandleId } from '@/layout/ports'
-import { buildBoardGeometryFromPositions } from '@/layout/boardGeometry'
+import { buildBoardGeometryFromPositions, buildBoardEdgeRouteFromPositions } from '@/layout/boardGeometry'
+import { assignBoardRouteBridges } from '@/layout/board'
 import type { DiagramStore } from '@/state/diagramStore'
 import {
   resolveClaimDotColor,
@@ -63,6 +64,7 @@ export interface CompiledNodeData extends Record<string, unknown> {
 export interface CompiledEdgeData extends Record<string, unknown> {
   spec: EdgeSpec
   routeChannels: ReturnType<typeof buildBoardGeometryFromPositions>['routeChannels']
+  route: ReturnType<typeof buildBoardEdgeRouteFromPositions>
   ariaLabel: string
   sourceTitle: string
   targetTitle: string
@@ -70,9 +72,14 @@ export interface CompiledEdgeData extends Record<string, unknown> {
   claims: ReturnType<typeof getClaimsForSpec>
   optional: boolean
   selected: boolean
+  hovered: boolean
+  searchMatched: boolean
+  localNeighborhood: boolean
   highlighted: boolean
   groupHighlighted: boolean
   dimmed: boolean
+  supportive: boolean
+  narrativeMatched: boolean
   sharedTagFocused: boolean
   highlightGroup?: string
   canvasLod: ReturnType<typeof resolveCanvasLod>
@@ -146,9 +153,6 @@ function nodeMatchesFilters(node: NodeSpec, state: DiagramStore, manifest: Graph
   ) {
     return false
   }
-  if (!includesPathTag(node.tags, filters.pathPreset)) {
-    return false
-  }
 
   return matchesSearch(filters.search, [
     node.id,
@@ -163,8 +167,6 @@ function nodeMatchesFilters(node: NodeSpec, state: DiagramStore, manifest: Graph
 
 function edgeMatchesFilters(edge: EdgeSpec, state: DiagramStore, manifest: GraphManifest): boolean {
   const { filters } = state.ui
-  const standards = getStandardsForSpec(edge.standardIds, manifest)
-  const claims = getClaimsForSpec(edge.claimIds, manifest)
 
   if (filters.claims.length > 0 && !filters.claims.some((claimId) => edge.claimIds.includes(claimId))) {
     return false
@@ -178,13 +180,17 @@ function edgeMatchesFilters(edge: EdgeSpec, state: DiagramStore, manifest: Graph
   if (!matchesSemanticFamilies(edge.semantic, filters.semanticFamilies)) {
     return false
   }
-  if (!includesPathTag(edge.tags, filters.pathPreset)) {
-    return false
-  }
 
+  return edgeMatchesSearchQuery(edge, filters.search, manifest)
+}
+
+function edgeMatchesSearchQuery(edge: EdgeSpec, query: string, manifest: GraphManifest): boolean {
+  const standards = getStandardsForSpec(edge.standardIds, manifest)
+  const claims = getClaimsForSpec(edge.claimIds, manifest)
   const source = resolveGraphNode(edge.source)?.title ?? edge.source
   const target = resolveGraphNode(edge.target)?.title ?? edge.target
-  return matchesSearch(filters.search, [
+
+  return matchesSearch(query, [
     edge.id,
     edge.label,
     edge.detail ?? '',
@@ -195,6 +201,27 @@ function edgeMatchesFilters(edge: EdgeSpec, state: DiagramStore, manifest: Graph
     ...standards.map((item) => item.label),
     ...claims.map((item) => item.label),
   ])
+}
+
+function sharesEndpoint(left: EdgeSpec, right: EdgeSpec) {
+  return (
+    left.source === right.source ||
+    left.source === right.target ||
+    left.target === right.source ||
+    left.target === right.target
+  )
+}
+
+function edgeMatchesNarrativePreset(edge: EdgeSpec, preset: DiagramStore['ui']['filters']['pathPreset']) {
+  return preset === 'all' || includesPathTag(edge.tags, preset)
+}
+
+function edgeSupportiveByDefault(edge: EdgeSpec) {
+  if (edge.interactive.optional) {
+    return true
+  }
+
+  return new Set(['status-ack', 'rejection', 'tool-call', 'subscription', 'audit', 'kpi']).has(edge.semantic)
 }
 
 function buildBreadcrumbs(state: DiagramStore, manifest: GraphManifest): BreadcrumbItem[] {
@@ -420,8 +447,7 @@ export function deriveDiagramState(state: DiagramStore, manifest: GraphManifest 
     state.ui.filters.standards.length > 0 ||
     state.ui.filters.semanticFamilies.length > 0 ||
     state.ui.filters.lanes.length > 0 ||
-    state.ui.filters.search.length > 0 ||
-    state.ui.filters.pathPreset !== 'all'
+    state.ui.filters.search.length > 0
 
   if (!hasActiveFilters) {
     manifest.nodes.forEach((node) => visibleNodeIds.add(node.id))
@@ -593,7 +619,30 @@ export function compileArchitectureEdges(
   derivedState: DerivedDiagramState,
   manifest: GraphManifest = graphManifest,
 ): DiagramFlowEdge[] {
+  if (!state.layout.ready) {
+    return []
+  }
+
   const routeChannels = buildBoardGeometryFromPositions(state.layout.positions, manifest).routeChannels
+  const selectedEdge = state.ui.selectedEdgeId ? resolveGraphEdge(state.ui.selectedEdgeId) : undefined
+  const hoveredEdgeId = state.ui.hoveredEntityKey?.startsWith('edge:')
+    ? state.ui.hoveredEntityKey.replace('edge:', '')
+    : undefined
+  const hoveredEdge = hoveredEdgeId ? resolveGraphEdge(hoveredEdgeId) : undefined
+  const selectedNodeId = state.ui.selectedNodeId
+  const hoveredNodeId = state.ui.hoveredEntityKey?.startsWith('node:')
+    ? state.ui.hoveredEntityKey.replace('node:', '')
+    : undefined
+  const selectedStep = state.ui.selectedStepId ? resolveSequenceStep(state.ui.selectedStepId) : undefined
+  const hoveredStepId = state.ui.hoveredEntityKey?.startsWith('step:')
+    ? state.ui.hoveredEntityKey.replace('step:', '')
+    : undefined
+  const hoveredStep = hoveredStepId ? resolveSequenceStep(hoveredStepId) : undefined
+  const explicitlyHighlightedEdgeKeys = new Set(
+    state.ui.highlightedEntityKeys
+      .filter((key) => key.startsWith('edge:'))
+      .map((key) => key.replace('edge:', '')),
+  )
   const sharedT0FocusActive = [...derivedState.highlightedEdgeIds].some((edgeId) => {
     const highlightedEdge = resolveGraphEdge(edgeId)
     return highlightedEdge?.panel.includes('architecture') && highlightedEdge.tags.includes('t0')
@@ -604,22 +653,52 @@ export function compileArchitectureEdges(
       .map((edgeId) => resolveGraphEdge(edgeId)?.interactive.highlightGroup)
       .filter((group): group is string => Boolean(group)),
   )
+  const hasHighlights =
+    derivedState.highlightedNodeIds.size > 0 ||
+    derivedState.highlightedEdgeIds.size > 0 ||
+    derivedState.highlightedStepIds.size > 0
 
-  return manifest.edges
+  const compiledEdges = manifest.edges
     .filter((edge) => edge.panel.includes('architecture'))
     .map((edge) => {
       const { sourceHandle, targetHandle } = resolveEdgeHandles(edge, state.projection.edgeHandles)
+      const searchMatched = state.ui.filters.search.length > 0 && edgeMatchesSearchQuery(edge, state.ui.filters.search, manifest)
+      const hovered = hoveredEdgeId === edge.id
+      const explicitlyHighlighted = explicitlyHighlightedEdgeKeys.has(edge.id)
       const highlighted = derivedState.highlightedEdgeIds.has(edge.id)
       const groupHighlighted =
         !highlighted &&
         typeof edge.interactive.highlightGroup === 'string' &&
         activeHighlightGroups.has(edge.interactive.highlightGroup)
-      const hasHighlights =
-        derivedState.highlightedNodeIds.size > 0 ||
-        derivedState.highlightedEdgeIds.size > 0 ||
-        derivedState.highlightedStepIds.size > 0
+      const activePath =
+        explicitlyHighlighted ||
+        groupHighlighted ||
+        (selectedStep?.linkedEdgeIds.includes(edge.id) ?? false)
+      const localNeighborhood =
+        !activePath &&
+        (
+          (selectedNodeId ? edge.source === selectedNodeId || edge.target === selectedNodeId : false) ||
+          (hoveredNodeId ? edge.source === hoveredNodeId || edge.target === hoveredNodeId : false) ||
+          (selectedEdge ? edge.id !== selectedEdge.id && sharesEndpoint(edge, selectedEdge) : false) ||
+          (hoveredEdge ? edge.id !== hoveredEdge.id && sharesEndpoint(edge, hoveredEdge) : false) ||
+          (hoveredStep?.linkedEdgeIds.includes(edge.id) ?? false)
+        )
       const selected = state.ui.selectedEdgeId === edge.id
-      const labelMode = resolveEdgeLabelMode(state.ui.viewport.zoom, selected, highlighted || groupHighlighted)
+      const narrativeMatched = edgeMatchesNarrativePreset(edge, state.ui.filters.pathPreset)
+      const supportive = edgeSupportiveByDefault(edge)
+      const labelMode = resolveEdgeLabelMode(state.ui.viewport.zoom, {
+        selected,
+        hovered,
+        highlighted: activePath,
+        searchMatched,
+        localNeighborhood,
+      })
+      const route = buildBoardEdgeRouteFromPositions(
+        edge,
+        state.layout.positions,
+        manifest,
+        { sourceHandle, targetHandle },
+      )
 
       return {
         id: edge.id,
@@ -640,6 +719,7 @@ export function compileArchitectureEdges(
         data: {
           spec: edge,
           routeChannels,
+          route,
           ariaLabel: buildEdgeAriaLabel(edge, manifest),
           sourceTitle: resolveGraphNode(edge.source)?.title ?? edge.source,
           targetTitle: resolveGraphNode(edge.target)?.title ?? edge.target,
@@ -647,9 +727,14 @@ export function compileArchitectureEdges(
           claims: getClaimsForSpec(edge.claimIds, manifest),
           optional: edge.interactive.optional,
           selected,
+          hovered,
+          searchMatched,
+          localNeighborhood,
           highlighted,
           groupHighlighted,
-          dimmed: hasHighlights && !highlighted && !groupHighlighted,
+          dimmed: hasHighlights ? !highlighted && !groupHighlighted : state.ui.filters.pathPreset !== 'all' && !narrativeMatched,
+          supportive,
+          narrativeMatched,
           sharedTagFocused: sharedT0FocusActive && edge.tags.includes('t0'),
           highlightGroup: edge.interactive.highlightGroup,
           canvasLod,
@@ -660,4 +745,24 @@ export function compileArchitectureEdges(
         },
       }
     })
+
+  const routeBridgeMap = assignBoardRouteBridges(
+    compiledEdges
+      .filter((edge) => !edge.hidden)
+      .map((edge) => ({
+        edge: edge.data.spec,
+        route: edge.data.route,
+      })),
+  )
+
+  return compiledEdges.map((edge) => ({
+    ...edge,
+    data: {
+      ...edge.data,
+      route: {
+        ...edge.data.route,
+        bridges: routeBridgeMap.get(edge.id) ?? [],
+      },
+    },
+  }))
 }

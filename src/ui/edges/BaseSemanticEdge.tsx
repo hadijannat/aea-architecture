@@ -3,7 +3,6 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   type EdgeProps,
-  useViewport,
 } from '@xyflow/react'
 import clsx from 'clsx'
 
@@ -14,8 +13,19 @@ import {
 } from '@/graph/compile/semanticPresentation'
 import type { DiagramFlowEdge } from '@/graph/compile/toReactFlow'
 import { edgeEntityKey } from '@/graph/spec/manifest'
-import { buildBoardEdgeRoute, resolveBoardLabelPosition } from '@/layout/board'
-import { resolveEdgeLabelMode, resolveSemanticVisual } from '@/graph/compile/visualSystem'
+import { resolveBoardLabelPosition } from '@/layout/board'
+import { resolveSemanticVisual } from '@/graph/compile/visualSystem'
+
+function bridgePath(
+  bridge: NonNullable<NonNullable<DiagramFlowEdge['data']>['route']['bridges']>[number],
+  radius = 7,
+) {
+  if (bridge.orientation === 'horizontal') {
+    return `M ${bridge.x - radius} ${bridge.y} Q ${bridge.x} ${bridge.y - radius} ${bridge.x + radius} ${bridge.y}`
+  }
+
+  return `M ${bridge.x} ${bridge.y - radius} Q ${bridge.x + radius} ${bridge.y} ${bridge.x} ${bridge.y + radius}`
+}
 
 export const BaseSemanticEdge = memo(function BaseSemanticEdge({
   id,
@@ -25,24 +35,12 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
   targetX,
   targetY,
 }: EdgeProps<DiagramFlowEdge>) {
-  const { zoom } = useViewport()
+  void sourceX
+  void sourceY
+  void targetX
+  void targetY
 
-  const route = useMemo(
-    () =>
-      data
-        ? buildBoardEdgeRoute(
-            data.spec,
-            { x: sourceX, y: sourceY },
-            { x: targetX, y: targetY },
-            data.routeChannels,
-            {
-              sourceHandle: data.sourceHandle,
-              targetHandle: data.targetHandle,
-            },
-          )
-        : null,
-    [data, sourceX, sourceY, targetX, targetY],
-  )
+  const route = data?.route ?? null
   const edgePath = route?.path ?? ''
   const labelPosition = useMemo(() => route ? resolveBoardLabelPosition(route.label) : { x: 0, y: 0 }, [route])
   const edgePoints = useMemo(
@@ -57,6 +55,21 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
     () => data && presentation ? edgeStrokeWidth(data.spec.style, data.spec.semantic, data.canvasLod) : 0,
     [data, presentation],
   )
+  const effectiveStrokeWidth = useMemo(() => {
+    if (!data) {
+      return 0
+    }
+
+    if (data.dimmed) {
+      return Math.max(strokeWidth - 0.45, 1.2)
+    }
+
+    if (data.supportive && !data.selected && !data.highlighted && !data.groupHighlighted) {
+      return Math.max(strokeWidth - 0.3, 1.25)
+    }
+
+    return strokeWidth
+  }, [data, strokeWidth])
   const strokeDasharray = useMemo(
     () => data ? getSemanticStrokeDash(data.spec.semantic, data.spec.style) : undefined,
     [data],
@@ -64,20 +77,20 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
 
   const haloStyle = useMemo<CSSProperties>(() => ({
     stroke: visual?.halo,
-    strokeWidth: strokeWidth + 2.4,
+    strokeWidth: effectiveStrokeWidth + 2.4,
     strokeLinecap: 'round',
     strokeLinejoin: 'round',
     vectorEffect: 'non-scaling-stroke',
-  }), [visual?.halo, strokeWidth])
+  }), [effectiveStrokeWidth, visual?.halo])
 
   const strokeStyle = useMemo<CSSProperties>(() => ({
     stroke: presentation?.stroke,
-    strokeWidth,
+    strokeWidth: effectiveStrokeWidth,
     strokeDasharray,
     strokeLinecap: 'round',
     strokeLinejoin: 'round',
     vectorEffect: 'non-scaling-stroke',
-  }), [presentation?.stroke, strokeWidth, strokeDasharray])
+  }), [effectiveStrokeWidth, presentation?.stroke, strokeDasharray])
 
   const groupStyle = useMemo(() => ({ '--semantic-stroke': presentation?.stroke } as CSSProperties), [presentation?.stroke])
 
@@ -114,11 +127,7 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
   }
 
   const isT0Edge = data.spec.tags.includes('t0')
-  const labelMode = resolveEdgeLabelMode(
-    zoom,
-    data.selected,
-    data.highlighted || data.groupHighlighted,
-  )
+  const labelMode = data.labelMode
   const displayLabel = data.spec.displayLabel ?? data.spec.label
   const detailText = data.spec.detail ? `${displayLabel} · ${data.spec.detail}` : displayLabel
   const labelText =
@@ -141,6 +150,8 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
         data.selected && 'is-selected',
         data.highlighted && 'is-highlighted',
         data.groupHighlighted && 'is-group-highlighted',
+        data.supportive && 'is-supportive',
+        data.narrativeMatched && 'is-narrative-matched',
         writePathActive && 'is-write-path-active',
         data.dimmed && 'is-dimmed',
         data.sharedTagFocused && 'is-shared-tag-focused',
@@ -152,6 +163,8 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
       data-edge-style={data.spec.style}
       data-edge-tag-t0={isT0Edge ? 'true' : 'false'}
       data-edge-shared-tag-focus={data.sharedTagFocused ? 'true' : 'false'}
+      data-edge-supportive={data.supportive ? 'true' : 'false'}
+      data-edge-narrative-matched={data.narrativeMatched ? 'true' : 'false'}
       data-edge-points={edgePoints}
       data-label-position={`${labelPosition.x},${labelPosition.y}`}
       style={groupStyle}
@@ -173,6 +186,12 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
         interactionWidth={12}
         style={strokeStyle}
       />
+      {route.bridges?.map((bridge, index) => (
+        <React.Fragment key={`${id}-bridge-${bridge.orientation}-${bridge.x}-${bridge.y}-${index}`}>
+          <path d={bridgePath(bridge)} fill="none" style={haloStyle} />
+          <path d={bridgePath(bridge)} fill="none" style={strokeStyle} />
+        </React.Fragment>
+      ))}
       {labelMode !== 'hidden' ? (
         <EdgeLabelRenderer>
           <button
@@ -184,6 +203,7 @@ export const BaseSemanticEdge = memo(function BaseSemanticEdge({
               data.selected && 'is-selected',
               (data.highlighted || data.groupHighlighted) && 'is-highlighted',
               data.groupHighlighted && 'is-group-highlighted',
+              data.supportive && 'is-supportive',
               data.dimmed && 'is-dimmed',
               data.sharedTagFocused && 'is-shared-tag-focused',
             )}

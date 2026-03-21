@@ -2059,9 +2059,14 @@
   opacity: 0.34;
 }
 
+.semantic-edge.is-supportive:not(.is-dimmed):not(.is-selected):not(.is-highlighted):not(.is-group-highlighted):not(.is-shared-tag-focused),
+.edge-label.is-supportive:not(.is-dimmed):not(.is-selected):not(.is-highlighted):not(.is-group-highlighted):not(.is-shared-tag-focused) {
+  opacity: 0.68;
+}
+
 .semantic-edge-family--telemetry:not(.is-optional):not(.is-dimmed):not(.is-selected):not(.is-highlighted):not(.is-shared-tag-focused) .react-flow__edge-path,
 .edge-label[data-edge-family='telemetry']:not(.is-optional):not(.is-dimmed):not(.is-selected):not(.is-highlighted):not(.is-shared-tag-focused) {
-  opacity: 0.82;
+  opacity: 0.72;
 }
 
 .semantic-edge[data-edge-id^='F_M1']:not(.is-selected):not(.is-highlighted) .react-flow__edge-path,
