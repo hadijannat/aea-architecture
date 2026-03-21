@@ -22,7 +22,7 @@
 **Data Modules (Exact Copy):**
 
 **1. Context**
-- **Canon** 36 nodes. 50 edges.
+- **Canon** 36 nodes. 51 edges.
 - **Claims** 6 architecture claims.
 - **Authority** 17 standards anchors.
 - **Boundary** Agent lives in psM+O, not CPC.
@@ -42,7 +42,7 @@
 **4. Actuation / VoR**
 - **Only write path** F5 -> VoR Interface -> F6.
 - **Protocol** **5** VoR steps: Auth -> Semantic check -> Mapping -> Acceptance -> Execute.
-- **Feedback** Dashed ACK returns *accepted | rejected | executed*.
+- **Feedback** Dashed ACK returns *accepted | rejected | executed | timeout*.
 - **Guardrail** No alternate direct write channel into CPC.
 
 **5. Telemetry + Standards**
@@ -62,7 +62,7 @@
 
 **Section Mapping:**
 - **Top band:** Title, subtitle, hook, analogy.
-- **Upper-left quadrant:** **Context** module with the 36/50/6/17 macro counts.
+- **Upper-left quadrant:** **Context** module with the 36/51/6/17 macro counts.
 - **Mid-left column:** **Sense Path** module wrapped around the G1 -> G2 -> G3 ingress chain.
 - **Center focal zone:** **Decide Guardrails** as the densest cluster, with guardrails stacked around the planner.
 - **Mid-right column:** **Actuation / VoR** as a five-step ribbon aimed toward CPC.
@@ -90,7 +90,7 @@
 
 **Data Visualization Specs:**
 - **1 bold path / 1 dashed ACK / 0 direct writes:** highlighted **Sankey-style corridor** centered on the gateway, with the forbidden direct-write route shown as a ghosted blocked line.
-- **36 nodes / 50 edges:** **annotated node-link density map** with lane shading and local count callouts.
+- **36 nodes / 51 edges:** **annotated node-link density map** with lane shading and local count callouts.
 - **6 architecture claims:** **radial claim wheel** with each claim tied to its dominant lane or corridor.
 - **17 standards anchors:** **domain-grouped dot matrix** arranged by NOA / OPC / IDTA / AI safety families.
 - **PA-DIM v1.02 released 2026-01-24:** left rung of a **dual release ladder** with a date chip and small “replaces prior harmonizer baseline” note.

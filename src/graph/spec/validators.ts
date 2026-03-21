@@ -53,6 +53,7 @@ const requiredEdgeIds = [
   'F3g',
   'F3h',
   'F3i',
+  'F_G2_reject',
   'F_T0_req',
   'F_T1',
   'F_T2',
@@ -376,6 +377,13 @@ const canonicalEdgeRules: Record<(typeof requiredEdgeIds)[number], CanonicalEdge
     style: 'thin',
     direction: 'ltr',
   },
+  F_G2_reject: {
+    source: 'DEC_G2',
+    target: 'DEC_R2',
+    semantic: 'rejection',
+    style: 'dashed',
+    direction: 'rtl',
+  },
   F_T0_req: {
     source: 'DEC_R2',
     target: 'DEC_T0',
@@ -598,6 +606,7 @@ const allowedPlannerInboundEdges = new Set([
   'F_G0_out',
   'F_G1A_reject',
   'F3f_reject',
+  'F_G2_reject',
   'F_H1_reject',
 ])
 
@@ -663,6 +672,7 @@ const canonicalInteractionRuleRequirements: Record<
       'node:DEC_R2',
       'node:DEC_T0',
       'node:DEC_G1A',
+      'node:DEC_G2',
       'node:DEC_H1',
       'node:DEC_M1',
       'node:ACT3',
@@ -675,6 +685,7 @@ const canonicalInteractionRuleRequirements: Record<
       'edge:F_T0_obs',
       'edge:F_G1A_pass',
       'edge:F_G1A_reject',
+      'edge:F_G2_reject',
       'edge:F_H1_revalidate',
       'edge:F_H1_reject',
       'edge:F_H1_pass',

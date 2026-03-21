@@ -304,7 +304,7 @@ function publicationTokens(): ExportTokens {
       medium: 1.2,
       thin: 0.7,
       dashed: 1.2,
-      dotted: 0.7,
+      dotted: 0.75,
     },
   }
 }

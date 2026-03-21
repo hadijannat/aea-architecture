@@ -10,7 +10,7 @@ This project is optimized for two audiences at once. External readers can use it
 
 ## What This App Does
 
-- Projects the AEA figure specification into a canonical runtime graph with 36 nodes, 50 edges, 5 sequence steps, 6 architectural claims, and 17 standards anchors.
+- Projects the AEA figure specification into a canonical runtime graph with 36 nodes, 51 edges, 5 sequence steps, 6 architectural claims, and 17 standards anchors.
 - Renders Panel A as an interactive architecture canvas spanning CPC, plant-specific M+O, and central M+O domains.
 - Renders Panel B as a synchronized VoR domain-transition sequence tied to the same graph model.
 - Lets readers search nodes, edges, claims, standards, and sequence steps, then inspect the semantic and standards context for each selection.
