@@ -1,19 +1,20 @@
 {
-  "specVersion": "aea-master-spec-2026-03-08",
+  "specVersion": "aea-master-spec-2026-03-21",
   "sourceSpec": {
     "title": "AEA Architecture Figure — Master Specification",
     "path": "docs/AEA_Figure_Specification.md",
     "authority": "markdown",
-    "importedAt": "2026-03-08",
+    "importedAt": "2026-03-21",
     "notes": [
       "Detailed per-arrow sections override conflicting summary prose.",
-      "The app mirrors the spec as structured graph data and keeps semantic objects spec-locked."
+      "The app mirrors the spec as structured graph data and keeps semantic objects spec-locked.",
+      "March 2026 review reconciled the master spec with the runtime graph and refreshed standard version metadata."
     ],
     "aliases": [
       {
         "original": "DEC3",
         "canonical": "DEC_G2",
-        "rationale": "The master spec uses DEC3 once inside the F3i paragraph, but the canonical block id is DEC_G2."
+        "rationale": "Legacy alias retained for backwards compatibility; the canonical block id is DEC_G2."
       }
     ]
   },
@@ -21,26 +22,26 @@
     "NE175": {
       "id": "NE175",
       "label": "NAMUR NE 175",
-      "version": "2020",
+      "version": "2020-07-09",
       "sourceUrl": "https://www.namur.net/en/recommendations/ne-recommendations/detail/ne-175.html",
-      "releaseDate": "2020",
-      "lastReviewed": "2026-03-08"
+      "releaseDate": "2020-07-09",
+      "lastReviewed": "2026-03-21"
     },
     "NE176": {
       "id": "NE176",
       "label": "NAMUR NE 176",
-      "version": "2022",
+      "version": "2021-06-16",
       "sourceUrl": "https://www.namur.net/en/recommendations/ne-recommendations/detail/ne-176.html",
-      "releaseDate": "2022",
-      "lastReviewed": "2026-03-08"
+      "releaseDate": "2021-06-16",
+      "lastReviewed": "2026-03-21"
     },
     "NE177": {
       "id": "NE177",
       "label": "NAMUR NE 177",
-      "version": "2022",
+      "version": "2021-04-08",
       "sourceUrl": "https://www.namur.net/en/recommendations/ne-recommendations/detail/ne-177.html",
-      "releaseDate": "2022",
-      "lastReviewed": "2026-03-08"
+      "releaseDate": "2021-04-08",
+      "lastReviewed": "2026-03-21"
     },
     "NE178": {
       "id": "NE178",
@@ -48,7 +49,7 @@
       "version": "2025-03-10",
       "sourceUrl": "https://www.namur.net/en/recommendations/ne-recommendations/detail/ne-178.html",
       "releaseDate": "2025-03-10",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "NE179": {
       "id": "NE179",
@@ -56,13 +57,13 @@
       "version": "2023",
       "sourceUrl": "https://www.namur.net/en/recommendations/ne-recommendations/detail/ne-179.html",
       "releaseDate": "2023",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "OPC62541": {
       "id": "OPC62541",
       "label": "OPC UA IEC 62541",
       "sourceUrl": "https://opcfoundation.org/developer-tools/documents/view/160",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "PADIM102": {
       "id": "PADIM102",
@@ -78,23 +79,25 @@
       "version": "2023",
       "sourceUrl": "https://www.iec.ch/dyn/www/f?p=103:38:0::::FSP_ORG_ID,FSP_APEX_PAGE,FSP_PROJECT_ID:1250,23,103615",
       "releaseDate": "2023",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "IDTA01001R2501": {
       "id": "IDTA01001R2501",
       "label": "IDTA AAS Part 1 Metamodel",
-      "version": "Release 25-01 / v3.1",
-      "url": "https://industrialdigitaltwin.org/wp-content/uploads/2025/06/IDTA_01001-25-01_AAS-Specification_Part1_Metamodel.pdf",
+      "version": "v3.1.1",
+      "url": "https://industrialdigitaltwin.org/en/wp-content/uploads/sites/2/2025/08/IDTA-01001-3-1-1_AAS-Specification_Part1_Metamodel.pdf",
       "sourceUrl": "https://industrialdigitaltwin.org/en/content-hub/aasspecifications",
-      "releaseDate": "2025-06-10",
+      "releaseDate": "2025-07",
       "lastReviewed": "2026-03-21"
     },
     "IDTAPART2311": {
       "id": "IDTAPART2311",
       "label": "IDTA Part 2 API",
       "version": "v3.1.1",
-      "sourceUrl": "https://industrialdigitaltwin.org/en/content-hub/aasspecifications/idta-01002-3-1-specification-of-the-asset-administration-shell-part-2-application-programming-interfaces",
-      "lastReviewed": "2026-03-08"
+      "url": "https://industrialdigitaltwin.org/wp-content/uploads/2025/08/IDTA-01002-3-1-1_AAS-Specification_Part2_API.pdf",
+      "sourceUrl": "https://industrialdigitaltwin.org/en/content-hub/aasspecifications",
+      "releaseDate": "2025-07",
+      "lastReviewed": "2026-03-21"
     },
     "NISTAIRMF10": {
       "id": "NISTAIRMF10",
@@ -102,7 +105,7 @@
       "version": "1.0",
       "sourceUrl": "https://airc.nist.gov/RMF/Docs",
       "releaseDate": "2023-01",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "NISTAI6001": {
       "id": "NISTAI6001",
@@ -111,7 +114,7 @@
       "url": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf",
       "sourceUrl": "https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf",
       "releaseDate": "2024-07",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "OWASPLMM25": {
       "id": "OWASPLMM25",
@@ -120,23 +123,23 @@
       "url": "https://genai.owasp.org/llm-top-10/",
       "sourceUrl": "https://genai.owasp.org/llm-top-10/",
       "releaseDate": "2025",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "OPC1000018": {
       "id": "OPC1000018",
       "label": "OPC 10000-18",
       "version": "v1.05.06",
       "sourceUrl": "https://opcfoundation.org/developer-tools/documents/view/242",
-      "releaseDate": "2025-10",
-      "lastReviewed": "2026-03-08"
+      "releaseDate": "2025-10-31",
+      "lastReviewed": "2026-03-21"
     },
     "OPC1000014": {
       "id": "OPC1000014",
       "label": "OPC 10000-14",
       "version": "v1.05.06",
       "sourceUrl": "https://opcfoundation.org/developer-tools/documents/view/239",
-      "releaseDate": "2025-10",
-      "lastReviewed": "2026-03-08"
+      "releaseDate": "2025-10-31",
+      "lastReviewed": "2026-03-21"
     },
     "MQTT5": {
       "id": "MQTT5",
@@ -144,13 +147,13 @@
       "version": "v5.0",
       "sourceUrl": "https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html",
       "releaseDate": "2019-03",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     },
     "IEC61987": {
       "id": "IEC61987",
       "label": "IEC 61987 IRDI",
       "sourceUrl": "https://www.iec.ch/dyn/www/f?p=103:38:0::::FSP_ORG_ID,FSP_APEX_PAGE,FSP_PROJECT_ID:1250,23,100438",
-      "lastReviewed": "2026-03-08"
+      "lastReviewed": "2026-03-21"
     }
   },
   "claims": {
@@ -890,7 +893,7 @@
       "nodeType": "GatewayInterfaceNode",
       "title": "VoR Interface",
       "subtitle": "NE 178 interface",
-      "description": "Separate security function handling authentication, authorisation, semantic validation, mapping, audit logging, and non-plant-specific status feedback for write-back.",
+      "description": "Separate security function handling authentication, authorisation, semantic validation, mapping, audit event emission, and non-plant-specific status feedback for write-back.",
       "standardIds": [
         "NE178"
       ],
@@ -916,7 +919,7 @@
         "role": "NE 178 write-back interface",
         "rationale": "VOI is distinct from the NE 177 read-only chain and is the only CPC boundary service allowed to receive F5 write requests.",
         "notes": [
-          "VOI enforces authentication, authorisation, semantic validation, mapping, and audit logging.",
+          "VOI enforces authentication, authorisation, semantic validation, mapping, and emits audit events for ACT3 to persist.",
           "Status feedback is intentionally non-plant-specific."
         ],
         "relatedEdgeIds": [
@@ -1294,7 +1297,7 @@
       "nodeType": "AgentNode",
       "title": "LLM Agent / Planner",
       "subtitle": "Tool-using; ReAct reasoning loop",
-      "description": "Planner that consumes only guarded context, proposes structured plans, and reacts to deterministic schema or policy rejections.",
+      "description": "Planner that consumes only guarded context, proposes structured plans, and reacts to deterministic schema, policy, validator, or human rejections.",
       "standardIds": [],
       "claimIds": [
         "C3",
@@ -1328,6 +1331,7 @@
           "F3e",
           "F_G1A_reject",
           "F3f_reject",
+          "F_G2_reject",
           "F_H1_reject",
           "F_T0_req"
         ],
@@ -1502,7 +1506,7 @@
       "nodeType": "SystemNode",
       "title": "Deterministic Validators",
       "subtitle": "AAS bounds validator + OPC UA RBAC validator",
-      "description": "Deterministic stage validating typed bounds, current values, permitted write scope, plan hash, and approval freshness before any VoR request is composed.",
+      "description": "Deterministic stage validating typed bounds, current values, permitted write scope, plan hash, and approval freshness before any VoR request is composed, with explicit rejection feedback to the planner on failure.",
       "standardIds": [
         "OPC1000018",
         "IEC63278",
@@ -1532,14 +1536,16 @@
         "role": "Deterministic safety gate",
         "rationale": "DEC_G2 is the final deterministic barrier before human approval and VoR request composition and therefore carries both AAS and RBAC evidence.",
         "notes": [
-          "The spec alias DEC3 resolves here for traceability.",
-          "Approval freshness is bound to plan_hash + snapshot_id + expires_at."
+          "Legacy alias DEC3 is retained for backwards compatibility.",
+          "Approval freshness is bound to plan_hash + snapshot_id + expires_at.",
+          "Validator failures return machine-readable feedback to DEC_R2 via F_G2_reject."
         ],
         "relatedEdgeIds": [
           "F3f",
           "F3g",
           "F3h",
           "F3i",
+          "F_G2_reject",
           "F4",
           "F_H1_revalidate"
         ],
@@ -2879,6 +2885,51 @@
       }
     },
     {
+      "id": "F_G2_reject",
+      "panel": [
+        "architecture"
+      ],
+      "band": "Decide",
+      "source": "DEC_G2",
+      "target": "DEC_R2",
+      "semantic": "rejection",
+      "style": "dashed",
+      "label": "bounds/role rejection + constraint feedback",
+      "displayLabel": "Reject bounds",
+      "direction": "rtl",
+      "standardIds": [
+        "IEC63278",
+        "OPC1000018",
+        "NISTAI6001"
+      ],
+      "claimIds": [
+        "C3",
+        "C4",
+        "C6"
+      ],
+      "tags": [
+        "policy-path",
+        "write-path",
+        "guardrail"
+      ],
+      "interactive": {
+        "relatedStepIds": [],
+        "sourceHandle": "left",
+        "targetHandle": "bottom",
+        "highlightGroup": "write"
+      },
+      "inspector": {
+        "rationale": "F_G2_reject returns deterministic validator failures to the planner so bounds, scope, or stale-snapshot violations are observable and revisable.",
+        "notes": [
+          "This loop-back also carries failures that surface after F_H1_revalidate sends a stale approval back through DEC_G2."
+        ],
+        "constraints": [
+          "Reject payloads must stay machine-readable.",
+          "Must remain planner-visible."
+        ]
+      }
+    },
+    {
       "id": "F_T1",
       "panel": [
         "architecture"
@@ -3564,7 +3615,7 @@
       "target": "ACT1",
       "semantic": "status-ack",
       "style": "dashed",
-      "label": "status: accepted | rejected | executed",
+      "label": "status: accepted | rejected | executed | timeout",
       "displayLabel": "Status",
       "detail": "non-plant-specific; no CPC architecture disclosed",
       "direction": "rtl",
@@ -4144,6 +4195,7 @@
         "node:DEC_R0",
         "node:DEC_T0",
         "node:DEC_G1A",
+        "node:DEC_G2",
         "node:DEC_H1",
         "node:DEC_M1"
       ],
@@ -4154,6 +4206,7 @@
         "node:DEC_R2",
         "node:DEC_T0",
         "node:DEC_G1A",
+        "node:DEC_G2",
         "node:DEC_H1",
         "node:DEC_M1",
         "node:ACT3"
@@ -4166,6 +4219,7 @@
         "edge:F_T0_obs",
         "edge:F_G1A_pass",
         "edge:F_G1A_reject",
+        "edge:F_G2_reject",
         "edge:F_H1_revalidate",
         "edge:F_H1_reject",
         "edge:F_H1_pass",

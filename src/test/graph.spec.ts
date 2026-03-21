@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+
 import { buildSearchResults } from '@/graph/compile/searchIndex'
 import {
   edgeStrokeWidth,
@@ -161,10 +164,78 @@ function expectedStructuralSizes() {
   } as const
 }
 
+function findRepoRoot(startDir: string) {
+  let current = startDir
+
+  while (true) {
+    if (
+      existsSync(resolve(current, 'package.json')) &&
+      existsSync(resolve(current, 'docs/AEA_Figure_Specification.md')) &&
+      existsSync(resolve(current, 'src/test/graph.spec.ts'))
+    ) {
+      return current
+    }
+
+    const parent = resolve(current, '..')
+    if (parent === current) {
+      return startDir
+    }
+    current = parent
+  }
+}
+
+const repoRoot = findRepoRoot(process.cwd())
+const readRepoText = (relativePath: string) => readFileSync(resolve(repoRoot, relativePath), 'utf8')
+
+const masterSpecMarkdown = readRepoText('docs/AEA_Figure_Specification.md')
+const infographicBlueprintMarkdown = readRepoText('docs/AEA_Infographic_Blueprint.md')
+const readmeMarkdown = readRepoText('README.md')
+
+const canonicalSpecCriticalEdgeIds = [
+  'F_G0_pol',
+  'F_G2_reject',
+  'F_H1_revalidate',
+  'F_H1_reject',
+  'F_M1_G0',
+  'F_M1_R0',
+  'F_M1_T0',
+  'F_M1_G1A',
+  'F_M1_H1',
+  'PB_F1',
+  'PB_F2',
+  'PB_F3',
+  'PB_F4',
+] as const
+
 describe('graph manifest', () => {
   it('passes integrity and semantic validation', () => {
     const issues = validateGraphManifest(graphManifest)
     expect(issues).toEqual([])
+  })
+
+  it('keeps published docs aligned on counts, ACK semantics, and the writeback model', () => {
+    expect(masterSpecMarkdown).toMatch(/six independent architectural claims/i)
+    expect(masterSpecMarkdown).toMatch(/five distinct arrow styles/i)
+    expect(masterSpecMarkdown).toContain('0.75 pt dotted')
+    expect(masterSpecMarkdown).toContain('status: {accepted | rejected | executed | timeout}')
+    expect(masterSpecMarkdown).toContain('max_iterations')
+    expect(masterSpecMarkdown).toContain('t1')
+    expect(masterSpecMarkdown).toContain('`F_VoR_ACK` returns only to `ACT1`; `ACT3` receives the durable audit trail')
+
+    expect(readmeMarkdown).toContain(
+      '36 nodes, 51 edges, 5 sequence steps, 6 architectural claims, and 17 standards anchors.',
+    )
+
+    expect(infographicBlueprintMarkdown).toMatch(/\*\*Exactly 1\*\* exclusive writeback corridor can reach CPC\./)
+    expect(infographicBlueprintMarkdown).toContain('accepted | rejected | executed | timeout')
+    expect(infographicBlueprintMarkdown).toContain('AAS Part 1 and Part 2 run at **v3.1.1**.')
+    expect(infographicBlueprintMarkdown).toContain('Metamodel and API references refreshed in **July 2025**.')
+  })
+
+  it('documents every critical manifest-backed edge in the master specification', () => {
+    for (const edgeId of canonicalSpecCriticalEdgeIds) {
+      expect(masterSpecMarkdown, `Missing ${edgeId} in master specification`).toContain(edgeId)
+    }
   })
 
   it('rejects gateway node drift and broken cross-panel correspondences', () => {
@@ -249,12 +320,13 @@ describe('graph manifest', () => {
     )
   })
 
-  it('allows the four canonical planner inbound edges', () => {
+  it('allows the five canonical planner inbound edges', () => {
     const plannerInbound = graphManifest.edges.filter((edge) => edge.target === 'DEC_R2')
     expect(plannerInbound.map((edge) => edge.id).sort()).toEqual([
       'F3f_reject',
       'F_G0_out',
       'F_G1A_reject',
+      'F_G2_reject',
       'F_H1_reject',
     ])
 
@@ -374,6 +446,7 @@ describe('graph manifest', () => {
       F3g: { source: 'DEC_K1', target: 'DEC_G2', semantic: 'validation', style: 'thin', direction: 'ltr' },
       F3h: { source: 'S2', target: 'DEC_G2', semantic: 'validation', style: 'thin', direction: 'ttb' },
       F3i: { source: 'VOI', target: 'DEC_G2', semantic: 'validation', style: 'thin', direction: 'ltr' },
+      F_G2_reject: { source: 'DEC_G2', target: 'DEC_R2', semantic: 'rejection', style: 'dashed', direction: 'rtl' },
       F_T1: { source: 'DEC_T0', target: 'S1', semantic: 'tool-call', style: 'dotted', direction: 'btt' },
       F_T2: { source: 'DEC_T0', target: 'DEC_K1', semantic: 'tool-call', style: 'dotted', direction: 'rtl' },
       F_T0_req: { source: 'DEC_R2', target: 'DEC_T0', semantic: 'tool-call', style: 'dotted', direction: 'btt' },
@@ -393,6 +466,7 @@ describe('graph manifest', () => {
       F5: { source: 'ACT1', target: 'VOI', semantic: 'writeback', style: 'bold', direction: 'rtl' },
       F6: { source: 'VOI', target: 'A3', semantic: 'writeback', style: 'bold', direction: 'ltr' },
       F_VoR_ACK: { source: 'VOI', target: 'ACT1', semantic: 'status-ack', style: 'dashed', direction: 'rtl' },
+      F_CPC_INT: { source: 'A3', target: 'A1', semantic: 'writeback', style: 'medium', direction: 'ttb' },
       F7a: { source: 'ACT2', target: 'C1', semantic: 'kpi', style: 'thin', direction: 'ltr' },
       F7b: { source: 'C1', target: 'C2', semantic: 'kpi', style: 'thin', direction: 'ltr' },
       F7_sub: { source: 'C2', target: 'C1', semantic: 'subscription', style: 'dotted', direction: 'rtl' },
@@ -434,6 +508,7 @@ describe('graph manifest', () => {
       F3g: 'Provide bounds',
       F3h: 'Load t0 vals',
       F3i: 'Limit writes',
+      F_G2_reject: 'Reject bounds',
       F_T1: 'Run read',
       F_T2: 'Query AAS',
       F_T0_req: 'Broker tools',
@@ -494,8 +569,17 @@ describe('graph manifest', () => {
   it('keeps F3i sourced from VOI and DEC_G2 aliased from DEC3', () => {
     const f3i = graphManifest.edges.find((edge) => edge.id === 'F3i')
     const validatorNode = graphManifest.nodes.find((node) => node.id === 'DEC_G2')
+    const validatorReject = graphManifest.edges.find((edge) => edge.id === 'F_G2_reject')
     expect(f3i?.source).toBe('VOI')
     expect(validatorNode?.aliases).toContain('DEC3')
+    expect(validatorReject?.interactive.sourceHandle).toBe('left')
+    expect(validatorReject?.interactive.targetHandle).toBe('bottom')
+  })
+
+  it('keeps VoR interface copy aligned with the audit-event model', () => {
+    const voi = resolveGraphNode('VOI')
+    expect(voi?.description).toContain('audit event emission')
+    expect(voi?.inspector.notes.some((note) => note.includes('emits audit events for ACT3 to persist.'))).toBe(true)
   })
 
   it('enforces guardrail node presence and kinds', () => {
@@ -527,12 +611,14 @@ describe('graph manifest', () => {
     expect(edgeMap.F4?.target).toBe('DEC_H1')
     expect(edgeMap.F_H1_revalidate?.source).toBe('DEC_H1')
     expect(edgeMap.F_H1_revalidate?.target).toBe('DEC_G2')
+    expect(edgeMap.F_G2_reject?.source).toBe('DEC_G2')
+    expect(edgeMap.F_G2_reject?.target).toBe('DEC_R2')
     expect(edgeMap.F_H1_reject?.source).toBe('DEC_H1')
     expect(edgeMap.F_H1_reject?.target).toBe('DEC_R2')
   })
 
   it('keeps deterministic external-control claims on policy feedback and approval-loop edges', () => {
-    const requiredC6Edges = ["F3b'", 'F3f_reject', 'F_H1_revalidate', 'F_H1_reject'] as const
+    const requiredC6Edges = ["F3b'", 'F3f_reject', 'F_G2_reject', 'F_H1_revalidate', 'F_H1_reject'] as const
 
     for (const edgeId of requiredC6Edges) {
       const edge = graphManifest.edges.find((candidate) => candidate.id === edgeId)
@@ -567,6 +653,9 @@ describe('graph manifest', () => {
 
     const rule = graphManifest.interactionRules.find((candidate) => candidate.id === 'RULE_GUARDRAIL_LAYER')
     expect(rule).toBeDefined()
+    expect(rule?.triggerIds).toContain('node:DEC_G2')
+    expect(rule?.relatedNodeIds).toContain('node:DEC_G2')
+    expect(rule?.relatedEdgeIds).toContain('edge:F_G2_reject')
     expect(rule?.triggerIds.every((id) => id.startsWith('node:'))).toBe(true)
     expect(rule?.relatedEdgeIds.every((id) => id.startsWith('edge:'))).toBe(true)
     expect(rule?.focusPath).toBe('policy')
@@ -710,13 +799,16 @@ describe('graph manifest', () => {
     expect(graphManifest.standards.NE176).toMatchObject({
       id: 'NE176',
       label: 'NAMUR NE 176',
-      releaseDate: '2022',
+      releaseDate: '2021-06-16',
     })
     expect(graphManifest.standards.NE179).toMatchObject({
       id: 'NE179',
       label: 'NAMUR NE 179',
       releaseDate: '2023',
     })
+    for (const standardId of ['IEC63278', 'NISTAIRMF10', 'NISTAI6001', 'OWASPLMM25', 'MQTT5', 'IEC61987'] as const) {
+      expect(graphManifest.standards[standardId]?.lastReviewed).toBe('2026-03-21')
+    }
 
     expect(
       buildSearchResults('NAMUR NE 176', graphManifest).some(
@@ -1098,6 +1190,10 @@ describe('exports', () => {
         path: 'M 1010 1246 L 1010 1318 Q 1010 1340 1032 1340 L 1748 1340 Q 1770 1340 1770 1318 L 1770 1250',
         labelPoint: { x: 1390, y: 1358 },
       },
+      F_G2_reject: {
+        path: 'M 1770 1250 L 1770 1166 Q 1770 1144 1748 1144 L 1637 1144 Q 1615 1144 1615 1122 L 1615 1018 Q 1615 996 1593 996 L 1555 996',
+        labelPoint: { x: 1692.5, y: 1162 },
+      },
       F_H1_reject: {
         path: 'M 895 1186 L 895 1106 Q 895 1084 917 1084 L 1533 1084 Q 1555 1084 1555 1062 L 1555 996',
         labelPoint: { x: 873, y: 1135 },
@@ -1146,6 +1242,7 @@ describe('exports', () => {
       'F_G1A_pass',
       'F_G1A_reject',
       'F3f_reject',
+      'F_G2_reject',
       'F3g',
       'F3h',
       'F3i',
@@ -1246,6 +1343,7 @@ describe('exports', () => {
       { edgeId: 'F3f_reject', nodes: ['DEC_R2', 'DEC_G1A'] },
       { edgeId: 'F3i', nodes: ['DEC_H1', 'DEC_M1', 'DEC_G1'] },
       { edgeId: 'F4', nodes: ['DEC_G1', 'DEC_G2', 'DEC_M1'] },
+      { edgeId: 'F_G2_reject', nodes: ['DEC_R2', 'DEC_G2'] },
       { edgeId: 'F_G1A_pass', nodes: ['DEC_G1A', 'DEC_G1', 'DEC_M1'] },
       { edgeId: 'F_T1', nodes: ['S1', 'S2', 'DEC_T0'] },
       { edgeId: 'F_T0_obs', nodes: ['DEC_T0', 'DEC_G0', 'DEC_R2'] },
@@ -1272,6 +1370,7 @@ describe('exports', () => {
     const rejectionRoutes = {
       F_G1A_reject: 964,
       F3f_reject: 1024,
+      F_G2_reject: 1144,
       F_H1_reject: 1084,
     } as const
 
@@ -1280,6 +1379,14 @@ describe('exports', () => {
       expect(route.points[1]?.y).toBe(expectedY)
       expect(route.points[2]?.y).toBe(expectedY)
     }
+
+    expect(buildArchitectureRoute(state, 'F_G2_reject').points).toEqual([
+      { x: 1770, y: 1250 },
+      { x: 1770, y: 1144 },
+      { x: 1615, y: 1144 },
+      { x: 1615, y: 996 },
+      { x: 1555, y: 996 },
+    ])
 
     expect(buildArchitectureRoute(state, 'F_M1_G0').points).toEqual([
       { x: 1340, y: 930 },
@@ -1354,7 +1461,7 @@ describe('exports', () => {
     expect(viewportDocument.svg).toContain('<title>AEA Architecture Viewport Export</title>')
     expect(viewportDocument.svg).toContain('data-export-theme="default"')
     expect(viewportDocument.svg).toContain('viewBox="60 40 320 180"')
-    for (const edgeId of ['F_G1A_pass', 'F_T1', 'F_T0_obs', 'F4', 'F_H1_revalidate', 'F_H1_reject', 'F_H1_pass', 'F5', 'F6', 'F_VoR_ACK', 'F_CPC_INT', 'F7a', 'F7_sub']) {
+    for (const edgeId of ['F_G1A_pass', 'F_T1', 'F_T0_obs', 'F4', 'F_H1_revalidate', 'F_G2_reject', 'F_H1_reject', 'F_H1_pass', 'F5', 'F6', 'F_VoR_ACK', 'F_CPC_INT', 'F7a', 'F7_sub']) {
       const route = buildArchitectureRoute(state, edgeId)
       const label = resolveBoardLabelPosition(route.label)
       expect(viewportDocument.svg).toContain(`d="${route.path}"`)
@@ -1422,7 +1529,7 @@ describe('exports', () => {
     expect(publicationDocument.svg).toContain('markerUnits="userSpaceOnUse"')
     expect(publicationDocument.svg).toContain('stroke-width="1.7"')
     expect(publicationDocument.svg).toContain('stroke-width="1.2"')
-    expect(publicationDocument.svg).toContain('stroke-width="0.7"')
+    expect(publicationDocument.svg).toContain('stroke-width="0.75"')
   })
 
   it('respects the active viewport theme while forcing publication exports to analysis mode', async () => {

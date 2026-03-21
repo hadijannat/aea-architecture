@@ -12,7 +12,7 @@
 - *A clear map of the AEA architecture, its guardrails, and the single controlled path into CPC*
 
 **The "Hook":**
-- **Exactly 1** bold writeback path can enter CPC.
+- **Exactly 1** exclusive writeback corridor can reach CPC.
 - **Exactly 1** dashed status path can return.
 - **Exactly 0** direct agent writes bypass the VoR interface.
 
@@ -22,7 +22,7 @@
 **Data Modules (Exact Copy):**
 
 **1. Context**
-- **Canon** 36 nodes. 50 edges.
+- **Canon** 36 nodes. 51 edges.
 - **Claims** 6 architecture claims.
 - **Authority** 17 standards anchors.
 - **Boundary** Agent lives in psM+O, not CPC.
@@ -35,14 +35,14 @@
 
 **3. Decide Guardrails**
 - **Stack** Retrieval. Context. Schema. Policy. Validators. Human approval.
-- **Grounding** AAS Release 25-01 spans **5 parts**.
-- **Update** Part 4 Security added **2025-06-10**.
+- **Grounding** AAS Part 1 and Part 2 run at **v3.1.1**.
+- **Update** Metamodel and API references refreshed in **July 2025**.
 - **Principle** Safety controls stay deterministic and external to the model.
 
 **4. Actuation / VoR**
 - **Only write path** F5 -> VoR Interface -> F6.
 - **Protocol** **5** VoR steps: Auth -> Semantic check -> Mapping -> Acceptance -> Execute.
-- **Feedback** Dashed ACK returns *accepted | rejected | executed*.
+- **Feedback** Dashed ACK returns *accepted | rejected | executed | timeout*.
 - **Guardrail** No alternate direct write channel into CPC.
 
 **5. Telemetry + Standards**
@@ -62,7 +62,7 @@
 
 **Section Mapping:**
 - **Top band:** Title, subtitle, hook, analogy.
-- **Upper-left quadrant:** **Context** module with the 36/50/6/17 macro counts.
+- **Upper-left quadrant:** **Context** module with the 36/51/6/17 macro counts.
 - **Mid-left column:** **Sense Path** module wrapped around the G1 -> G2 -> G3 ingress chain.
 - **Center focal zone:** **Decide Guardrails** as the densest cluster, with guardrails stacked around the planner.
 - **Mid-right column:** **Actuation / VoR** as a five-step ribbon aimed toward CPC.
@@ -90,11 +90,11 @@
 
 **Data Visualization Specs:**
 - **1 bold path / 1 dashed ACK / 0 direct writes:** highlighted **Sankey-style corridor** centered on the gateway, with the forbidden direct-write route shown as a ghosted blocked line.
-- **36 nodes / 50 edges:** **annotated node-link density map** with lane shading and local count callouts.
+- **36 nodes / 51 edges:** **annotated node-link density map** with lane shading and local count callouts.
 - **6 architecture claims:** **radial claim wheel** with each claim tied to its dominant lane or corridor.
 - **17 standards anchors:** **domain-grouped dot matrix** arranged by NOA / OPC / IDTA / AI safety families.
 - **PA-DIM v1.02 released 2026-01-24:** left rung of a **dual release ladder** with a date chip and small “replaces prior harmonizer baseline” note.
-- **AAS Release 25-01 / 5 parts / Part 4 Security added 2025-06-10:** right rung of the **dual release ladder** with five stacked capsules and the Part 4 capsule accented.
+- **AAS Part 1 + Part 2 v3.1.1 / July 2025:** right rung of the **dual release ladder** with paired metamodel/API capsules and both capsules accented.
 - **5 VoR steps:** **numbered sequence ribbon** with rectangular stations and a dashed rejection/ACK branch.
 - **NE 178 and OPC UA 1.05.06 release dates:** **labeled timeline footer** with compact date pins.
 - **NIST + OWASP microdata:** **compact lollipop callouts** in the footer, split into “governance” and “community scale” columns.
